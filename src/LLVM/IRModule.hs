@@ -7,11 +7,13 @@ module LLVM.IRModule (
   IRAttribute (..),
   IRFunction (..),
   IRBlock (..),
+  appendInstr,
 ) where
 
 import Common (Name)
 import Data.ByteString (ByteString)
 import Data.Text (Text)
+import LLVM.IRAnnotation (IRAnnotation (..))
 import LLVM.IRInstruction (IRInstruction)
 import LLVM.IROperand (IRConstant, IRTerminator)
 import LLVM.IRType (IRType (..))
@@ -23,10 +25,10 @@ data IRLinkage
   deriving (Show, Eq, Ord)
 
 data IRModule = IRModule
-  { modName :: Name
-  , modDecls :: [IRDecl]
-  , modGlobals :: [IRGlobal]
-  , modFunctions :: [IRFunction]
+  { moduleName :: Name
+  , moduleDecls :: [IRDecl]
+  , moduleGlobals :: [IRGlobal]
+  , moduleFunctions :: [IRFunction]
   }
 
 data IRDecl = IRDecl
@@ -58,18 +60,26 @@ data IRAttribute
   deriving (Show, Eq, Ord)
 
 data IRFunction = IRFunction
-  { fnName :: Name
-  , fnLinkage :: IRLinkage
-  , fnRetType :: IRType
-  , fnArgs :: [(IRType, Name)]
-  , fnBlocks :: [IRBlock]
-  , fnAttributes :: [IRAttribute]
+  { functionName :: Name
+  , functionLinkage :: IRLinkage
+  , functionRetType :: IRType
+  , functionArgs :: [(IRType, Name)]
+  , functionBlocks :: [IRBlock]
+  , functionAttributes :: [IRAttribute]
   }
+  deriving (Show, Eq, Ord)
+
+data IRBlockArtifact
+  = BlockInstr IRInstruction
+  | BlockAnnotation IRAnnotation
   deriving (Show, Eq, Ord)
 
 data IRBlock = IRBlock
   { blockLabel :: Name
-  , blockInstructions :: [IRInstruction]
+  , blockInstructions :: [IRBlockArtifact]
   , blockTerminator :: IRTerminator
   }
   deriving (Show, Eq, Ord)
+
+appendInstr :: IRFunction -> IRFunction
+appendInstr = undefined
