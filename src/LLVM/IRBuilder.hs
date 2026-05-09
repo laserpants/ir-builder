@@ -17,7 +17,7 @@ import Data.Text (Text)
 import LLVM.IRAnnotation (IRAnnotation (..))
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv, overBuilderEnvCurrentFunction)
 import LLVM.IRInstruction (IRInstruction)
-import LLVM.IRModule
+import LLVM.IRModule (IRFunction, IRModule (..), appendAnnotation, appendInstr)
 import LLVM.IRRenderer (renderModule, runIRRenderer)
 
 data IRBuilderF next
