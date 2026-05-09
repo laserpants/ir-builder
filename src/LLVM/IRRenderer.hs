@@ -4,7 +4,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
-module LLVM.IRInterpreter (compileModule) where
+module LLVM.IRRenderer (compileModule) where
 
 import Common (Name)
 import Control.Monad.State (MonadState, State, evalState, execState, modify)
@@ -28,14 +28,14 @@ import LLVM.IRModule (
   appendAnnotation,
   appendInstr,
  )
-import LLVM.IRState (IRState (..), emptyIRState)
+import LLVM.IRRenderer.State (IRRendererState (..), emptyIRRendererState)
 
-newtype IRInterpreter a = IRInterpreter {runIRInterpreter :: State IRState a}
+newtype IRRenderer a = IRRenderer {runIRRenderer :: State IRRendererState a}
   deriving
     ( Functor
     , Applicative
     , Monad
-    , MonadState IRState
+    , MonadState IRRendererState
     )
 
 step :: IRBuilderF (State IRBuilderEnv a) -> State IRBuilderEnv a
@@ -54,10 +54,10 @@ emitInstruction instr = modify $ overBuilderEnvCurrentFunction (fmap (appendInst
 emitAnnotation :: IRAnnotation -> State IRBuilderEnv ()
 emitAnnotation ann = modify $ overBuilderEnvCurrentFunction (fmap (appendAnnotation ann))
 
-buildIR :: IRBuilder a -> State IRBuilderEnv a
-buildIR = iterT step . runIRBuilder
+execIRBuilder :: IRBuilder a -> State IRBuilderEnv a
+execIRBuilder = iterT step . runIRBuilder
 
-renderModule :: IRModule -> IRInterpreter Text
+renderModule :: IRModule -> IRRenderer Text
 renderModule IRModule {moduleDecls, moduleGlobals, moduleFunctions} = do
   decls <- traverse renderDecl moduleDecls
   globs <- traverse renderGlobal moduleGlobals
@@ -65,15 +65,15 @@ renderModule IRModule {moduleDecls, moduleGlobals, moduleFunctions} = do
   pure $ Text.unlines $ concat [decls, globs, funs]
 
 -- TODO
-renderDecl :: IRDecl -> IRInterpreter Text
+renderDecl :: IRDecl -> IRRenderer Text
 renderDecl = undefined
 
 -- TODO
-renderGlobal :: IRGlobal -> IRInterpreter Text
+renderGlobal :: IRGlobal -> IRRenderer Text
 renderGlobal = undefined
 
 -- TODO
-renderFunction :: IRFunction -> IRInterpreter Text
+renderFunction :: IRFunction -> IRRenderer Text
 renderFunction = undefined
 
 finalizeModule :: Name -> IRBuilderEnv -> IRModule
@@ -91,10 +91,10 @@ finalizeFunctions = undefined
 buildModule :: Name -> IRBuilder a -> IRModule
 buildModule name builder = finalizeModule name env
  where
-  env = execState (buildIR builder) emptyIRBuilderEnv
+  env = execState (execIRBuilder builder) emptyIRBuilderEnv
 
-runRenderer :: IRInterpreter Text -> Text
-runRenderer interpreter = evalState (runIRInterpreter interpreter) emptyIRState
+runRenderer :: IRRenderer a -> a
+runRenderer interpreter = evalState (runIRRenderer interpreter) emptyIRRendererState
 
 compileModule :: Name -> IRBuilder a -> Text
 compileModule name = runRenderer . renderModule . buildModule name
