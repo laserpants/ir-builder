@@ -49,12 +49,12 @@ execIRBuilder :: IRBuilder a -> State IRBuilderEnv a
 execIRBuilder = iterT emit . unpackIRBuilder
 
 finalizeModule :: Name -> IRBuilderEnv -> IRModule
-finalizeModule name IRBuilderEnv{..} =
+finalizeModule name env@IRBuilderEnv{..} =
   IRModule
     { moduleName = name
     , moduleDecls = reverse builderEnvDecls
     , moduleGlobals = reverse builderEnvGlobals
-    , moduleFunctions = finalizeFunctions IRBuilderEnv{..}
+    , moduleFunctions = finalizeFunctions env
     }
 
 finalizeFunctions :: IRBuilderEnv -> [IRFunction]

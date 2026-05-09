@@ -11,7 +11,7 @@ import qualified Data.Text as Text
 import LLVM.IRModule (IRDecl, IRFunction (..), IRGlobal, IRModule (..))
 import LLVM.IRRenderer.State (IRRendererState (..), emptyIRRendererState)
 
-newtype IRRenderer a = IRRenderer {getIRRenderer :: State IRRendererState a}
+newtype IRRenderer a = IRRenderer {unpackIRRenderer :: State IRRendererState a}
   deriving
     ( Functor
     , Applicative
@@ -20,7 +20,7 @@ newtype IRRenderer a = IRRenderer {getIRRenderer :: State IRRendererState a}
     )
 
 runIRRenderer :: IRRenderer a -> a
-runIRRenderer rr = evalState (getIRRenderer rr) emptyIRRendererState
+runIRRenderer irRenderer = evalState (unpackIRRenderer irRenderer) emptyIRRendererState
 
 renderModule :: IRModule -> IRRenderer Text
 renderModule IRModule{moduleDecls, moduleGlobals, moduleFunctions} = do
