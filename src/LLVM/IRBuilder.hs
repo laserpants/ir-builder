@@ -1,3 +1,5 @@
+{-# LANGUAGE StrictData #-}
+
 module LLVM.IRBuilder (IRBuilderF (..), IRBuilder) where
 
 import Control.Monad.Free (Free)

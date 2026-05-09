@@ -1,3 +1,5 @@
+{-# LANGUAGE StrictData #-}
+
 module LLVM.IRType (IRType (..)) where
 
 import Common (Name)

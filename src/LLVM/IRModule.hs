@@ -1,3 +1,5 @@
+{-# LANGUAGE StrictData #-}
+
 module LLVM.IRModule (
   IRModule (..),
   IRDecl (..),

@@ -1,3 +1,5 @@
+{-# LANGUAGE StrictData #-}
+
 module LLVM.IROperand (
   IRConstant (..),
   IROperand (..),

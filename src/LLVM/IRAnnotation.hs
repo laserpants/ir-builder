@@ -1,3 +1,5 @@
+{-# LANGUAGE StrictData #-}
+
 module LLVM.IRAnnotation (IRAnnotation (..)) where
 
 import Data.Text (Text)
