@@ -59,11 +59,11 @@ data IRInstrOp
   | IAdd IRType IROperand IROperand
   | IAlloca IRType IROperand
   | IAnd IRType IROperand IROperand
-  | IBitcasty IROperand IRType
+  | IBitcast IROperand IRType
   | ICall IRTailMarker IRType IROperand [IROperand]
   | IFAdd IRType IROperand IROperand
   | IFCmp IRFCmpCond IRType IROperand IROperand
-  | IFDiIROperand IRType IROperand IROperand
+  | IFDiv IRType IROperand IROperand
   | IFMul IRType IROperand IROperand
   | IFNeg IRType IROperand
   | IFSub IRType IROperand IROperand
@@ -75,19 +75,19 @@ data IRInstrOp
   | IMul IRType IROperand IROperand
   | IOr IRType IROperand IROperand
   | IPhi IRType [(Name, IROperand)]
-  | IPtrtointy IROperand IRType
-  | ISDiIROperand IRType IROperand IROperand
+  | IPtrtoint IROperand IRType
+  | ISDiv IRType IROperand IROperand
   | ISRem IRType IROperand IROperand
-  | ISelecty IRType IROperand IROperand IROperand
-  | ISexty IROperand IRType
+  | ISelect IRType IROperand IROperand IROperand
+  | ISext IROperand IRType
   | IShl IRType IROperand IROperand
   | IStore IROperand IROperand
   | ISub IRType IROperand IROperand
   | ITrunc IROperand IRType
-  | IUDiIROperand IRType IROperand IROperand
+  | IUDiv IRType IROperand IROperand
   | IURem IRType IROperand IROperand
   | IXOr IRType IROperand IROperand
-  | IZexty IROperand IRType
+  | IZext IROperand IRType
   deriving (Show, Eq, Ord)
 
 data IRInstruction = IRInstruction
