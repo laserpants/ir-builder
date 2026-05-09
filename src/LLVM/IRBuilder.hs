@@ -37,7 +37,7 @@ data IRBuilderEnv = IRBuilderEnv
 emptyIRBuilderEnv :: IRBuilderEnv
 emptyIRBuilderEnv =
   IRBuilderEnv
-    { builderEnvFresh = 1
+    { builderEnvFresh = 0
     , builderEnvCurrentBlock = Nothing
     , builderEnvCurrentFunction = Nothing
     , builderEnvBlocks = mempty
