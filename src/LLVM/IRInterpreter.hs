@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module LLVM.IRInterpreter (IRInterpreter (..), step) where
+module LLVM.IRInterpreter (compileModule) where
 
 import Common (Name)
 import Control.Monad.State (MonadState, State, evalState, execState, modify)
