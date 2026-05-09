@@ -13,9 +13,9 @@ module LLVM.IRBuilder (
 import Common (Name)
 import Control.Monad.State (State, execState, modify)
 import Control.Monad.Trans.Free (FreeT, iterT)
-import Data.Map.Strict (Map)
 import Data.Text (Text)
 import LLVM.IRAnnotation (IRAnnotation (..))
+import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv)
 import LLVM.IRInstruction (IRInstruction)
 import LLVM.IRModule
 import LLVM.IRRenderer (renderModule, runIRRenderer)
@@ -24,29 +24,6 @@ data IRBuilderF next
   = EmitInstr IRInstruction next
   | EmitAnnotation IRAnnotation next
   deriving (Functor)
-
-data IRBuilderEnv = IRBuilderEnv
-  { builderEnvFresh :: Int
-  , builderEnvCurrentBlock :: Maybe IRBlock
-  , builderEnvCurrentFunction :: Maybe IRFunction
-  , builderEnvBlocks :: Map Name IRBlock
-  , builderEnvFunctions :: Map Name IRFunction
-  , builderEnvGlobals :: [IRGlobal]
-  , builderEnvDecls :: [IRDecl]
-  }
-  deriving (Show, Eq, Ord)
-
-emptyIRBuilderEnv :: IRBuilderEnv
-emptyIRBuilderEnv =
-  IRBuilderEnv
-    { builderEnvFresh = 0
-    , builderEnvCurrentBlock = Nothing
-    , builderEnvCurrentFunction = Nothing
-    , builderEnvBlocks = mempty
-    , builderEnvFunctions = mempty
-    , builderEnvGlobals = mempty
-    , builderEnvDecls = mempty
-    }
 
 newtype IRBuilder a = IRBuilder
   { unpackIRBuilder :: FreeT IRBuilderF (State IRBuilderEnv) a
