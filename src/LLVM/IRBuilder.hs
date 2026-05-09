@@ -15,7 +15,7 @@ import Control.Monad.State (State, execState, modify)
 import Control.Monad.Trans.Free (FreeT, iterT)
 import Data.Text (Text)
 import LLVM.IRAnnotation (IRAnnotation (..))
-import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv)
+import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv, overBuilderEnvCurrentFunction)
 import LLVM.IRInstruction (IRInstruction)
 import LLVM.IRModule
 import LLVM.IRRenderer (renderModule, runIRRenderer)
@@ -28,13 +28,6 @@ data IRBuilderF next
 newtype IRBuilder a = IRBuilder
   { unpackIRBuilder :: FreeT IRBuilderF (State IRBuilderEnv) a
   }
-
-overBuilderEnvCurrentFunction :: (Maybe IRFunction -> Maybe IRFunction) -> IRBuilderEnv -> IRBuilderEnv
-overBuilderEnvCurrentFunction fn IRBuilderEnv{..} =
-  IRBuilderEnv
-    { builderEnvCurrentFunction = fn builderEnvCurrentFunction
-    , ..
-    }
 
 emit :: IRBuilderF (State IRBuilderEnv a) -> State IRBuilderEnv a
 emit =
