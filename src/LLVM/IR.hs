@@ -93,14 +93,6 @@ data IRInstruction = IRInstruction
   , instrOp :: IRInstrOp
   }
 
-data IRTerminator
-  = IRet IROperand
-  | IBr Name
-  | ICondBr IROperand Name Name
-  | ISwitch IROperand Name [(IRConstant, Name)]
-  | IUnreachable
-  deriving (Show, Eq, Ord)
-
 --------------------------------------------------------------------------------
 -- IRType
 --------------------------------------------------------------------------------
@@ -136,6 +128,14 @@ data IROperand
   = OLocal IRType Name
   | OGlobal IRType Name
   | OConstant IRConstant
+  deriving (Show, Eq, Ord)
+
+data IRTerminator
+  = IRet IROperand
+  | IBr Name
+  | ICondBr IROperand Name Name
+  | ISwitch IROperand Name [(IRConstant, Name)]
+  | IUnreachable
   deriving (Show, Eq, Ord)
 
 --------------------------------------------------------------------------------
