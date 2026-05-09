@@ -7,9 +7,6 @@ module LLVM.IRBuilder (
   IRBuilderF (..),
   IRBuilder (..),
   IRBuilderEnv (..),
-  emptyIRBuilderEnv,
-  overBuilderEnvCurrentFunction,
-  execIRBuilder,
   compileModule,
 ) where
 
