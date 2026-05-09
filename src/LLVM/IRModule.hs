@@ -31,6 +31,7 @@ data IRModule = IRModule
   , moduleGlobals :: [IRGlobal]
   , moduleFunctions :: [IRFunction]
   }
+  deriving (Show, Eq, Ord)
 
 data IRDecl = IRDecl
   { declName :: Name
