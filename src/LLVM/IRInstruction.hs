@@ -1,11 +1,11 @@
-module LLVM.IRInstruction
-  ( IRICmpCond (..),
-    IRFCmpCond (..),
-    IRTailMarker (..),
-    IRInstrOpF (..),
-    IRInstrOp,
-    IRInstruction (..),
-  )
+module LLVM.IRInstruction (
+  IRICmpCond (..),
+  IRFCmpCond (..),
+  IRTailMarker (..),
+  IRInstrOpF (..),
+  IRInstrOp,
+  IRInstruction (..),
+)
 where
 
 import Common (Name)
@@ -91,6 +91,6 @@ data IRInstrOpF op ty next
 type IRInstrOp = IRInstrOpF IROperand IRType ()
 
 data IRInstruction = IRInstruction
-  { instrResult :: Maybe (Name, IRType),
-    instrOp :: IRInstrOp
+  { instrResult :: Maybe (Name, IRType)
+  , instrOp :: IRInstrOp
   }

@@ -14,6 +14,12 @@ import LLVM.IRInstruction (IRInstruction)
 import LLVM.IROperand (IRConstant, IRTerminator)
 import LLVM.IRType (IRType (..))
 
+data IRLinkage
+  = LExternal
+  | LInternal
+  | LPrivate
+  deriving (Show, Eq, Ord)
+
 data IRModule = IRModule
   { modName :: Name
   , modDecls :: [IRDecl]
@@ -28,8 +34,8 @@ data IRDecl = IRDecl
   deriving (Show, Eq, Ord)
 
 data IRGlobal
-  = IRString Name ByteString
-  | IRConstant Name IRType IRConstant
+  = IRString IRLinkage Name ByteString
+  | IRConstant IRLinkage Name IRType IRConstant
   | IRExtern Name IRType
   deriving (Show, Eq, Ord)
 
@@ -51,6 +57,7 @@ data IRAttribute
 
 data IRFunction = IRFunction
   { fnName :: Name
+  , fnLinkage :: IRLinkage
   , fnRetType :: IRType
   , fnArgs :: [(IRType, Name)]
   , fnBlocks :: [IRBlock]
