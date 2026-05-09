@@ -53,7 +53,7 @@ data IRTailMarker
   | MustTail
   deriving (Show, Eq, Ord)
 
--- | IR instruction set
+-- | IR instruction grammar
 data IRInstrOp
   = IAShr IRType IROperand IROperand
   | IAdd IRType IROperand IROperand
