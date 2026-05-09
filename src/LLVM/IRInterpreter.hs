@@ -1,7 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 
-module LLVM.IRInterpreter (interpret) where
+module LLVM.IRInterpreter (IRInterpreter (..), interpret) where
 
 import Control.Monad.Free (foldFree)
 import Control.Monad.State (MonadState, State)
@@ -26,5 +26,6 @@ step =
     EmitAnnotation ann next ->
       undefined
 
+{-# INLINE interpret #-}
 interpret :: IRBuilder a -> IRInterpreter a
 interpret = foldFree step
