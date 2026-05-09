@@ -2,8 +2,7 @@ module LLVM.IRInstruction (
   IRICmpCond (..),
   IRFCmpCond (..),
   IRTailMarker (..),
-  IRInstrOpF (..),
-  IRInstrOp,
+  IRInstrOp (..),
   IRInstruction (..),
 )
 where
@@ -53,44 +52,44 @@ data IRTailMarker
   deriving (Show, Eq, Ord)
 
 -- | IR instruction set
-data IRInstrOpF op ty next
-  = IAShr ty op op (op -> next)
-  | IAdd ty op op (op -> next)
-  | IAlloca ty op (op -> next)
-  | IAnd ty op op (op -> next)
-  | IBitcasty op ty (op -> next)
-  | ICall IRTailMarker ty op [op] (op -> next)
-  | IFAdd ty op op (op -> next)
-  | IFCmp IRFCmpCond ty op op (op -> next)
-  | IFDiop ty op op (op -> next)
-  | IFMul ty op op (op -> next)
-  | IFNeg ty op (op -> next)
-  | IFSub ty op op (op -> next)
-  | IGep ty op op op (op -> next)
-  | IICmp IRICmpCond ty op op (op -> next)
-  | IInttoptr op ty (op -> next)
-  | ILShr ty op op (op -> next)
-  | ILoad ty op (op -> next)
-  | IMul ty op op (op -> next)
-  | IOr ty op op (op -> next)
-  | IPhi ty [(Name, op)] (op -> next)
-  | IPtrtointy op ty (op -> next)
-  | ISDiop ty op op (op -> next)
-  | ISRem ty op op (op -> next)
-  | ISelecty ty op op op (op -> next)
-  | ISexty op ty (op -> next)
-  | IShl ty op op (op -> next)
-  | IStore op op next
-  | ISub ty op op (op -> next)
-  | ITrunc op ty (op -> next)
-  | IUDiop ty op op (op -> next)
-  | IURem ty op op (op -> next)
-  | IXOr ty op op (op -> next)
-  | IZexty op ty (op -> next)
-
-type IRInstrOp = IRInstrOpF IROperand IRType ()
+data IRInstrOp
+  = IAShr IRType IROperand IROperand
+  | IAdd IRType IROperand IROperand
+  | IAlloca IRType IROperand
+  | IAnd IRType IROperand IROperand
+  | IBitcasty IROperand IRType
+  | ICall IRTailMarker IRType IROperand [IROperand]
+  | IFAdd IRType IROperand IROperand
+  | IFCmp IRFCmpCond IRType IROperand IROperand
+  | IFDiIROperand IRType IROperand IROperand
+  | IFMul IRType IROperand IROperand
+  | IFNeg IRType IROperand
+  | IFSub IRType IROperand IROperand
+  | IGep IRType IROperand IROperand IROperand
+  | IICmp IRICmpCond IRType IROperand IROperand
+  | IInttoptr IROperand IRType
+  | ILShr IRType IROperand IROperand
+  | ILoad IRType IROperand
+  | IMul IRType IROperand IROperand
+  | IOr IRType IROperand IROperand
+  | IPhi IRType [(Name, IROperand)]
+  | IPtrtointy IROperand IRType
+  | ISDiIROperand IRType IROperand IROperand
+  | ISRem IRType IROperand IROperand
+  | ISelecty IRType IROperand IROperand IROperand
+  | ISexty IROperand IRType
+  | IShl IRType IROperand IROperand
+  | IStore IROperand IROperand
+  | ISub IRType IROperand IROperand
+  | ITrunc IROperand IRType
+  | IUDiIROperand IRType IROperand IROperand
+  | IURem IRType IROperand IROperand
+  | IXOr IRType IROperand IROperand
+  | IZexty IROperand IRType
+  deriving (Show, Eq, Ord)
 
 data IRInstruction = IRInstruction
   { instrResult :: Maybe (Name, IRType)
   , instrOp :: IRInstrOp
   }
+  deriving (Show, Eq, Ord)

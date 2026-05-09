@@ -63,9 +63,11 @@ data IRFunction = IRFunction
   , fnBlocks :: [IRBlock]
   , fnAttributes :: [IRAttribute]
   }
+  deriving (Show, Eq, Ord)
 
 data IRBlock = IRBlock
   { blockLabel :: Name
   , blockInstructions :: [IRInstruction]
   , blockTerminator :: IRTerminator
   }
+  deriving (Show, Eq, Ord)
