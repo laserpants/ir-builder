@@ -62,8 +62,8 @@ overBuilderEnvCurrentFunction fn IRBuilderEnv{..} =
     , ..
     }
 
-step :: IRBuilderF (State IRBuilderEnv a) -> State IRBuilderEnv a
-step =
+emit :: IRBuilderF (State IRBuilderEnv a) -> State IRBuilderEnv a
+emit =
   \case
     EmitInstr instr next -> do
       emitInstruction instr
@@ -79,7 +79,7 @@ emitAnnotation :: IRAnnotation -> State IRBuilderEnv ()
 emitAnnotation ann = modify $ overBuilderEnvCurrentFunction (fmap (appendAnnotation ann))
 
 execIRBuilder :: IRBuilder a -> State IRBuilderEnv a
-execIRBuilder = iterT step . unpackIRBuilder
+execIRBuilder = iterT emit . unpackIRBuilder
 
 finalizeModule :: Name -> IRBuilderEnv -> IRModule
 finalizeModule name IRBuilderEnv{..} =

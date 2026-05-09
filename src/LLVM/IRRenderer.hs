@@ -20,7 +20,7 @@ newtype IRRenderer a = IRRenderer {getIRRenderer :: State IRRendererState a}
     )
 
 runIRRenderer :: IRRenderer a -> a
-runIRRenderer interpreter = evalState (getIRRenderer interpreter) emptyIRRendererState
+runIRRenderer rr = evalState (getIRRenderer rr) emptyIRRendererState
 
 renderModule :: IRModule -> IRRenderer Text
 renderModule IRModule{moduleDecls, moduleGlobals, moduleFunctions} = do
