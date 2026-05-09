@@ -1,4 +1,4 @@
-module Common where
+module Common (Name) where
 
 import Data.Text (Text)
 
