@@ -3,17 +3,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module LLVM.IRInterpreter (IRInterpreter (..)) where
+module LLVM.IRInterpreter (IRInterpreter (..), step) where
 
 import Common (Name)
-import Control.Monad.State (MonadState, State, modify)
+import Control.Monad.State (MonadState, State, evalState, execState, modify)
 import Control.Monad.Trans.Free (iterT)
 import Data.Text (Text)
+import qualified Data.Text as Text
 import LLVM.IRAnnotation (IRAnnotation (..))
-import LLVM.IRBuilder (IRBuilder (runIRBuilder), IRBuilderEnv (..), IRBuilderF (..))
+import LLVM.IRBuilder (IRBuilder (runIRBuilder), IRBuilderEnv (..), IRBuilderF (..), emptyIRBuilderEnv, overBuilderEnvCurrentFunction)
 import LLVM.IRInstruction (IRInstruction)
-import LLVM.IRModule (IRFunction (..), IRModule (..), appendInstr)
-import LLVM.IRState (IRState (..))
+import LLVM.IRModule (IRDecl, IRFunction (..), IRGlobal, IRModule (..), appendAnnotation, appendInstr)
+import LLVM.IRState (IRState (..), emptyIRState)
 
 newtype IRInterpreter a = IRInterpreter {runIRInterpreter :: State IRState a}
   deriving
@@ -22,19 +23,6 @@ newtype IRInterpreter a = IRInterpreter {runIRInterpreter :: State IRState a}
     , Monad
     , MonadState IRState
     )
-
-emitInstruction :: IRInstruction -> State IRBuilderEnv ()
-emitInstruction instr =
-  modify $
-    \env ->
-      env
-        { builderEnvCurrentFunction =
-            fmap appendInstr (builderEnvCurrentFunction env)
-        }
-
-emitAnnotation :: IRAnnotation -> State IRBuilderEnv a
-emitAnnotation ann =
-  undefined
 
 step :: IRBuilderF (State IRBuilderEnv a) -> State IRBuilderEnv a
 step =
@@ -46,11 +34,33 @@ step =
       emitAnnotation ann
       next
 
+emitInstruction :: IRInstruction -> State IRBuilderEnv ()
+emitInstruction instr = modify $ overBuilderEnvCurrentFunction (fmap (appendInstr instr))
+
+emitAnnotation :: IRAnnotation -> State IRBuilderEnv ()
+emitAnnotation ann = modify $ overBuilderEnvCurrentFunction (fmap (appendAnnotation ann))
+
 buildIR :: IRBuilder a -> State IRBuilderEnv a
 buildIR = iterT step . runIRBuilder
 
 renderModule :: IRModule -> IRInterpreter Text
-renderModule irModule = pure "TODO"
+renderModule IRModule{..} = do
+  decls <- traverse renderDecl moduleDecls
+  globs <- traverse renderGlobal moduleGlobals
+  funs <- traverse renderFunction moduleFunctions
+  pure $ Text.unlines $ concat [decls, globs, funs]
+
+-- TODO
+renderDecl :: IRDecl -> IRInterpreter Text
+renderDecl = undefined
+
+-- TODO
+renderGlobal :: IRGlobal -> IRInterpreter Text
+renderGlobal = undefined
+
+-- TODO
+renderFunction :: IRFunction -> IRInterpreter Text
+renderFunction = undefined
 
 finalizeModule :: Name -> IRBuilderEnv -> IRModule
 finalizeModule name IRBuilderEnv{..} =
@@ -64,19 +74,13 @@ finalizeModule name IRBuilderEnv{..} =
 finalizeFunctions :: IRBuilderEnv -> [IRFunction]
 finalizeFunctions = undefined
 
---  decls <- traverse renderDecl (moduleDecls modl)
---  globs <- traverse renderGlobal (moduleGlobals modl)
---  funs  <- traverse renderFunction (moduleFunctions modl)
---
---  pure $
---    Text.unlines $
---      concat [decls, globs, funs]
+buildModule :: Name -> IRBuilder a -> IRModule
+buildModule name builder = finalizeModule name env
+ where
+  env = execState (buildIR builder) emptyIRBuilderEnv
 
--- buildModule :: IRBuilder a -> IRModule
--- buildModule m = finalizeModule $ execState (buildIR m) emptyBuilderEnv
---
--- compileModule :: IRBuilder a -> Text
--- compileModule =
---   runRenderer .
---   renderModule .
---   buildModule
+runRenderer :: IRInterpreter Text -> Text
+runRenderer interpreter = evalState (runIRInterpreter interpreter) emptyIRState
+
+compileModule :: Name -> IRBuilder a -> Text
+compileModule name = runRenderer . renderModule . buildModule name

@@ -8,6 +8,7 @@ module LLVM.IRModule (
   IRFunction (..),
   IRBlock (..),
   appendInstr,
+  appendAnnotation,
 ) where
 
 import Common (Name)
@@ -69,17 +70,20 @@ data IRFunction = IRFunction
   }
   deriving (Show, Eq, Ord)
 
-data IRBlockArtifact
+data IRBlockItem
   = BlockInstr IRInstruction
   | BlockAnnotation IRAnnotation
   deriving (Show, Eq, Ord)
 
 data IRBlock = IRBlock
   { blockLabel :: Name
-  , blockInstructions :: [IRBlockArtifact]
+  , blockItems :: [IRBlockItem]
   , blockTerminator :: IRTerminator
   }
   deriving (Show, Eq, Ord)
 
-appendInstr :: IRFunction -> IRFunction
+appendInstr :: IRInstruction -> IRFunction -> IRFunction
 appendInstr = undefined
+
+appendAnnotation :: IRAnnotation -> IRFunction -> IRFunction
+appendAnnotation = undefined

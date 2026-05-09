@@ -1,10 +1,13 @@
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StrictData #-}
 
 module LLVM.IRBuilder (
   IRBuilderF (..),
   IRBuilder (..),
   IRBuilderEnv (..),
+  emptyIRBuilderEnv,
+  overBuilderEnvCurrentFunction,
 ) where
 
 import Common (Name)
@@ -31,6 +34,25 @@ data IRBuilderEnv = IRBuilderEnv
   }
   deriving (Show, Eq, Ord)
 
+emptyIRBuilderEnv :: IRBuilderEnv
+emptyIRBuilderEnv =
+  IRBuilderEnv
+    { builderEnvFresh = 1
+    , builderEnvCurrentBlock = Nothing
+    , builderEnvCurrentFunction = Nothing
+    , builderEnvBlocks = mempty
+    , builderEnvFunctions = mempty
+    , builderEnvGlobals = mempty
+    , builderEnvDecls = mempty
+    }
+
 newtype IRBuilder a = IRBuilder
   { runIRBuilder :: FreeT IRBuilderF (State IRBuilderEnv) a
   }
+
+overBuilderEnvCurrentFunction :: (Maybe IRFunction -> Maybe IRFunction) -> IRBuilderEnv -> IRBuilderEnv
+overBuilderEnvCurrentFunction fn IRBuilderEnv{..} =
+  IRBuilderEnv
+    { builderEnvCurrentFunction = fn builderEnvCurrentFunction
+    , ..
+    }
