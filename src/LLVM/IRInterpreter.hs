@@ -2,6 +2,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module LLVM.IRInterpreter (compileModule) where
 
@@ -11,9 +12,22 @@ import Control.Monad.Trans.Free (iterT)
 import Data.Text (Text)
 import qualified Data.Text as Text
 import LLVM.IRAnnotation (IRAnnotation (..))
-import LLVM.IRBuilder (IRBuilder (runIRBuilder), IRBuilderEnv (..), IRBuilderF (..), emptyIRBuilderEnv, overBuilderEnvCurrentFunction)
+import LLVM.IRBuilder (
+  IRBuilder (runIRBuilder),
+  IRBuilderEnv (..),
+  IRBuilderF (..),
+  emptyIRBuilderEnv,
+  overBuilderEnvCurrentFunction,
+ )
 import LLVM.IRInstruction (IRInstruction)
-import LLVM.IRModule (IRDecl, IRFunction (..), IRGlobal, IRModule (..), appendAnnotation, appendInstr)
+import LLVM.IRModule (
+  IRDecl,
+  IRFunction (..),
+  IRGlobal,
+  IRModule (..),
+  appendAnnotation,
+  appendInstr,
+ )
 import LLVM.IRState (IRState (..), emptyIRState)
 
 newtype IRInterpreter a = IRInterpreter {runIRInterpreter :: State IRState a}
@@ -44,7 +58,7 @@ buildIR :: IRBuilder a -> State IRBuilderEnv a
 buildIR = iterT step . runIRBuilder
 
 renderModule :: IRModule -> IRInterpreter Text
-renderModule IRModule{..} = do
+renderModule IRModule {moduleDecls, moduleGlobals, moduleFunctions} = do
   decls <- traverse renderDecl moduleDecls
   globs <- traverse renderGlobal moduleGlobals
   funs <- traverse renderFunction moduleFunctions
