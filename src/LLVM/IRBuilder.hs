@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StrictData #-}
 
@@ -8,15 +9,19 @@ module LLVM.IRBuilder (
   IRBuilderEnv (..),
   emptyIRBuilderEnv,
   overBuilderEnvCurrentFunction,
+  execIRBuilder,
+  compileModule,
 ) where
 
 import Common (Name)
-import Control.Monad.State (State)
-import Control.Monad.Trans.Free (FreeT)
+import Control.Monad.State (State, execState, modify)
+import Control.Monad.Trans.Free (FreeT, iterT)
 import Data.Map.Strict (Map)
+import Data.Text (Text)
 import LLVM.IRAnnotation (IRAnnotation (..))
 import LLVM.IRInstruction (IRInstruction)
-import LLVM.IRModule (IRBlock, IRDecl, IRFunction, IRGlobal)
+import LLVM.IRModule
+import LLVM.IRRenderer (renderModule, runIRRenderer)
 
 data IRBuilderF next
   = EmitInstr IRInstruction next
@@ -47,7 +52,7 @@ emptyIRBuilderEnv =
     }
 
 newtype IRBuilder a = IRBuilder
-  { runIRBuilder :: FreeT IRBuilderF (State IRBuilderEnv) a
+  { unpackIRBuilder :: FreeT IRBuilderF (State IRBuilderEnv) a
   }
 
 overBuilderEnvCurrentFunction :: (Maybe IRFunction -> Maybe IRFunction) -> IRBuilderEnv -> IRBuilderEnv
@@ -56,3 +61,42 @@ overBuilderEnvCurrentFunction fn IRBuilderEnv{..} =
     { builderEnvCurrentFunction = fn builderEnvCurrentFunction
     , ..
     }
+
+step :: IRBuilderF (State IRBuilderEnv a) -> State IRBuilderEnv a
+step =
+  \case
+    EmitInstr instr next -> do
+      emitInstruction instr
+      next
+    EmitAnnotation ann next -> do
+      emitAnnotation ann
+      next
+
+emitInstruction :: IRInstruction -> State IRBuilderEnv ()
+emitInstruction instr = modify $ overBuilderEnvCurrentFunction (fmap (appendInstr instr))
+
+emitAnnotation :: IRAnnotation -> State IRBuilderEnv ()
+emitAnnotation ann = modify $ overBuilderEnvCurrentFunction (fmap (appendAnnotation ann))
+
+execIRBuilder :: IRBuilder a -> State IRBuilderEnv a
+execIRBuilder = iterT step . unpackIRBuilder
+
+finalizeModule :: Name -> IRBuilderEnv -> IRModule
+finalizeModule name IRBuilderEnv{..} =
+  IRModule
+    { moduleName = name
+    , moduleDecls = reverse builderEnvDecls
+    , moduleGlobals = reverse builderEnvGlobals
+    , moduleFunctions = finalizeFunctions IRBuilderEnv{..}
+    }
+
+finalizeFunctions :: IRBuilderEnv -> [IRFunction]
+finalizeFunctions = undefined
+
+buildModule :: Name -> IRBuilder a -> IRModule
+buildModule name builder = finalizeModule name env
+ where
+  env = execState (execIRBuilder builder) emptyIRBuilderEnv
+
+compileModule :: Name -> IRBuilder a -> Text
+compileModule name = runIRRenderer . renderModule . buildModule name
