@@ -37,8 +37,7 @@ module LLVM.IRInstruction.Constructors (
 where
 
 import Common (Name)
-import Control.Monad.Free (liftF)
-import LLVM.IRBuilder (IRBuilder, IRBuilderF (..))
+import LLVM.IRBuilder (IRBuilder, emitInstr)
 import LLVM.IRBuilder.Supply (freshOperand)
 import LLVM.IRInstruction (IRFCmpCond, IRICmpCond, IRInstrOp (..), IRInstruction (..), IRTailMarker)
 import LLVM.IROperand (IROperand (..), opComponents)
@@ -50,14 +49,13 @@ import Prelude hiding (and, or)
 emitWithResult :: IRType -> IRInstrOp -> IRBuilder IROperand
 emitWithResult t op = do
   reg <- freshOperand t
-  let instr = IRInstruction{instrResult = opComponents reg, instrOp = op}
-  liftF $ EmitInstr instr reg
+  emitInstr $ IRInstruction{instrResult = opComponents reg, instrOp = op}
+  return reg
 
 -- | Emit an instruction that produces no result.
 emitVoid :: IRInstrOp -> IRBuilder ()
 emitVoid op = do
-  let instr = IRInstruction{instrResult = Nothing, instrOp = op}
-  liftF $ EmitInstr instr ()
+  emitInstr $ IRInstruction{instrResult = Nothing, instrOp = op}
 
 -- Arithmetic
 

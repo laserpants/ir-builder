@@ -13,16 +13,19 @@ module LLVM.IRBuilder (
   compileModule,
   setTerminator,
   beginBlock,
+  emitInstr,
+  emitAnn,
   emitInstruction,
   emitAnnotation,
-  --  emitTerminator,
+  emitTerminator,
 ) where
 
 import Common (Name)
-import Control.Monad.State (MonadState, State, execState, get, modify, put)
+import Control.Monad.State (MonadState, State, execState, get, gets, modify, put)
 import Control.Monad.Trans.Free (FreeT, MonadFree, iterT)
 
--- import Data.Maybe (isJust)
+import Control.Monad.Free (liftF)
+import Data.Maybe (isJust)
 import Data.Text (Text)
 import LLVM.IRAnnotation (IRAnnotation (..))
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..), appendBlockBuilderItem, setBlockBuilderTerminator)
@@ -67,17 +70,25 @@ emitInstruction instr =
     mapBuilderEnvCurrentBlock
       (appendBlockBuilderItem (BlockInstr instr))
 
--- emitTerminator :: IRTerminator -> State IRBuilderEnv ()
--- emitTerminator term = do
---  block <- gets builderEnvCurrentBlock
---  case block of
---    Just BlockBuilder{blockBuilderTerminator}
---      | isJust blockBuilderTerminator ->
---          error "Block already terminated"
---    _ ->
---      pure ()
---
---  setTerminator term
+emitInstr :: IRInstruction -> IRBuilder ()
+emitInstr instr = liftF (EmitInstr instr ())
+
+emitAnn :: IRAnnotation -> IRBuilder ()
+emitAnn ann = liftF (EmitAnnotation ann ())
+
+emitTerminator :: IRTerminator -> IRBuilder ()
+emitTerminator term = do
+  block <- gets builderEnvCurrentBlock
+  case block of
+    Just BlockBuilder{blockBuilderTerminator}
+      | isJust blockBuilderTerminator ->
+          error "Block already terminated"
+    Nothing ->
+      error "No current block"
+    _ ->
+      pure ()
+
+  setTerminator term
 
 emitAnnotation :: IRAnnotation -> State IRBuilderEnv ()
 emitAnnotation ann =
