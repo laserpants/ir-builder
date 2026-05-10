@@ -3,6 +3,7 @@
 module LLVM.IRBuilder.BlockBuilder (
   BlockBuilder (..),
   appendBlockBuilderItem,
+  setBlockBuilderTerminator,
 ) where
 
 import Common (Name)
@@ -20,5 +21,12 @@ appendBlockBuilderItem :: IRBlockItem -> BlockBuilder -> BlockBuilder
 appendBlockBuilderItem item BlockBuilder{..} =
   BlockBuilder
     { blockBuilderItems = blockBuilderItems <> [item]
+    , ..
+    }
+
+setBlockBuilderTerminator :: IRTerminator -> BlockBuilder -> BlockBuilder
+setBlockBuilderTerminator term BlockBuilder{..} =
+  BlockBuilder
+    { blockBuilderTerminator = Just term
     , ..
     }

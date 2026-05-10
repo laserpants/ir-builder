@@ -10,6 +10,9 @@ module LLVM.IRBuilder (
   IRBuilderEnv (..),
   compileModule,
   beginBlock,
+  emitInstruction,
+  emitAnnotation,
+  emitTerminator,
 ) where
 
 import Common (Name)
@@ -18,10 +21,11 @@ import Control.Monad.Trans.Free (FreeT, MonadFree, iterT)
 import qualified Data.Map.Strict as Map
 import Data.Text (Text)
 import LLVM.IRAnnotation (IRAnnotation (..))
-import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..), appendBlockBuilderItem)
+import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..), appendBlockBuilderItem, setBlockBuilderTerminator)
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv, mapBuilderEnvCurrentBlock)
 import LLVM.IRInstruction (IRInstruction)
 import LLVM.IRModule (IRBlock (..), IRBlockItem (..), IRFunction (..), IRModule (..))
+import LLVM.IROperand (IRTerminator)
 import LLVM.IRRenderer (renderModule, runIRRenderer)
 
 data IRBuilderF next
@@ -55,6 +59,12 @@ emitInstruction instr =
   modify $
     mapBuilderEnvCurrentBlock
       (appendBlockBuilderItem (BlockInstr instr))
+
+emitTerminator :: IRTerminator -> State IRBuilderEnv ()
+emitTerminator term =
+  modify $
+    mapBuilderEnvCurrentBlock $
+      setBlockBuilderTerminator term
 
 emitAnnotation :: IRAnnotation -> State IRBuilderEnv ()
 emitAnnotation ann =
