@@ -11,12 +11,14 @@ module LLVM.IRBuilder.Environment (
 
 import Common (Name)
 import Data.Map.Strict (Map)
+import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
+import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..))
 import LLVM.IRModule (IRBlock, IRDecl, IRFunction, IRGlobal)
 
 data IRBuilderEnv = IRBuilderEnv
   { builderEnvFresh :: Int
-  , builderEnvCurrentBlock :: Maybe IRBlock
-  , builderEnvCurrentFunction :: Maybe IRFunction
+  , builderEnvCurrentBlock :: Maybe BlockBuilder
+  , builderEnvCurrentFunction :: Maybe FunctionBuilder
   , builderEnvBlocks :: Map Name IRBlock
   , builderEnvFunctions :: Map Name IRFunction
   , builderEnvGlobals :: [IRGlobal]
@@ -43,14 +45,14 @@ overBuilderEnvFresh fn IRBuilderEnv{..} =
     , ..
     }
 
-overBuilderEnvCurrentFunction :: (Maybe IRFunction -> Maybe IRFunction) -> IRBuilderEnv -> IRBuilderEnv
+overBuilderEnvCurrentFunction :: (Maybe FunctionBuilder -> Maybe FunctionBuilder) -> IRBuilderEnv -> IRBuilderEnv
 overBuilderEnvCurrentFunction fn IRBuilderEnv{..} =
   IRBuilderEnv
     { builderEnvCurrentFunction = fn builderEnvCurrentFunction
     , ..
     }
 
-mapBuilderEnvCurrentFunction :: (IRFunction -> IRFunction) -> IRBuilderEnv -> IRBuilderEnv
+mapBuilderEnvCurrentFunction :: (FunctionBuilder -> FunctionBuilder) -> IRBuilderEnv -> IRBuilderEnv
 mapBuilderEnvCurrentFunction fn IRBuilderEnv{..} =
   IRBuilderEnv
     { builderEnvCurrentFunction = fmap fn builderEnvCurrentFunction

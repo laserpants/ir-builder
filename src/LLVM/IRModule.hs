@@ -1,14 +1,14 @@
 {-# LANGUAGE StrictData #-}
 
 module LLVM.IRModule (
+  IRLinkage (..),
   IRModule (..),
   IRDecl (..),
   IRGlobal (..),
   IRAttribute (..),
   IRFunction (..),
+  IRBlockItem (..),
   IRBlock (..),
-  appendInstr,
-  appendAnnotation,
 ) where
 
 import Common (Name)
@@ -82,9 +82,3 @@ data IRBlock = IRBlock
   , blockTerminator :: IRTerminator
   }
   deriving (Show, Eq, Ord)
-
-appendInstr :: IRInstruction -> IRFunction -> IRFunction
-appendInstr = undefined
-
-appendAnnotation :: IRAnnotation -> IRFunction -> IRFunction
-appendAnnotation = undefined

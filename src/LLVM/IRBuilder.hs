@@ -9,16 +9,20 @@ module LLVM.IRBuilder (
   IRBuilder (..),
   IRBuilderEnv (..),
   compileModule,
+  beginBlock,
 ) where
 
 import Common (Name)
-import Control.Monad.State (MonadState, State, execState, modify)
+import Control.Monad.State (MonadState, State, execState, get, modify, put)
 import Control.Monad.Trans.Free (FreeT, MonadFree, iterT)
+import qualified Data.Map.Strict as Map
 import Data.Text (Text)
 import LLVM.IRAnnotation (IRAnnotation (..))
+import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv, mapBuilderEnvCurrentFunction)
+import LLVM.IRBuilder.FunctionBuilder (appendAnnotation, appendInstr)
 import LLVM.IRInstruction (IRInstruction)
-import LLVM.IRModule (IRFunction, IRModule (..), appendAnnotation, appendInstr)
+import LLVM.IRModule (IRBlock (..), IRFunction (..), IRModule (..))
 import LLVM.IRRenderer (renderModule, runIRRenderer)
 
 data IRBuilderF next
@@ -75,3 +79,38 @@ buildModule name builder = finalizeModule name env
 
 compileModule :: Name -> IRBuilder a -> Text
 compileModule name = runIRRenderer . renderModule . buildModule name
+
+beginBlock :: Name -> State IRBuilderEnv ()
+beginBlock label = do
+  IRBuilderEnv{..} <- get
+
+  finalizedBlocks <-
+    case builderEnvCurrentBlock of
+      Nothing ->
+        pure builderEnvBlocks
+      Just BlockBuilder{..} ->
+        case blockBuilderTerminator of
+          Nothing ->
+            error "Cannot finalize block without terminator"
+          Just term ->
+            let finalBlock =
+                  IRBlock
+                    { blockLabel = blockBuilderLabel
+                    , blockItems = reverse blockBuilderItems
+                    , blockTerminator = term
+                    }
+             in pure $ Map.insert blockBuilderLabel finalBlock builderEnvBlocks
+
+  let newBlock =
+        BlockBuilder
+          { blockBuilderLabel = label
+          , blockBuilderItems = []
+          , blockBuilderTerminator = Nothing
+          }
+
+  put $
+    IRBuilderEnv
+      { builderEnvBlocks = finalizedBlocks
+      , builderEnvCurrentBlock = Just newBlock
+      , ..
+      }
