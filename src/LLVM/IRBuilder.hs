@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StrictData #-}
 
@@ -16,9 +17,10 @@ module LLVM.IRBuilder (
 ) where
 
 import Common (Name)
-import Control.Monad.State (MonadState, State, execState, get, modify, put)
+import Control.Monad.State (MonadState, State, execState, get, gets, modify, put)
 import Control.Monad.Trans.Free (FreeT, MonadFree, iterT)
 import qualified Data.Map.Strict as Map
+import Data.Maybe (isJust)
 import Data.Text (Text)
 import LLVM.IRAnnotation (IRAnnotation (..))
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..), appendBlockBuilderItem, setBlockBuilderTerminator)
@@ -61,7 +63,15 @@ emitInstruction instr =
       (appendBlockBuilderItem (BlockInstr instr))
 
 emitTerminator :: IRTerminator -> State IRBuilderEnv ()
-emitTerminator term =
+emitTerminator term = do
+  block <- gets builderEnvCurrentBlock
+  case block of
+    Just BlockBuilder{blockBuilderTerminator}
+      | isJust blockBuilderTerminator ->
+          error "Block already terminated"
+    _ ->
+      pure ()
+
   modify $
     mapBuilderEnvCurrentBlock $
       setBlockBuilderTerminator term
