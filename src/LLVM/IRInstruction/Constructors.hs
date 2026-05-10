@@ -1,4 +1,4 @@
-module LLVM.IRInstruction.DSL (
+module LLVM.IRInstruction.Constructors (
   add,
   alloca,
   and,
