@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StrictData #-}
@@ -11,8 +12,8 @@ module LLVM.IRBuilder (
 ) where
 
 import Common (Name)
-import Control.Monad.State (State, execState, modify)
-import Control.Monad.Trans.Free (FreeT, iterT)
+import Control.Monad.State (MonadState, State, execState, modify)
+import Control.Monad.Trans.Free (FreeT, MonadFree, iterT)
 import Data.Text (Text)
 import LLVM.IRAnnotation (IRAnnotation (..))
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv, overBuilderEnvCurrentFunction)
@@ -28,6 +29,13 @@ data IRBuilderF next
 newtype IRBuilder a = IRBuilder
   { unpackIRBuilder :: FreeT IRBuilderF (State IRBuilderEnv) a
   }
+  deriving
+    ( Functor
+    , Applicative
+    , Monad
+    , MonadState IRBuilderEnv
+    , MonadFree IRBuilderF
+    )
 
 emit :: IRBuilderF (State IRBuilderEnv a) -> State IRBuilderEnv a
 emit =

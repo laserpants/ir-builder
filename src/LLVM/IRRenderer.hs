@@ -10,6 +10,7 @@ import Data.Text (Text)
 import qualified Data.Text as Text
 import LLVM.IRModule (IRDecl, IRFunction (..), IRGlobal, IRModule (..))
 import LLVM.IRRenderer.State (IRRendererState (..), emptyIRRendererState)
+import LLVM.IRType (IRType)
 
 newtype IRRenderer a = IRRenderer {unpackIRRenderer :: State IRRendererState a}
   deriving
@@ -40,3 +41,10 @@ renderGlobal = undefined
 -- TODO
 renderFunction :: IRFunction -> IRRenderer Text
 renderFunction = undefined
+
+renderType :: IRType -> IRRenderer Text
+renderType = undefined
+
+renderOperand = undefined
+renderInstruction = undefined
+renderTerminator = undefined
