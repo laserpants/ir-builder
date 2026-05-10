@@ -172,21 +172,24 @@ beginBlock label = do
       }
 
 finalizeCurrentBlock :: IRBuilderEnv -> IRBuilderEnv
-finalizeCurrentBlock env =
-  case builderEnvCurrentBlock env of
+finalizeCurrentBlock env@IRBuilderEnv{..} =
+  case builderEnvCurrentBlock of
     Nothing ->
       env
     Just BlockBuilder{blockBuilderLabel, blockBuilderItems, blockBuilderTerminator} ->
       case blockBuilderTerminator of
         Nothing ->
           error "Cannot finalize block without terminator"
-        Just term ->
+        Just term -> do
           let block =
                 IRBlock
                   { blockLabel = blockBuilderLabel
                   , blockItems = reverse blockBuilderItems
                   , blockTerminator = term
                   }
-           in env
-                & mapBuilderEnvCurrentFunction (appendFunctionBuilderBlock block)
-                & clearBuilderEnvCurrentBlock
+
+          IRBuilderEnv
+            { builderEnvCurrentBlock = Nothing
+            , builderEnvCurrentFunction = fmap (appendFunctionBuilderBlock block) builderEnvCurrentFunction
+            , ..
+            }
