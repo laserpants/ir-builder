@@ -1,9 +1,11 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE StrictData #-}
 
 module LLVM.IROperand (
   IRConstant (..),
   IROperand (..),
   IRTerminator (..),
+  opComponents,
 ) where
 
 import Common (Name)
@@ -31,3 +33,13 @@ data IRTerminator
   | ISwitch IROperand Name [(IRConstant, Name)]
   | IUnreachable
   deriving (Show, Eq, Ord)
+
+opComponents :: IROperand -> Maybe (Name, IRType)
+opComponents =
+  \case
+    OLocal t name ->
+      Just (name, t)
+    OGlobal t name ->
+      Just (name, t)
+    _ ->
+      Nothing

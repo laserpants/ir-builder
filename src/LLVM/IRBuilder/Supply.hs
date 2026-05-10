@@ -1,4 +1,4 @@
-module LLVM.IRBuilder.Supply (fresh, freshRegister) where
+module LLVM.IRBuilder.Supply (fresh, freshOperand) where
 
 import Common (Name)
 import Control.Monad.State (gets, modify)
@@ -10,8 +10,8 @@ import LLVM.IRType (IRType)
 fresh :: IRBuilder Name
 fresh = do
   modify (overBuilderEnvFresh (+ 1))
-  fresh <- gets builderEnvFresh
+  reg <- gets builderEnvFresh
   undefined
 
-freshRegister :: IRType -> IRBuilder IROperand
-freshRegister t = OLocal t <$> fresh
+freshOperand :: IRType -> IRBuilder IROperand
+freshOperand t = OLocal t <$> fresh
