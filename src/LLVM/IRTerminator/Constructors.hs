@@ -11,16 +11,16 @@ import LLVM.IRBuilder (IRBuilder, setTerminator)
 import LLVM.IROperand (IRConstant, IROperand, IRTerminator (..))
 
 ret :: IROperand -> IRBuilder ()
-ret v = setTerminator (IRet v)
+ret op = setTerminator (IRet op)
 
 br :: Name -> IRBuilder ()
 br n = setTerminator (IBr n)
 
 condbr :: IROperand -> Name -> Name -> IRBuilder ()
-condbr v n1 n2 = setTerminator (ICondBr v n1 n2)
+condbr op n1 n2 = setTerminator (ICondBr op n1 n2)
 
 switch :: IROperand -> Name -> [(IRConstant, Name)] -> IRBuilder ()
-switch v n bs = setTerminator (ISwitch v n bs)
+switch op n cs = setTerminator (ISwitch op n cs)
 
 unreachable :: IRBuilder ()
 unreachable = setTerminator IUnreachable

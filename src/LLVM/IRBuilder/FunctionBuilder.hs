@@ -1,7 +1,11 @@
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE StrictData #-}
+
 module LLVM.IRBuilder.FunctionBuilder (
   FunctionBuilder (..),
   appendInstr,
   appendAnnotation,
+  appendFunctionBuilderBlock,
 ) where
 
 import Common (Name)
@@ -25,3 +29,10 @@ appendInstr = undefined
 
 appendAnnotation :: IRAnnotation -> FunctionBuilder -> FunctionBuilder
 appendAnnotation = undefined
+
+appendFunctionBuilderBlock :: IRBlock -> FunctionBuilder -> FunctionBuilder
+appendFunctionBuilderBlock block FunctionBuilder{..} =
+  FunctionBuilder
+    { functionBuilderBlocks = functionBuilderBlocks <> [block]
+    , ..
+    }

@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE StrictData #-}
 
 module LLVM.IRBuilder.BlockBuilder (
   BlockBuilder (..),

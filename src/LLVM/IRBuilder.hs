@@ -21,15 +21,26 @@ module LLVM.IRBuilder (
 ) where
 
 import Common (Name)
+import Control.Monad.Free (liftF)
 import Control.Monad.State (MonadState, State, execState, get, gets, modify, put)
 import Control.Monad.Trans.Free (FreeT, MonadFree, iterT)
-
-import Control.Monad.Free (liftF)
+import Data.Function ((&))
 import Data.Maybe (isJust)
 import Data.Text (Text)
 import LLVM.IRAnnotation (IRAnnotation (..))
-import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..), appendBlockBuilderItem, setBlockBuilderTerminator)
-import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv, mapBuilderEnvCurrentBlock)
+import LLVM.IRBuilder.BlockBuilder (
+  BlockBuilder (..),
+  appendBlockBuilderItem,
+  setBlockBuilderTerminator,
+ )
+import LLVM.IRBuilder.Environment (
+  IRBuilderEnv (..),
+  clearBuilderEnvCurrentBlock,
+  emptyIRBuilderEnv,
+  mapBuilderEnvCurrentBlock,
+  mapBuilderEnvCurrentFunction,
+ )
+import LLVM.IRBuilder.FunctionBuilder (appendFunctionBuilderBlock)
 import LLVM.IRInstruction (IRInstruction)
 import LLVM.IRModule (IRBlock (..), IRBlockItem (..), IRFunction (..), IRModule (..))
 import LLVM.IROperand (IRTerminator)
@@ -51,8 +62,8 @@ newtype IRBuilder a = IRBuilder
     , MonadFree IRBuilderF
     )
 
-setTerminator :: (MonadState IRBuilderEnv m) => IRTerminator -> m ()
-setTerminator term = modify $ mapBuilderEnvCurrentBlock (setBlockBuilderTerminator term)
+execIRBuilder :: IRBuilder a -> State IRBuilderEnv a
+execIRBuilder = iterT emit . unpackIRBuilder
 
 emit :: IRBuilderF (State IRBuilderEnv a) -> State IRBuilderEnv a
 emit =
@@ -69,6 +80,15 @@ emitInstruction instr =
   modify $
     mapBuilderEnvCurrentBlock
       (appendBlockBuilderItem (BlockInstr instr))
+
+emitAnnotation :: IRAnnotation -> State IRBuilderEnv ()
+emitAnnotation ann =
+  modify $
+    mapBuilderEnvCurrentBlock
+      (appendBlockBuilderItem (BlockAnnotation ann))
+
+setTerminator :: IRTerminator -> IRBuilder ()
+setTerminator term = modify $ mapBuilderEnvCurrentBlock (setBlockBuilderTerminator term)
 
 emitInstr :: IRInstruction -> IRBuilder ()
 emitInstr instr = liftF (EmitInstr instr ())
@@ -89,15 +109,6 @@ emitTerminator term = do
       pure ()
 
   setTerminator term
-
-emitAnnotation :: IRAnnotation -> State IRBuilderEnv ()
-emitAnnotation ann =
-  modify $
-    mapBuilderEnvCurrentBlock
-      (appendBlockBuilderItem (BlockAnnotation ann))
-
-execIRBuilder :: IRBuilder a -> State IRBuilderEnv a
-execIRBuilder = iterT emit . unpackIRBuilder
 
 finalizeModule :: Name -> IRBuilderEnv -> IRModule
 finalizeModule name env@IRBuilderEnv{..} =
@@ -159,3 +170,23 @@ beginBlock label = do
       , builderEnvCurrentBlock = Just newBlock
       , ..
       }
+
+finalizeCurrentBlock :: IRBuilderEnv -> IRBuilderEnv
+finalizeCurrentBlock env =
+  case builderEnvCurrentBlock env of
+    Nothing ->
+      env
+    Just BlockBuilder{blockBuilderLabel, blockBuilderItems, blockBuilderTerminator} ->
+      case blockBuilderTerminator of
+        Nothing ->
+          error "Cannot finalize block without terminator"
+        Just term ->
+          let block =
+                IRBlock
+                  { blockLabel = blockBuilderLabel
+                  , blockItems = reverse blockBuilderItems
+                  , blockTerminator = term
+                  }
+           in env
+                & mapBuilderEnvCurrentFunction (appendFunctionBuilderBlock block)
+                & clearBuilderEnvCurrentBlock

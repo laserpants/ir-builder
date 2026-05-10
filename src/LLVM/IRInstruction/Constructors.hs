@@ -54,8 +54,7 @@ emitWithResult t op = do
 
 -- | Emit an instruction that produces no result.
 emitVoid :: IRInstrOp -> IRBuilder ()
-emitVoid op = do
-  emitInstr $ IRInstruction{instrResult = Nothing, instrOp = op}
+emitVoid op = emitInstr $ IRInstruction{instrResult = Nothing, instrOp = op}
 
 -- Arithmetic
 
@@ -120,21 +119,21 @@ fneg t a = emitWithResult t (IFNeg t a)
 -- Comparison
 
 icmp :: IRICmpCond -> IRType -> IROperand -> IROperand -> IRBuilder IROperand
-icmp cond t a b = emitWithResult i1 (IICmp cond t a b)
+icmp cc t a b = emitWithResult i1 (IICmp cc t a b)
 
 fcmp :: IRFCmpCond -> IRType -> IROperand -> IROperand -> IRBuilder IROperand
-fcmp cond t a b = emitWithResult i1 (IFCmp cond t a b)
+fcmp cc t a b = emitWithResult i1 (IFCmp cc t a b)
 
 -- Memory
 
 alloca :: IRType -> IROperand -> IRBuilder IROperand
-alloca t n = emitWithResult (TPtr t) (IAlloca t n)
+alloca t op = emitWithResult (TPtr t) (IAlloca t op)
 
 load :: IRType -> IROperand -> IRBuilder IROperand
-load t ptr = emitWithResult t (ILoad t ptr)
+load t op = emitWithResult t (ILoad t op)
 
 store :: IROperand -> IROperand -> IRBuilder ()
-store val ptr = emitVoid (IStore val ptr)
+store op ptr = emitVoid (IStore op ptr)
 
 gep :: IRType -> IROperand -> IROperand -> IROperand -> IRBuilder IROperand
 gep t base idx0 idx1 = emitWithResult (TPtr t) (IGep t base idx0 idx1)
@@ -142,37 +141,37 @@ gep t base idx0 idx1 = emitWithResult (TPtr t) (IGep t base idx0 idx1)
 -- Casts
 
 bitcast :: IROperand -> IRType -> IRBuilder IROperand
-bitcast v t = emitWithResult t (IBitcast v t)
+bitcast op t = emitWithResult t (IBitcast op t)
 
 sext :: IROperand -> IRType -> IRBuilder IROperand
-sext v t = emitWithResult t (ISext v t)
+sext op t = emitWithResult t (ISext op t)
 
 zext :: IROperand -> IRType -> IRBuilder IROperand
-zext v t = emitWithResult t (IZext v t)
+zext op t = emitWithResult t (IZext op t)
 
 trunc :: IROperand -> IRType -> IRBuilder IROperand
-trunc v t = emitWithResult t (ITrunc v t)
+trunc op t = emitWithResult t (ITrunc op t)
 
 inttoptr :: IROperand -> IRType -> IRBuilder IROperand
-inttoptr v t = emitWithResult t (IInttoptr v t)
+inttoptr op t = emitWithResult t (IInttoptr op t)
 
 ptrtoint :: IROperand -> IRType -> IRBuilder IROperand
-ptrtoint v t = emitWithResult t (IPtrtoint v t)
+ptrtoint op t = emitWithResult t (IPtrtoint op t)
 
 -- Control flow
 
 -- | Call a function that returns a non-void value.
 call :: IRTailMarker -> IRType -> IROperand -> [IROperand] -> IRBuilder IROperand
-call tm rty fn args = emitWithResult rty (ICall tm rty fn args)
+call tm t fn args = emitWithResult t (ICall tm t fn args)
 
 -- | Call a function that returns void.
 callVoid :: IRTailMarker -> IRType -> IROperand -> [IROperand] -> IRBuilder ()
-callVoid tm rty fn args = emitVoid (ICall tm rty fn args)
+callVoid tm t fn args = emitVoid (ICall tm t fn args)
 
 -- Miscellaneous
 
 phi :: IRType -> [(Name, IROperand)] -> IRBuilder IROperand
-phi t incoming = emitWithResult t (IPhi t incoming)
+phi t ops = emitWithResult t (IPhi t ops)
 
 select :: IRType -> IROperand -> IROperand -> IROperand -> IRBuilder IROperand
-select t cond t_ f_ = emitWithResult t (ISelect t cond t_ f_)
+select t op1 op2 op3 = emitWithResult t (ISelect t op1 op2 op3)
