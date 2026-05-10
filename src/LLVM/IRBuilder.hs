@@ -18,11 +18,10 @@ import Control.Monad.Trans.Free (FreeT, MonadFree, iterT)
 import qualified Data.Map.Strict as Map
 import Data.Text (Text)
 import LLVM.IRAnnotation (IRAnnotation (..))
-import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
-import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv, mapBuilderEnvCurrentFunction)
-import LLVM.IRBuilder.FunctionBuilder (appendAnnotation, appendInstr)
+import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..), appendBlockBuilderItem)
+import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv, mapBuilderEnvCurrentBlock)
 import LLVM.IRInstruction (IRInstruction)
-import LLVM.IRModule (IRBlock (..), IRFunction (..), IRModule (..))
+import LLVM.IRModule (IRBlock (..), IRBlockItem (..), IRFunction (..), IRModule (..))
 import LLVM.IRRenderer (renderModule, runIRRenderer)
 
 data IRBuilderF next
@@ -52,10 +51,16 @@ emit =
       next
 
 emitInstruction :: IRInstruction -> State IRBuilderEnv ()
-emitInstruction instr = modify $ mapBuilderEnvCurrentFunction (appendInstr instr)
+emitInstruction instr =
+  modify $
+    mapBuilderEnvCurrentBlock
+      (appendBlockBuilderItem (BlockInstr instr))
 
 emitAnnotation :: IRAnnotation -> State IRBuilderEnv ()
-emitAnnotation ann = modify $ mapBuilderEnvCurrentFunction (appendAnnotation ann)
+emitAnnotation ann =
+  modify $
+    mapBuilderEnvCurrentBlock
+      (appendBlockBuilderItem (BlockAnnotation ann))
 
 execIRBuilder :: IRBuilder a -> State IRBuilderEnv a
 execIRBuilder = iterT emit . unpackIRBuilder

@@ -5,6 +5,8 @@ module LLVM.IRBuilder.Environment (
   IRBuilderEnv (..),
   emptyIRBuilderEnv,
   overBuilderEnvFresh,
+  overBuilderEnvCurrentBlock,
+  mapBuilderEnvCurrentBlock,
   overBuilderEnvCurrentFunction,
   mapBuilderEnvCurrentFunction,
 ) where
@@ -42,6 +44,20 @@ overBuilderEnvFresh :: (Int -> Int) -> IRBuilderEnv -> IRBuilderEnv
 overBuilderEnvFresh fn IRBuilderEnv{..} =
   IRBuilderEnv
     { builderEnvFresh = fn builderEnvFresh
+    , ..
+    }
+
+overBuilderEnvCurrentBlock :: (Maybe BlockBuilder -> Maybe BlockBuilder) -> IRBuilderEnv -> IRBuilderEnv
+overBuilderEnvCurrentBlock fn IRBuilderEnv{..} =
+  IRBuilderEnv
+    { builderEnvCurrentBlock = fn builderEnvCurrentBlock
+    , ..
+    }
+
+mapBuilderEnvCurrentBlock :: (BlockBuilder -> BlockBuilder) -> IRBuilderEnv -> IRBuilderEnv
+mapBuilderEnvCurrentBlock fn IRBuilderEnv{..} =
+  IRBuilderEnv
+    { builderEnvCurrentBlock = fmap fn builderEnvCurrentBlock
     , ..
     }
 

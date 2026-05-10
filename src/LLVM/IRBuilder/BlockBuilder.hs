@@ -1,4 +1,9 @@
-module LLVM.IRBuilder.BlockBuilder (BlockBuilder (..)) where
+{-# LANGUAGE RecordWildCards #-}
+
+module LLVM.IRBuilder.BlockBuilder (
+  BlockBuilder (..),
+  appendBlockBuilderItem,
+) where
 
 import Common (Name)
 import LLVM.IRModule (IRBlockItem)
@@ -10,3 +15,10 @@ data BlockBuilder = BlockBuilder
   , blockBuilderTerminator :: Maybe IRTerminator
   }
   deriving (Show, Eq, Ord)
+
+appendBlockBuilderItem :: IRBlockItem -> BlockBuilder -> BlockBuilder
+appendBlockBuilderItem item BlockBuilder{..} =
+  BlockBuilder
+    { blockBuilderItems = blockBuilderItems <> [item]
+    , ..
+    }
