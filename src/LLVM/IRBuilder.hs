@@ -109,6 +109,12 @@ buildModule name builder = finalizeModule name env
 compileModule :: Name -> IRBuilder a -> Text
 compileModule name = runIRRenderer . renderModule . buildModule name
 
+beginFunction :: Name -> State IRBuilderEnv ()
+beginFunction = undefined
+
+endFunction :: State IRBuilderEnv ()
+endFunction = undefined
+
 beginBlock :: Name -> State IRBuilderEnv ()
 beginBlock label = do
   IRBuilderEnv{..} <- get
@@ -128,7 +134,7 @@ beginBlock label = do
                     , blockItems = reverse blockBuilderItems
                     , blockTerminator = term
                     }
-             in pure $ Map.insert blockBuilderLabel finalBlock builderEnvBlocks
+             in pure (builderEnvBlocks <> [finalBlock])
 
   let newBlock =
         BlockBuilder

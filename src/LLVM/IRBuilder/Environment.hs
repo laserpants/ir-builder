@@ -11,8 +11,6 @@ module LLVM.IRBuilder.Environment (
   mapBuilderEnvCurrentFunction,
 ) where
 
-import Common (Name)
-import Data.Map.Strict (Map)
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
 import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..))
 import LLVM.IRModule (IRBlock, IRDecl, IRFunction, IRGlobal)
@@ -21,8 +19,8 @@ data IRBuilderEnv = IRBuilderEnv
   { builderEnvFresh :: Int
   , builderEnvCurrentBlock :: Maybe BlockBuilder
   , builderEnvCurrentFunction :: Maybe FunctionBuilder
-  , builderEnvBlocks :: Map Name IRBlock
-  , builderEnvFunctions :: Map Name IRFunction
+  , builderEnvBlocks :: [IRBlock]
+  , builderEnvFunctions :: [IRFunction]
   , builderEnvGlobals :: [IRGlobal]
   , builderEnvDecls :: [IRDecl]
   }

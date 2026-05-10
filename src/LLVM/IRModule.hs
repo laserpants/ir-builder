@@ -82,3 +82,11 @@ data IRBlock = IRBlock
   , blockTerminator :: IRTerminator
   }
   deriving (Show, Eq, Ord)
+
+-- Verify:
+--   - every block terminated
+--   - no duplicate block names
+--   - no duplicate SSA names
+--   - branch targets exist
+verifyModule :: IRModule -> Either e ()
+verifyModule = undefined
