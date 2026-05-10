@@ -21,7 +21,6 @@ module LLVM.IRBuilder (
 import Common (Name)
 import Control.Monad.State (MonadState, State, execState, get, modify, put)
 import Control.Monad.Trans.Free (FreeT, MonadFree, iterT)
-import qualified Data.Map.Strict as Map
 
 -- import Data.Maybe (isJust)
 import Data.Text (Text)
@@ -109,13 +108,13 @@ buildModule name builder = finalizeModule name env
 compileModule :: Name -> IRBuilder a -> Text
 compileModule name = runIRRenderer . renderModule . buildModule name
 
-beginFunction :: Name -> State IRBuilderEnv ()
+beginFunction :: Name -> IRBuilder ()
 beginFunction = undefined
 
-endFunction :: State IRBuilderEnv ()
+endFunction :: IRBuilder ()
 endFunction = undefined
 
-beginBlock :: Name -> State IRBuilderEnv ()
+beginBlock :: Name -> IRBuilder ()
 beginBlock label = do
   IRBuilderEnv{..} <- get
 
