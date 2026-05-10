@@ -16,7 +16,7 @@ import Control.Monad.State (MonadState, State, execState, modify)
 import Control.Monad.Trans.Free (FreeT, MonadFree, iterT)
 import Data.Text (Text)
 import LLVM.IRAnnotation (IRAnnotation (..))
-import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv, overBuilderEnvCurrentFunction)
+import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv, mapBuilderEnvCurrentFunction)
 import LLVM.IRInstruction (IRInstruction)
 import LLVM.IRModule (IRFunction, IRModule (..), appendAnnotation, appendInstr)
 import LLVM.IRRenderer (renderModule, runIRRenderer)
@@ -48,10 +48,10 @@ emit =
       next
 
 emitInstruction :: IRInstruction -> State IRBuilderEnv ()
-emitInstruction instr = modify $ overBuilderEnvCurrentFunction (fmap (appendInstr instr))
+emitInstruction instr = modify $ mapBuilderEnvCurrentFunction (appendInstr instr)
 
 emitAnnotation :: IRAnnotation -> State IRBuilderEnv ()
-emitAnnotation ann = modify $ overBuilderEnvCurrentFunction (fmap (appendAnnotation ann))
+emitAnnotation ann = modify $ mapBuilderEnvCurrentFunction (appendAnnotation ann)
 
 execIRBuilder :: IRBuilder a -> State IRBuilderEnv a
 execIRBuilder = iterT emit . unpackIRBuilder

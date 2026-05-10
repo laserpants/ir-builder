@@ -6,6 +6,7 @@ module LLVM.IRBuilder.Environment (
   emptyIRBuilderEnv,
   overBuilderEnvFresh,
   overBuilderEnvCurrentFunction,
+  mapBuilderEnvCurrentFunction,
 ) where
 
 import Common (Name)
@@ -46,5 +47,12 @@ overBuilderEnvCurrentFunction :: (Maybe IRFunction -> Maybe IRFunction) -> IRBui
 overBuilderEnvCurrentFunction fn IRBuilderEnv{..} =
   IRBuilderEnv
     { builderEnvCurrentFunction = fn builderEnvCurrentFunction
+    , ..
+    }
+
+mapBuilderEnvCurrentFunction :: (IRFunction -> IRFunction) -> IRBuilderEnv -> IRBuilderEnv
+mapBuilderEnvCurrentFunction fn IRBuilderEnv{..} =
+  IRBuilderEnv
+    { builderEnvCurrentFunction = fmap fn builderEnvCurrentFunction
     , ..
     }
