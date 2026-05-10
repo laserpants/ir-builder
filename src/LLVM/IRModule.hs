@@ -91,11 +91,6 @@ data IRBlock = IRBlock
   }
   deriving (Show, Eq, Ord)
 
--- Verify:
---   - every block terminated
---   - no duplicate block names
---   - no duplicate SSA names
---   - branch targets exist
 verifyModule :: IRModule -> Either String ()
 verifyModule IRModule{moduleFunctions} = mapM_ verifyFunction moduleFunctions
 
