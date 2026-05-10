@@ -24,22 +24,11 @@ import Common (Name)
 import Control.Monad.Free (liftF)
 import Control.Monad.State (MonadState, State, execState, get, gets, modify, put)
 import Control.Monad.Trans.Free (FreeT, MonadFree, iterT)
-import Data.Function ((&))
 import Data.Maybe (isJust)
 import Data.Text (Text)
 import LLVM.IRAnnotation (IRAnnotation (..))
-import LLVM.IRBuilder.BlockBuilder (
-  BlockBuilder (..),
-  appendBlockBuilderItem,
-  setBlockBuilderTerminator,
- )
-import LLVM.IRBuilder.Environment (
-  IRBuilderEnv (..),
-  clearBuilderEnvCurrentBlock,
-  emptyIRBuilderEnv,
-  mapBuilderEnvCurrentBlock,
-  mapBuilderEnvCurrentFunction,
- )
+import LLVM.IRBuilder.BlockBuilder ( BlockBuilder (..), appendBlockBuilderItem, setBlockBuilderTerminator)
+import LLVM.IRBuilder.Environment ( IRBuilderEnv (..), emptyIRBuilderEnv, mapBuilderEnvCurrentBlock)
 import LLVM.IRBuilder.FunctionBuilder (appendFunctionBuilderBlock)
 import LLVM.IRInstruction (IRInstruction)
 import LLVM.IRModule (IRBlock (..), IRBlockItem (..), IRFunction (..), IRModule (..))
@@ -111,7 +100,7 @@ emitTerminator term = do
   setTerminator term
 
 finalizeModule :: Name -> IRBuilderEnv -> IRModule
-finalizeModule name env@IRBuilderEnv{..} =
+finalizeModule name env@IRBuilderEnv {builderEnvGlobals, builderEnvDecls} =
   IRModule
     { moduleName = name
     , moduleDecls = reverse builderEnvDecls
