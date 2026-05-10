@@ -43,6 +43,7 @@ import LLVM.IRBuilder.Supply (freshOperand)
 import LLVM.IRInstruction (IRFCmpCond, IRICmpCond, IRInstrOp (..), IRInstruction (..), IRTailMarker)
 import LLVM.IROperand (IROperand (..), opComponents)
 import LLVM.IRType (IRType (..))
+import LLVM.IRType.Constructors (i1)
 import Prelude hiding (and, or)
 
 -- | Emit an instruction that produces a result register.
@@ -121,10 +122,10 @@ fneg t a = emitWithResult t (IFNeg t a)
 -- Comparison
 
 icmp :: IRICmpCond -> IRType -> IROperand -> IROperand -> IRBuilder IROperand
-icmp cond t a b = emitWithResult (TInt 1) (IICmp cond t a b)
+icmp cond t a b = emitWithResult i1 (IICmp cond t a b)
 
 fcmp :: IRFCmpCond -> IRType -> IROperand -> IROperand -> IRBuilder IROperand
-fcmp cond t a b = emitWithResult (TInt 1) (IFCmp cond t a b)
+fcmp cond t a b = emitWithResult i1 (IFCmp cond t a b)
 
 -- Memory
 
@@ -164,11 +165,11 @@ ptrtoint v t = emitWithResult t (IPtrtoint v t)
 
 -- | Call a function that returns a non-void value.
 call :: IRTailMarker -> IRType -> IROperand -> [IROperand] -> IRBuilder IROperand
-call tail_ retTy fn args = emitWithResult retTy (ICall tail_ retTy fn args)
+call tm rty fn args = emitWithResult rty (ICall tm rty fn args)
 
 -- | Call a function that returns void.
 callVoid :: IRTailMarker -> IRType -> IROperand -> [IROperand] -> IRBuilder ()
-callVoid tail_ retTy fn args = emitVoid (ICall tail_ retTy fn args)
+callVoid tm rty fn args = emitVoid (ICall tm rty fn args)
 
 -- Miscellaneous
 

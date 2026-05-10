@@ -2,6 +2,7 @@ module LLVM.IRBuilder.Supply (fresh, freshOperand) where
 
 import Common (Name)
 import Control.Monad.State (gets, modify)
+import qualified Data.Text as Text
 import LLVM.IRBuilder (IRBuilder)
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), overBuilderEnvFresh)
 import LLVM.IROperand (IROperand (..))
@@ -11,7 +12,7 @@ fresh :: IRBuilder Name
 fresh = do
   modify (overBuilderEnvFresh (+ 1))
   reg <- gets builderEnvFresh
-  undefined
+  pure (Text.pack (show reg))
 
 freshOperand :: IRType -> IRBuilder IROperand
 freshOperand t = OLocal t <$> fresh
