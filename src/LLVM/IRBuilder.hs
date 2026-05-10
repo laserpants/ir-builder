@@ -13,10 +13,10 @@ module LLVM.IRBuilder (
   compileModule,
   setTerminator,
   beginBlock,
-  emitInstr,
-  emitAnn,
   emitInstruction,
   emitAnnotation,
+  appendInstruction,
+  appendAnnotation,
   emitTerminator,
 ) where
 
@@ -27,13 +27,14 @@ import Control.Monad.Trans.Free (FreeT, MonadFree, iterT)
 import Data.Maybe (isJust)
 import Data.Text (Text)
 import LLVM.IRAnnotation (IRAnnotation (..))
-import LLVM.IRBuilder.BlockBuilder ( BlockBuilder (..), appendBlockBuilderItem, setBlockBuilderTerminator)
-import LLVM.IRBuilder.Environment ( IRBuilderEnv (..), emptyIRBuilderEnv, mapBuilderEnvCurrentBlock)
-import LLVM.IRBuilder.FunctionBuilder (appendFunctionBuilderBlock)
+import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..), appendBlockBuilderItem, setBlockBuilderTerminator)
+import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv, mapBuilderEnvCurrentBlock)
+import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..), appendFunctionBuilderBlock)
 import LLVM.IRInstruction (IRInstruction)
-import LLVM.IRModule (IRBlock (..), IRBlockItem (..), IRFunction (..), IRModule (..))
+import LLVM.IRModule (IRBlock (..), IRBlockItem (..), IRFunction (..), IRLinkage, IRModule (..))
 import LLVM.IROperand (IRTerminator)
 import LLVM.IRRenderer (renderModule, runIRRenderer)
+import LLVM.IRType (IRType)
 
 data IRBuilderF next
   = EmitInstr IRInstruction next
@@ -52,26 +53,26 @@ newtype IRBuilder a = IRBuilder
     )
 
 execIRBuilder :: IRBuilder a -> State IRBuilderEnv a
-execIRBuilder = iterT emit . unpackIRBuilder
+execIRBuilder = iterT interpretBuilderF . unpackIRBuilder
 
-emit :: IRBuilderF (State IRBuilderEnv a) -> State IRBuilderEnv a
-emit =
+interpretBuilderF :: IRBuilderF (State IRBuilderEnv a) -> State IRBuilderEnv a
+interpretBuilderF =
   \case
     EmitInstr instr next -> do
-      emitInstruction instr
+      appendInstruction instr
       next
     EmitAnnotation ann next -> do
-      emitAnnotation ann
+      appendAnnotation ann
       next
 
-emitInstruction :: IRInstruction -> State IRBuilderEnv ()
-emitInstruction instr =
+appendInstruction :: IRInstruction -> State IRBuilderEnv ()
+appendInstruction instr =
   modify $
     mapBuilderEnvCurrentBlock
       (appendBlockBuilderItem (BlockInstr instr))
 
-emitAnnotation :: IRAnnotation -> State IRBuilderEnv ()
-emitAnnotation ann =
+appendAnnotation :: IRAnnotation -> State IRBuilderEnv ()
+appendAnnotation ann =
   modify $
     mapBuilderEnvCurrentBlock
       (appendBlockBuilderItem (BlockAnnotation ann))
@@ -79,11 +80,11 @@ emitAnnotation ann =
 setTerminator :: IRTerminator -> IRBuilder ()
 setTerminator term = modify $ mapBuilderEnvCurrentBlock (setBlockBuilderTerminator term)
 
-emitInstr :: IRInstruction -> IRBuilder ()
-emitInstr instr = liftF (EmitInstr instr ())
+emitInstruction :: IRInstruction -> IRBuilder ()
+emitInstruction instr = liftF (EmitInstr instr ())
 
-emitAnn :: IRAnnotation -> IRBuilder ()
-emitAnn ann = liftF (EmitAnnotation ann ())
+emitAnnotation :: IRAnnotation -> IRBuilder ()
+emitAnnotation ann = liftF (EmitAnnotation ann ())
 
 emitTerminator :: IRTerminator -> IRBuilder ()
 emitTerminator term = do
@@ -100,7 +101,7 @@ emitTerminator term = do
   setTerminator term
 
 finalizeModule :: Name -> IRBuilderEnv -> IRModule
-finalizeModule name env@IRBuilderEnv {builderEnvGlobals, builderEnvDecls} =
+finalizeModule name env@IRBuilderEnv{builderEnvGlobals, builderEnvDecls} =
   IRModule
     { moduleName = name
     , moduleDecls = reverse builderEnvDecls
@@ -109,7 +110,7 @@ finalizeModule name env@IRBuilderEnv {builderEnvGlobals, builderEnvDecls} =
     }
 
 finalizeFunctions :: IRBuilderEnv -> [IRFunction]
-finalizeFunctions = undefined
+finalizeFunctions = builderEnvFunctions
 
 buildModule :: Name -> IRBuilder a -> IRModule
 buildModule name builder = finalizeModule name env
@@ -119,11 +120,63 @@ buildModule name builder = finalizeModule name env
 compileModule :: Name -> IRBuilder a -> Text
 compileModule name = runIRRenderer . renderModule . buildModule name
 
-beginFunction :: Name -> IRBuilder ()
-beginFunction = undefined
+beginFunction :: Name -> IRLinkage -> IRType -> [(IRType, Name)] -> IRBuilder ()
+beginFunction name linkage retType args = do
+  modify finalizeCurrentBlock
+
+  IRBuilderEnv{..} <- get
+
+  case builderEnvCurrentFunction of
+    Just _ ->
+      error "A current function already active"
+    Nothing ->
+      pure ()
+
+  let fun =
+        FunctionBuilder
+          { functionBuilderName = name
+          , functionBuilderLinkage = linkage
+          , functionBuilderRetType = retType
+          , functionBuilderArgs = args
+          , functionBuilderBlocks = []
+          , functionBuilderAttributes = []
+          }
+
+  put $
+    IRBuilderEnv
+      { builderEnvCurrentFunction = Just fun
+      , builderEnvCurrentBlock = Nothing
+      , ..
+      }
 
 endFunction :: IRBuilder ()
-endFunction = undefined
+endFunction = do
+  modify finalizeCurrentBlock
+
+  IRBuilderEnv{..} <- get
+
+  fun <-
+    case builderEnvCurrentFunction of
+      Nothing ->
+        error "No current function"
+      Just FunctionBuilder{..} ->
+        pure $
+          IRFunction
+            { functionName = functionBuilderName
+            , functionLinkage = functionBuilderLinkage
+            , functionRetType = functionBuilderRetType
+            , functionArgs = functionBuilderArgs
+            , functionBlocks = functionBuilderBlocks
+            , functionAttributes = functionBuilderAttributes
+            }
+
+  put $
+    IRBuilderEnv
+      { builderEnvCurrentFunction = Nothing
+      , builderEnvCurrentBlock = Nothing
+      , builderEnvFunctions = builderEnvFunctions <> [fun]
+      , ..
+      }
 
 beginBlock :: Name -> IRBuilder ()
 beginBlock label = do
@@ -161,10 +214,10 @@ beginBlock label = do
       }
 
 finalizeCurrentBlock :: IRBuilderEnv -> IRBuilderEnv
-finalizeCurrentBlock env@IRBuilderEnv{..} =
+finalizeCurrentBlock IRBuilderEnv{..} =
   case builderEnvCurrentBlock of
     Nothing ->
-      env
+      IRBuilderEnv{..}
     Just BlockBuilder{blockBuilderLabel, blockBuilderItems, blockBuilderTerminator} ->
       case blockBuilderTerminator of
         Nothing ->
