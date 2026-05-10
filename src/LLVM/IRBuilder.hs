@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -10,17 +11,19 @@ module LLVM.IRBuilder (
   IRBuilder (..),
   IRBuilderEnv (..),
   compileModule,
+  setTerminator,
   beginBlock,
   emitInstruction,
   emitAnnotation,
-  emitTerminator,
+  --  emitTerminator,
 ) where
 
 import Common (Name)
-import Control.Monad.State (MonadState, State, execState, get, gets, modify, put)
+import Control.Monad.State (MonadState, State, execState, get, modify, put)
 import Control.Monad.Trans.Free (FreeT, MonadFree, iterT)
 import qualified Data.Map.Strict as Map
-import Data.Maybe (isJust)
+
+-- import Data.Maybe (isJust)
 import Data.Text (Text)
 import LLVM.IRAnnotation (IRAnnotation (..))
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..), appendBlockBuilderItem, setBlockBuilderTerminator)
@@ -46,6 +49,9 @@ newtype IRBuilder a = IRBuilder
     , MonadFree IRBuilderF
     )
 
+setTerminator :: (MonadState IRBuilderEnv m) => IRTerminator -> m ()
+setTerminator term = modify $ mapBuilderEnvCurrentBlock (setBlockBuilderTerminator term)
+
 emit :: IRBuilderF (State IRBuilderEnv a) -> State IRBuilderEnv a
 emit =
   \case
@@ -62,19 +68,17 @@ emitInstruction instr =
     mapBuilderEnvCurrentBlock
       (appendBlockBuilderItem (BlockInstr instr))
 
-emitTerminator :: IRTerminator -> State IRBuilderEnv ()
-emitTerminator term = do
-  block <- gets builderEnvCurrentBlock
-  case block of
-    Just BlockBuilder{blockBuilderTerminator}
-      | isJust blockBuilderTerminator ->
-          error "Block already terminated"
-    _ ->
-      pure ()
-
-  modify $
-    mapBuilderEnvCurrentBlock $
-      setBlockBuilderTerminator term
+-- emitTerminator :: IRTerminator -> State IRBuilderEnv ()
+-- emitTerminator term = do
+--  block <- gets builderEnvCurrentBlock
+--  case block of
+--    Just BlockBuilder{blockBuilderTerminator}
+--      | isJust blockBuilderTerminator ->
+--          error "Block already terminated"
+--    _ ->
+--      pure ()
+--
+--  setTerminator term
 
 emitAnnotation :: IRAnnotation -> State IRBuilderEnv ()
 emitAnnotation ann =
