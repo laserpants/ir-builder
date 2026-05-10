@@ -4,6 +4,7 @@
 module LLVM.IRBuilder.Environment (
   IRBuilderEnv (..),
   emptyIRBuilderEnv,
+  overBuilderEnvFresh,
   overBuilderEnvCurrentFunction,
 ) where
 
@@ -32,6 +33,13 @@ emptyIRBuilderEnv =
     , builderEnvFunctions = mempty
     , builderEnvGlobals = mempty
     , builderEnvDecls = mempty
+    }
+
+overBuilderEnvFresh :: (Int -> Int) -> IRBuilderEnv -> IRBuilderEnv
+overBuilderEnvFresh fn IRBuilderEnv{..} =
+  IRBuilderEnv
+    { builderEnvFresh = fn builderEnvFresh
+    , ..
     }
 
 overBuilderEnvCurrentFunction :: (Maybe IRFunction -> Maybe IRFunction) -> IRBuilderEnv -> IRBuilderEnv
