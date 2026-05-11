@@ -15,11 +15,4 @@ fresh = do
   pure (Text.pack (show reg))
 
 freshOperand :: IRType -> IRBuilder IROperand
-freshOperand t = do
-  hint <- gets builderEnvNameHint
-  case hint of
-    Just name -> do
-      modify $ \env -> env{builderEnvNameHint = Nothing}
-      pure (OLocal t name)
-    Nothing ->
-      OLocal t <$> fresh
+freshOperand t = OLocal t <$> fresh

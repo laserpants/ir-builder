@@ -25,7 +25,6 @@ dependencies:
   - bytestring
   - containers
   - mtl
-  - free
 
 ghc-options:
   - -Wall

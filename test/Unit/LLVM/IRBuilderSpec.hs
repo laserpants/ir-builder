@@ -1,26 +1,19 @@
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Unit.LLVM.IRBuilderSpec (spec) where
 
-import Control.Monad.State (modify, runState)
-import Control.Monad.Trans.Free (iterT)
+import Control.Monad.State (runState)
 import LLVM.IRBuilder
-import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..), appendBlockBuilderItem)
-import LLVM.IRBuilder.Environment (emptyIRBuilderEnv, mapBuilderEnvCurrentBlock)
+import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
+import LLVM.IRBuilder.Environment (emptyIRBuilderEnv)
 import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..))
-import LLVM.IRModule (IRBlockItem (..), IRFunction (..), IRLinkage (..))
+import LLVM.IRModule (IRFunction (..), IRLinkage (..))
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
 import LLVM.IRType (IRType (..))
 import Test.Hspec (Spec, describe, expectationFailure, it, shouldBe)
 
 runBuilder :: IRBuilder a -> IRBuilderEnv -> (a, IRBuilderEnv)
-runBuilder b env = runState (iterT interpretF (unpackIRBuilder b)) env
- where
-  interpretF (EmitInstr instr next) =
-    modify (mapBuilderEnvCurrentBlock (appendBlockBuilderItem (BlockInstr instr))) >> next
-  interpretF (EmitAnnotation ann next) =
-    modify (mapBuilderEnvCurrentBlock (appendBlockBuilderItem (BlockAnnotation ann))) >> next
+runBuilder b env = runState (runIRBuilder b) env
 
 execBuilder :: IRBuilder a -> IRBuilderEnv -> IRBuilderEnv
 execBuilder b = snd . runBuilder b

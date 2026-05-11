@@ -1,13 +1,9 @@
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StrictData #-}
 
 module LLVM.IRBuilder (
-  IRBuilderF (..),
   IRBuilder (..),
   IRBuilderEnv (..),
   compileModule,
@@ -19,81 +15,51 @@ module LLVM.IRBuilder (
   define,
   emitInstruction,
   emitAnnotation,
-  appendInstruction,
-  appendAnnotation,
   emitTerminator,
   emitGlobal,
-  allocReg,
-  (<#>),
 )
 where
 
 import Common (Name)
-import Control.Monad.Free (liftF)
+import Control.Monad.Fix (MonadFix)
 import Control.Monad.State (MonadState, State, execState, get, gets, modify, put)
-import Control.Monad.Trans.Free (FreeT, MonadFree, iterT)
 import Data.Maybe (isJust)
 import Data.Text (Text)
-import qualified Data.Text as Text
 import LLVM.IRAnnotation (IRAnnotation (..))
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..), appendBlockBuilderItem, setBlockBuilderTerminator)
-import LLVM.IRBuilder.Environment (IRBuilderEnv (..), appendBuilderEnvGlobals, emptyIRBuilderEnv, mapBuilderEnvCurrentBlock, overBuilderEnvFresh)
+import LLVM.IRBuilder.Environment (IRBuilderEnv (..), appendBuilderEnvGlobals, emptyIRBuilderEnv, mapBuilderEnvCurrentBlock)
 import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..), appendFunctionBuilderBlock)
 import LLVM.IRInstruction (IRInstruction)
 import LLVM.IRModule (IRAttribute (..), IRBlock (..), IRBlockItem (..), IRFunction (..), IRGlobal, IRLinkage (..), IRModule (..))
-import LLVM.IROperand (IROperand (..), IRTerminator)
+import LLVM.IROperand (IRTerminator)
 import LLVM.IRRenderer (renderModule, runIRRenderer)
 import LLVM.IRType (IRType)
 
-data IRBuilderF next
-  = EmitInstr IRInstruction next
-  | EmitAnnotation IRAnnotation next
-  deriving (Functor)
-
 newtype IRBuilder a = IRBuilder
-  { unpackIRBuilder :: FreeT IRBuilderF (State IRBuilderEnv) a
+  { runIRBuilder :: State IRBuilderEnv a
   }
   deriving
     ( Functor
     , Applicative
     , Monad
     , MonadState IRBuilderEnv
-    , MonadFree IRBuilderF
+    , MonadFix
     )
-
-execIRBuilder :: IRBuilder a -> State IRBuilderEnv a
-execIRBuilder = iterT interpretBuilderF . unpackIRBuilder
-
-interpretBuilderF :: IRBuilderF (State IRBuilderEnv a) -> State IRBuilderEnv a
-interpretBuilderF =
-  \case
-    EmitInstr instr next -> do
-      appendInstruction instr
-      next
-    EmitAnnotation ann next -> do
-      appendAnnotation ann
-      next
-
-appendInstruction :: IRInstruction -> State IRBuilderEnv ()
-appendInstruction instr =
-  modify $
-    mapBuilderEnvCurrentBlock
-      (appendBlockBuilderItem (BlockInstr instr))
-
-appendAnnotation :: IRAnnotation -> State IRBuilderEnv ()
-appendAnnotation ann =
-  modify $
-    mapBuilderEnvCurrentBlock
-      (appendBlockBuilderItem (BlockAnnotation ann))
 
 setTerminator :: IRTerminator -> IRBuilder ()
 setTerminator term = modify $ mapBuilderEnvCurrentBlock (setBlockBuilderTerminator term)
 
 emitInstruction :: IRInstruction -> IRBuilder ()
-emitInstruction instr = liftF (EmitInstr instr ())
+emitInstruction instr =
+  modify $
+    mapBuilderEnvCurrentBlock
+      (appendBlockBuilderItem (BlockInstr instr))
 
 emitAnnotation :: IRAnnotation -> IRBuilder ()
-emitAnnotation ann = liftF (EmitAnnotation ann ())
+emitAnnotation ann =
+  modify $
+    mapBuilderEnvCurrentBlock
+      (appendBlockBuilderItem (BlockAnnotation ann))
 
 emitTerminator :: IRTerminator -> IRBuilder ()
 emitTerminator term = do
@@ -124,7 +90,7 @@ finalizeFunctions = builderEnvFunctions
 buildModule :: Name -> IRBuilder a -> IRModule
 buildModule name builder = finalizeModule name env
  where
-  env = execState (execIRBuilder builder) emptyIRBuilderEnv
+  env = execState (runIRBuilder builder) emptyIRBuilderEnv
 
 compileModule :: Name -> IRBuilder a -> Text
 compileModule name = runIRRenderer . renderModule . buildModule name
@@ -194,34 +160,6 @@ define retType name args linkage attributes body = do
 
 emitGlobal :: IRGlobal -> IRBuilder ()
 emitGlobal global = modify (appendBuilderEnvGlobals [global])
-
-{- | Pre-allocate a register for use in forward phi references.
-Does not emit any instruction; just reserves a name.
--}
-allocReg :: IRType -> IRBuilder IROperand
-allocReg t = do
-  hint <- gets builderEnvNameHint
-  case hint of
-    Just name -> do
-      modify $ \env -> env{builderEnvNameHint = Nothing}
-      pure (OLocal t name)
-    Nothing -> do
-      modify (overBuilderEnvFresh (+ 1))
-      n <- gets builderEnvFresh
-      pure (OLocal t (Text.pack (show n)))
-
-{- | Emit an instruction, forcing its result into a pre-allocated register.
-Typical usage: @phi i64 [...] <#> myReg@
--}
-(<#>) :: IRBuilder IROperand -> IROperand -> IRBuilder IROperand
-action <#> OLocal _ name = do
-  modify $ \env -> env{builderEnvNameHint = Just name}
-  result <- action
-  modify $ \env -> env{builderEnvNameHint = Nothing}
-  pure result
-action <#> _ = action
-
-infixl 1 <#>
 
 beginBlock :: Name -> IRBuilder ()
 beginBlock label = do

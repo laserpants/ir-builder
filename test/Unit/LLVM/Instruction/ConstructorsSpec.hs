@@ -1,13 +1,11 @@
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Unit.LLVM.Instruction.ConstructorsSpec (spec) where
 
-import Control.Monad.State (modify, runState)
-import Control.Monad.Trans.Free (iterT)
-import LLVM.IRBuilder (IRBuilder, IRBuilderF (..), unpackIRBuilder)
-import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..), appendBlockBuilderItem)
-import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv, mapBuilderEnvCurrentBlock)
+import Control.Monad.State (runState)
+import LLVM.IRBuilder (IRBuilder (..))
+import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
+import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv)
 import LLVM.IRInstruction (IRFCmpCond (..), IRICmpCond (..), IRInstrOp (..), IRInstruction (..), IRTailMarker (..))
 import LLVM.IRInstruction.Constructors
 import LLVM.IRModule (IRBlockItem (..))
@@ -16,28 +14,26 @@ import LLVM.IRType (IRType (..))
 import Test.Hspec (Spec, describe, expectationFailure, it, shouldBe)
 import Prelude hiding (and, or)
 
--- | Run a builder action that emits instructions and return the last-emitted operand result
--- plus the collected block items via interpretting EmitInstr effects directly
+{- | Run a builder action that emits instructions and return the last-emitted operand result
+plus the collected block items via interpretting EmitInstr effects directly
+-}
 runInstrBuilder :: IRBuilder IROperand -> (IROperand, [IRBlockItem])
 runInstrBuilder action = (result, blockBuilderItems bb)
-  where
-    initialEnv =
-      emptyIRBuilderEnv
-        { builderEnvCurrentBlock =
-            Just
-              BlockBuilder
-                { blockBuilderLabel = "entry",
-                  blockBuilderItems = [],
-                  blockBuilderTerminator = Nothing
-                }
-        }
-    (result, finalEnv) = runState (iterT interpretF (unpackIRBuilder action)) initialEnv
-    bb = case builderEnvCurrentBlock finalEnv of
-      Just b -> b
-      Nothing -> error "no current block"
-    interpretF (EmitInstr instr next) =
-      modify (mapBuilderEnvCurrentBlock (appendBlockBuilderItem (BlockInstr instr))) >> next
-    interpretF (EmitAnnotation _ next) = next
+ where
+  initialEnv =
+    emptyIRBuilderEnv
+      { builderEnvCurrentBlock =
+          Just
+            BlockBuilder
+              { blockBuilderLabel = "entry"
+              , blockBuilderItems = []
+              , blockBuilderTerminator = Nothing
+              }
+      }
+  (result, finalEnv) = runState (runIRBuilder action) initialEnv
+  bb = case builderEnvCurrentBlock finalEnv of
+    Just b -> b
+    Nothing -> error "no current block"
 
 -- | Extract the instrOp from the last block item
 lastInstrOp :: [IRBlockItem] -> Maybe IRInstrOp
@@ -166,12 +162,9 @@ spec = describe "LLVM.IRInstruction.Constructors" $ do
           initialEnv =
             emptyIRBuilderEnv
               { builderEnvCurrentBlock =
-                  Just BlockBuilder {blockBuilderLabel = "entry", blockBuilderItems = [], blockBuilderTerminator = Nothing}
+                  Just BlockBuilder{blockBuilderLabel = "entry", blockBuilderItems = [], blockBuilderTerminator = Nothing}
               }
-          (_, finalEnv) = runState (iterT interpretF (unpackIRBuilder (store a32 ptr))) initialEnv
-          interpretF (EmitInstr instr next) =
-            modify (mapBuilderEnvCurrentBlock (appendBlockBuilderItem (BlockInstr instr))) >> next
-          interpretF (EmitAnnotation _ next) = next
+          (_, finalEnv) = runState (runIRBuilder (store a32 ptr)) initialEnv
           items = maybe [] blockBuilderItems (builderEnvCurrentBlock finalEnv)
       lastInstrOp items `shouldBe` Just (IStore a32 ptr)
 

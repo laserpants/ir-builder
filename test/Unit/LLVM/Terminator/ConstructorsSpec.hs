@@ -3,8 +3,7 @@
 module Unit.LLVM.Terminator.ConstructorsSpec (spec) where
 
 import Control.Monad.State (runState)
-import Control.Monad.Trans.Free (iterT)
-import LLVM.IRBuilder (IRBuilder, beginBlock, unpackIRBuilder)
+import LLVM.IRBuilder (IRBuilder (..), beginBlock)
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv)
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
@@ -12,9 +11,7 @@ import LLVM.IRTerminator.Constructors (br, condbr, ret, switch, unreachable)
 import Test.Hspec (Spec, describe, it, shouldBe)
 
 execBuilder :: IRBuilder a -> IRBuilderEnv -> IRBuilderEnv
-execBuilder b env = snd $ runState (iterT interpretF (unpackIRBuilder b)) env
- where
-  interpretF _ = error "unexpected effect"
+execBuilder b env = snd $ runState (runIRBuilder b) env
 
 currentTerminator :: IRBuilderEnv -> Maybe IRTerminator
 currentTerminator env = blockBuilderTerminator =<< builderEnvCurrentBlock env
