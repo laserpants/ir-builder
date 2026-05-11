@@ -1,11 +1,12 @@
-module LLVM.IRType.Constructors (
-  i1,
-  i8,
-  i32,
-  i64,
-  ptr,
-  void,
-)
+module LLVM.IRType.Constructors
+  ( i1,
+    i8,
+    i32,
+    i64,
+    ptr,
+    void,
+    struct,
+  )
 where
 
 import LLVM.IRType (IRType (..))
@@ -33,3 +34,7 @@ ptr = TPtr
 {-# INLINE void #-}
 void :: IRType
 void = TVoid
+
+{-# INLINE struct #-}
+struct :: [IRType] -> IRType
+struct = TStruct
