@@ -2,8 +2,8 @@
 
 module Unit.LLVM.IRAnnotationSpec where
 
-import LLVM.IRAnnotation
-import Test.Hspec
+import LLVM.IRAnnotation (IRAnnotation (Comment, CommentBlock))
+import Test.Hspec (Spec, describe, it, shouldBe)
 
 spec :: Spec
 spec = describe "LLVM.IRAnnotation" $ do

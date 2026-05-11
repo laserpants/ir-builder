@@ -5,16 +5,15 @@ module Unit.LLVM.IRBuilderSpec (spec) where
 
 import Control.Monad.State (modify, runState)
 import Control.Monad.Trans.Free (iterT)
-import LLVM.IRAnnotation (IRAnnotation (..))
 import LLVM.IRBuilder
-import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..), appendBlockBuilderItem, setBlockBuilderTerminator)
-import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv, mapBuilderEnvCurrentBlock)
+import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..), appendBlockBuilderItem)
+import LLVM.IRBuilder.Environment (emptyIRBuilderEnv, mapBuilderEnvCurrentBlock)
 import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..))
 import LLVM.IRInstruction (IRInstrOp (..), IRInstruction (..))
-import LLVM.IRModule (IRBlock (..), IRBlockItem (..), IRLinkage (..))
+import LLVM.IRModule (IRBlockItem (..), IRLinkage (..))
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
 import LLVM.IRType (IRType (..))
-import Test.Hspec
+import Test.Hspec (Spec, describe, expectationFailure, it, shouldBe)
 
 runBuilder :: IRBuilder a -> IRBuilderEnv -> (a, IRBuilderEnv)
 runBuilder b env = runState (iterT interpretF (unpackIRBuilder b)) env
@@ -33,19 +32,19 @@ evalBuilder b = fst . runBuilder b
 testFB :: FunctionBuilder
 testFB =
   FunctionBuilder
-    { functionBuilderName = "test"
-    , functionBuilderLinkage = LExternal
-    , functionBuilderRetType = TInt 32
-    , functionBuilderArgs = []
-    , functionBuilderBlocks = []
-    , functionBuilderAttributes = []
+    { functionBuilderName = "test",
+      functionBuilderLinkage = LExternal,
+      functionBuilderRetType = TInt 32,
+      functionBuilderArgs = [],
+      functionBuilderBlocks = [],
+      functionBuilderAttributes = []
     }
 
 testInstr :: IRInstruction
 testInstr =
   IRInstruction
-    { instrResult = Just ("r", TInt 32)
-    , instrOp = IAdd (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b")
+    { instrResult = Just ("r", TInt 32),
+      instrOp = IAdd (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b")
     }
 
 spec :: Spec

@@ -3,7 +3,7 @@
 module Unit.LLVM.Renderer.StateSpec (spec) where
 
 import LLVM.IRRenderer.State
-import Test.Hspec
+import Test.Hspec (Spec, describe, it, shouldBe)
 
 spec :: Spec
 spec = describe "LLVM.IRRenderer.State" $ do

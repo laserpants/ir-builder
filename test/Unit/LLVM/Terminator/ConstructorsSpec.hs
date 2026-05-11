@@ -4,13 +4,12 @@ module Unit.LLVM.Terminator.ConstructorsSpec (spec) where
 
 import Control.Monad.State (runState)
 import Control.Monad.Trans.Free (iterT)
-import LLVM.IRBuilder (IRBuilder, beginBlock, setTerminator, unpackIRBuilder)
+import LLVM.IRBuilder (IRBuilder, beginBlock, unpackIRBuilder)
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv)
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
 import LLVM.IRTerminator.Constructors
-import LLVM.IRType (IRType (..))
-import Test.Hspec
+import Test.Hspec (Spec, describe, it, shouldBe)
 
 execBuilder :: IRBuilder a -> IRBuilderEnv -> IRBuilderEnv
 execBuilder b env = snd $ runState (iterT interpretF (unpackIRBuilder b)) env

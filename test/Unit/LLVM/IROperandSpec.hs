@@ -4,8 +4,12 @@ module Unit.LLVM.IROperandSpec where
 
 import Fixtures.TestData
 import LLVM.IROperand
-import LLVM.IRType
-import Test.Hspec
+  ( IRConstant (CInt),
+    IROperand (OConstant, OGlobal, OLocal),
+    IRTerminator (IBr, ICondBr, IRet, ISwitch, IUnreachable),
+    opComponents,
+  )
+import Test.Hspec (Spec, describe, it, shouldBe)
 
 spec :: Spec
 spec = describe "LLVM.IROperand" $ do
