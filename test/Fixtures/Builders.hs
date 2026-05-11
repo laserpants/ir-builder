@@ -1,33 +1,33 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Fixtures.Builders
-  ( -- * Simple builders
-    buildSimpleBlock,
-    buildSimpleFunction,
-    buildSimpleModule,
-    buildBlockWithTerminator,
-    buildInstructionBlock,
+module Fixtures.Builders (
+  -- * Simple builders
+  buildSimpleBlock,
+  buildSimpleFunction,
+  buildSimpleModule,
+  buildBlockWithTerminator,
+  buildInstructionBlock,
 
-    -- * Complex builders
-    buildMultiBlockFunction,
-    buildFunctionWithAttributes,
+  -- * Complex builders
+  buildMultiBlockFunction,
+  buildFunctionWithAttributes,
 
-    -- * Error scenario builders
-    buildModuleWithDuplicateBlockNames,
-    buildModuleWithInvalidBranchTarget,
-  )
+  -- * Error scenario builders
+  buildModuleWithDuplicateBlockNames,
+  buildModuleWithInvalidBranchTarget,
+)
 where
 
 import Common (Name)
 import LLVM.IRInstruction (IRInstruction (..))
-import LLVM.IRModule
-  ( IRAttribute (..)
-  , IRBlock (..)
-  , IRBlockItem (..)
-  , IRFunction (..)
-  , IRLinkage (..)
-  , IRModule (..)
-  )
+import LLVM.IRModule (
+  IRAttribute (..),
+  IRBlock (..),
+  IRBlockItem (..),
+  IRFunction (..),
+  IRLinkage (..),
+  IRModule (..),
+ )
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
 import LLVM.IRType (IRType (..))
 

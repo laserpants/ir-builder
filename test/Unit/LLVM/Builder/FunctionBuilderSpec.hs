@@ -2,13 +2,12 @@
 
 module Unit.LLVM.Builder.FunctionBuilderSpec (spec) where
 
-import LLVM.IRAnnotation (IRAnnotation (..))
-import LLVM.IRBuilder.FunctionBuilder
+import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..), appendFunctionBuilderBlock)
 import LLVM.IRInstruction (IRInstrOp (..), IRInstruction (..))
-import LLVM.IRModule (IRBlock (..), IRBlockItem (..), IRLinkage (..))
+import LLVM.IRModule (IRBlock (..), IRLinkage (..))
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
 import LLVM.IRType (IRType (..))
-import Test.Hspec
+import Test.Hspec (Spec, describe, it, shouldBe)
 
 emptyFB :: FunctionBuilder
 emptyFB =
@@ -62,8 +61,10 @@ spec = describe "LLVM.IRBuilder.FunctionBuilder" $ do
       length (functionBuilderBlocks fb) `shouldBe` 1
 
     it "appends blocks in order" $ do
-      let fb = appendFunctionBuilderBlock testBlock2
-                 (appendFunctionBuilderBlock testBlock emptyFB)
+      let fb =
+            appendFunctionBuilderBlock
+              testBlock2
+              (appendFunctionBuilderBlock testBlock emptyFB)
       map blockLabel (functionBuilderBlocks fb) `shouldBe` ["entry", "exit"]
 
     it "does not affect other fields" $ do

@@ -13,8 +13,8 @@ import Test.Hspec (Spec, describe, it, shouldBe)
 
 execBuilder :: IRBuilder a -> IRBuilderEnv -> IRBuilderEnv
 execBuilder b env = snd $ runState (iterT interpretF (unpackIRBuilder b)) env
-  where
-    interpretF _ = error "unexpected effect"
+ where
+  interpretF _ = error "unexpected effect"
 
 currentTerminator :: IRBuilderEnv -> Maybe IRTerminator
 currentTerminator env = blockBuilderTerminator =<< builderEnvCurrentBlock env

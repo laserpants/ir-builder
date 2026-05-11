@@ -63,8 +63,10 @@ spec = describe "LLVM.IRBuilder.BlockBuilder" $ do
       blockBuilderTerminator b `shouldBe` Just (IBr "exit")
 
     it "overwrites a previous terminator" $ do
-      let b = setBlockBuilderTerminator (IBr "other")
-                (setBlockBuilderTerminator (IBr "first") emptyBlock)
+      let b =
+            setBlockBuilderTerminator
+              (IBr "other")
+              (setBlockBuilderTerminator (IBr "first") emptyBlock)
       blockBuilderTerminator b `shouldBe` Just (IBr "other")
 
     it "does not affect existing items" $ do

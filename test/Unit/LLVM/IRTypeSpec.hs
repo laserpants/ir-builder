@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Unit.LLVM.IRTypeSpec where
+module Unit.LLVM.IRTypeSpec (spec) where
 
 import Fixtures.TestData
 import LLVM.IRType
-import Test.Hspec
+import Test.Hspec (Spec, describe, it, shouldBe, shouldNotBe)
 
 spec :: Spec
 spec = describe "LLVM.IRType" $ do

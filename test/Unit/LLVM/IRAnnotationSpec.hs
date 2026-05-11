@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Unit.LLVM.IRAnnotationSpec where
+module Unit.LLVM.IRAnnotationSpec (spec) where
 
 import LLVM.IRAnnotation (IRAnnotation (Comment, CommentBlock))
 import Test.Hspec (Spec, describe, it, shouldBe)

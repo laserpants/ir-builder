@@ -1,14 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Unit.LLVM.IROperandSpec where
+module Unit.LLVM.IROperandSpec (spec) where
 
 import Fixtures.TestData
 import LLVM.IROperand
-  ( IRConstant (CInt),
-    IROperand (OConstant, OGlobal, OLocal),
-    IRTerminator (IBr, ICondBr, IRet, ISwitch, IUnreachable),
-    opComponents,
-  )
 import Test.Hspec (Spec, describe, it, shouldBe)
 
 spec :: Spec

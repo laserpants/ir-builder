@@ -17,11 +17,11 @@ import Test.Hspec (Spec, describe, expectationFailure, it, shouldBe)
 
 runBuilder :: IRBuilder a -> IRBuilderEnv -> (a, IRBuilderEnv)
 runBuilder b env = runState (iterT interpretF (unpackIRBuilder b)) env
-  where
-    interpretF (EmitInstr instr next) =
-      modify (mapBuilderEnvCurrentBlock (appendBlockBuilderItem (BlockInstr instr))) >> next
-    interpretF (EmitAnnotation ann next) =
-      modify (mapBuilderEnvCurrentBlock (appendBlockBuilderItem (BlockAnnotation ann))) >> next
+ where
+  interpretF (EmitInstr instr next) =
+    modify (mapBuilderEnvCurrentBlock (appendBlockBuilderItem (BlockInstr instr))) >> next
+  interpretF (EmitAnnotation ann next) =
+    modify (mapBuilderEnvCurrentBlock (appendBlockBuilderItem (BlockAnnotation ann))) >> next
 
 execBuilder :: IRBuilder a -> IRBuilderEnv -> IRBuilderEnv
 execBuilder b = snd . runBuilder b
@@ -32,19 +32,19 @@ evalBuilder b = fst . runBuilder b
 testFB :: FunctionBuilder
 testFB =
   FunctionBuilder
-    { functionBuilderName = "test",
-      functionBuilderLinkage = LExternal,
-      functionBuilderRetType = TInt 32,
-      functionBuilderArgs = [],
-      functionBuilderBlocks = [],
-      functionBuilderAttributes = []
+    { functionBuilderName = "test"
+    , functionBuilderLinkage = LExternal
+    , functionBuilderRetType = TInt 32
+    , functionBuilderArgs = []
+    , functionBuilderBlocks = []
+    , functionBuilderAttributes = []
     }
 
 testInstr :: IRInstruction
 testInstr =
   IRInstruction
-    { instrResult = Just ("r", TInt 32),
-      instrOp = IAdd (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b")
+    { instrResult = Just ("r", TInt 32)
+    , instrOp = IAdd (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b")
     }
 
 spec :: Spec
@@ -83,8 +83,10 @@ spec = describe "LLVM.IRBuilder" $ do
     it "records the function name" $ do
       let env = execBuilder (beginFunction testFB >> beginBlock "entry" >> setTerminator (IRet (OConstant (CInt 32 0))) >> endFunction) emptyIRBuilderEnv
       case builderEnvFunctions env of
-        [f] -> functionBuilderName (FunctionBuilder "test" LExternal (TInt 32) [] [] []) `shouldBe` "test"
-        _ -> expectationFailure "expected exactly one function"
+        [_] ->
+          functionBuilderName (FunctionBuilder "test" LExternal (TInt 32) [] [] []) `shouldBe` "test"
+        _ ->
+          expectationFailure "expected exactly one function"
 
     it "clears current function after endFunction" $ do
       let env = execBuilder (beginFunction testFB >> beginBlock "entry" >> setTerminator (IRet (OConstant (CInt 32 0))) >> endFunction) emptyIRBuilderEnv

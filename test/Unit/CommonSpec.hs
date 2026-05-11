@@ -1,9 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Unit.CommonSpec where
+module Unit.CommonSpec (spec) where
 
 import Common (Name)
-import Test.Hspec
+import Test.Hspec (Spec, describe, it, shouldBe)
 
 spec :: Spec
 spec = describe "Common.Name" $ do

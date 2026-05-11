@@ -1,53 +1,53 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Fixtures.TestData
-  ( -- * Types
-    typeI1,
-    typeI8,
-    typeI32,
-    typeI64,
-    typeFloat,
-    typeDouble,
-    typeVoid,
-    typePtr,
-    typePtr32,
-    typeArray,
-    typeStruct,
-    typeVector,
+module Fixtures.TestData (
+  -- * Types
+  typeI1,
+  typeI8,
+  typeI32,
+  typeI64,
+  typeFloat,
+  typeDouble,
+  typeVoid,
+  typePtr,
+  typePtr32,
+  typeArray,
+  typeStruct,
+  typeVector,
 
-    -- * Operands
-    operandLocal32,
-    operandLocal64,
-    operandGlobal32,
-    operandConstInt,
-    operandConstFloat,
+  -- * Operands
+  operandLocal32,
+  operandLocal64,
+  operandGlobal32,
+  operandConstInt,
+  operandConstFloat,
 
-    -- * Constants
-    constInt32,
-    constFloat,
-    constDouble,
-    constNull,
-    constStruct,
+  -- * Constants
+  constInt32,
+  constFloat,
+  constDouble,
+  constNull,
+  constStruct,
 
-    -- * Names
-    nameA,
-    nameB,
-    nameC,
-    nameBlock,
-    nameFunc,
+  -- * Names
+  nameA,
+  nameB,
+  nameC,
+  nameBlock,
+  nameFunc,
 
-    -- * Instruction operations
-    instrAdd,
-    instrSub,
-    instrMul,
-    instrLoad,
-    instrStore,
+  -- * Instruction operations
+  instrAdd,
+  instrSub,
+  instrMul,
+  instrLoad,
+  instrStore,
 
-    -- * Terminators
-    termRet,
-    termBr,
-    termCondBr,
-  )
+  -- * Terminators
+  termRet,
+  termBr,
+  termCondBr,
+)
 where
 
 import Common (Name)

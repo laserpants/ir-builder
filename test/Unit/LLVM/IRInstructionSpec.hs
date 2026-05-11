@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Unit.LLVM.IRInstructionSpec where
+module Unit.LLVM.IRInstructionSpec (spec) where
 
 import Fixtures.TestData
 import LLVM.IRInstruction
@@ -17,22 +17,22 @@ spec = describe "LLVM.IRInstruction" $ do
   describe "IRFCmpCond" $ do
     it "creates all fcmp conditions" $ do
       length
-        [ FCmpOEq,
-          FCmpOGt,
-          FCmpOGe,
-          FCmpOLt,
-          FCmpOLe,
-          FCmpONe,
-          FCmpUeq,
-          FCmpUGt,
-          FCmpUGe,
-          FCmpULt,
-          FCmpULe,
-          FCmpUNe,
-          FCmpOrd,
-          FCmpUno,
-          FCmpTrue,
-          FCmpFalse
+        [ FCmpOEq
+        , FCmpOGt
+        , FCmpOGe
+        , FCmpOLt
+        , FCmpOLe
+        , FCmpONe
+        , FCmpUeq
+        , FCmpUGt
+        , FCmpUGe
+        , FCmpULt
+        , FCmpULe
+        , FCmpUNe
+        , FCmpOrd
+        , FCmpUno
+        , FCmpTrue
+        , FCmpFalse
         ]
         `shouldBe` 16
 
@@ -50,23 +50,23 @@ spec = describe "LLVM.IRInstruction" $ do
     it "creates instructions with results" $ do
       let instr =
             IRInstruction
-              { instrResult = Just ("result", typeI32),
-                instrOp = instrAdd
+              { instrResult = Just ("result", typeI32)
+              , instrOp = instrAdd
               }
       instr
         `shouldBe` IRInstruction
-          { instrResult = Just ("result", typeI32),
-            instrOp = instrAdd
+          { instrResult = Just ("result", typeI32)
+          , instrOp = instrAdd
           }
 
     it "creates instructions without results" $ do
       let instr =
             IRInstruction
-              { instrResult = Nothing,
-                instrOp = instrStore
+              { instrResult = Nothing
+              , instrOp = instrStore
               }
       instr
         `shouldBe` IRInstruction
-          { instrResult = Nothing,
-            instrOp = instrStore
+          { instrResult = Nothing
+          , instrOp = instrStore
           }

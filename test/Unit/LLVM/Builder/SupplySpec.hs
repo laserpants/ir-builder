@@ -2,20 +2,20 @@
 
 module Unit.LLVM.Builder.SupplySpec (spec) where
 
-import Control.Monad.State (evalState, execState, runState)
+import Control.Monad.State (runState)
+import Control.Monad.Trans.Free (iterT)
 import Data.List (nub)
 import LLVM.IRBuilder (IRBuilder, unpackIRBuilder)
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv)
 import LLVM.IRBuilder.Supply (fresh, freshOperand)
 import LLVM.IROperand (IROperand (..))
 import LLVM.IRType (IRType (..))
-import Control.Monad.Trans.Free (iterT)
-import Test.Hspec
+import Test.Hspec (Spec, describe, expectationFailure, it, shouldBe)
 
 runBuilder :: IRBuilder a -> IRBuilderEnv -> (a, IRBuilderEnv)
 runBuilder b env = runState (iterT interpretF (unpackIRBuilder b)) env
-  where
-    interpretF _ = error "unexpected effect in supply test"
+ where
+  interpretF _ = error "unexpected effect in supply test"
 
 evalBuilder :: IRBuilder a -> IRBuilderEnv -> a
 evalBuilder b env = fst (runBuilder b env)

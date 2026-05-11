@@ -1,13 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Unit.LLVM.IRModuleSpec where
+module Unit.LLVM.IRModuleSpec (spec) where
 
 import Fixtures.Builders
-import Fixtures.TestData
 import LLVM.IRModule
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
 import LLVM.IRType (IRType (..))
-import Test.Hspec
+import Test.Hspec (Spec, describe, it, shouldBe, shouldSatisfy)
 
 spec :: Spec
 spec = describe "LLVM.IRModule" $ do
@@ -38,12 +37,13 @@ spec = describe "LLVM.IRModule" $ do
     it "accepts a valid multi-block function" $ do
       let block1 = buildBlockWithTerminator "entry" (IBr "exit")
           block2 = buildBlockWithTerminator "exit" (IRet (OConstant (CInt 32 0)))
-          m = IRModule
-                { moduleName = "multi"
-                , moduleDecls = []
-                , moduleGlobals = []
-                , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
-                }
+          m =
+            IRModule
+              { moduleName = "multi"
+              , moduleDecls = []
+              , moduleGlobals = []
+              , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
+              }
       verifyModule m `shouldBe` Right ()
 
     it "rejects duplicate block names" $ do
@@ -58,34 +58,37 @@ spec = describe "LLVM.IRModule" $ do
       let block1 = buildBlockWithTerminator "entry" (ICondBr (OConstant (CInt 1 1)) "then" "else")
           block2 = buildBlockWithTerminator "then" (IRet (OConstant (CInt 32 1)))
           block3 = buildBlockWithTerminator "else" (IRet (OConstant (CInt 32 0)))
-          m = IRModule
-                { moduleName = "condbr"
-                , moduleDecls = []
-                , moduleGlobals = []
-                , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2, block3]]
-                }
+          m =
+            IRModule
+              { moduleName = "condbr"
+              , moduleDecls = []
+              , moduleGlobals = []
+              , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2, block3]]
+              }
       verifyModule m `shouldBe` Right ()
 
     it "rejects conditional branch with invalid 'then' target" $ do
       let block1 = buildBlockWithTerminator "entry" (ICondBr (OConstant (CInt 1 1)) "invalid" "else")
           block2 = buildBlockWithTerminator "else" (IRet (OConstant (CInt 32 0)))
-          m = IRModule
-                { moduleName = "bad_condbr"
-                , moduleDecls = []
-                , moduleGlobals = []
-                , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
-                }
+          m =
+            IRModule
+              { moduleName = "bad_condbr"
+              , moduleDecls = []
+              , moduleGlobals = []
+              , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
+              }
       verifyModule m `shouldSatisfy` isLeft
 
     it "accepts switch with valid default" $ do
       let block1 = buildBlockWithTerminator "entry" (ISwitch (OConstant (CInt 32 1)) "default" [])
           block2 = buildBlockWithTerminator "default" (IRet (OConstant (CInt 32 0)))
-          m = IRModule
-                { moduleName = "switch"
-                , moduleDecls = []
-                , moduleGlobals = []
-                , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
-                }
+          m =
+            IRModule
+              { moduleName = "switch"
+              , moduleDecls = []
+              , moduleGlobals = []
+              , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
+              }
       verifyModule m `shouldBe` Right ()
 
 isLeft :: Either a b -> Bool
