@@ -57,7 +57,7 @@ spec = describe "LLVM.IRRenderer" $ do
       out `shouldContain` "define"
       out `shouldContain` "@main"
       out `shouldContain` "entry:"
-      out `shouldContain` "ret"
+      out `shouldContain` "ret i32"
 
     it "renders function return type" $ do
       let out = render singleFuncModule
@@ -173,7 +173,7 @@ spec = describe "LLVM.IRRenderer" $ do
       let instr =
             IRInstruction
               { instrResult = Nothing
-              , instrOp = IStore (OLocal (TInt 32) "v") (OGlobal (TPtr (TInt 32)) "g")
+              , instrOp = IStore (OLocal (TInt 32) "v") (OGlobal TPtr "g")
               }
           m =
             minimalModule
@@ -182,12 +182,42 @@ spec = describe "LLVM.IRRenderer" $ do
                   ]
               }
       let out = render m
-      out `shouldContain` "store"
+      out `shouldContain` "store i32 %v, ptr @g"
+
+    it "renders load instruction" $ do
+      let instr =
+            IRInstruction
+              { instrResult = Just ("r", TInt 32)
+              , instrOp = ILoad (TInt 32) (OGlobal TPtr "g")
+              }
+          m =
+            minimalModule
+              { moduleFunctions =
+                  [ IRFunction "f" LExternal (TInt 32) [] [IRBlock "entry" [BlockInstr instr] (IRet (OLocal (TInt 32) "r"))] []
+                  ]
+              }
+      let out = render m
+      out `shouldContain` "load i32, ptr @g"
+
+    it "renders call instruction with typed arguments" $ do
+      let instr =
+            IRInstruction
+              { instrResult = Nothing
+              , instrOp = ICall NoTail (TInt 32) (OGlobal (TInt 32) "puts") [OLocal TPtr "s"]
+              }
+          m =
+            minimalModule
+              { moduleFunctions =
+                  [ IRFunction "f" LExternal TVoid [] [IRBlock "entry" [BlockInstr instr] IUnreachable] []
+                  ]
+              }
+      let out = render m
+      out `shouldContain` "call i32 @puts(ptr %s)"
 
   describe "renderModule - terminators" $ do
     it "renders ret terminator" $ do
       let out = render singleFuncModule
-      out `shouldContain` "ret"
+      out `shouldContain` "ret i32"
 
     it "renders br terminator" $ do
       let m =

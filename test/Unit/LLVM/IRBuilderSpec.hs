@@ -16,11 +16,11 @@ import Test.Hspec (Spec, describe, expectationFailure, it, shouldBe)
 
 runBuilder :: IRBuilder a -> IRBuilderEnv -> (a, IRBuilderEnv)
 runBuilder b env = runState (iterT interpretF (unpackIRBuilder b)) env
-  where
-    interpretF (EmitInstr instr next) =
-      modify (mapBuilderEnvCurrentBlock (appendBlockBuilderItem (BlockInstr instr))) >> next
-    interpretF (EmitAnnotation ann next) =
-      modify (mapBuilderEnvCurrentBlock (appendBlockBuilderItem (BlockAnnotation ann))) >> next
+ where
+  interpretF (EmitInstr instr next) =
+    modify (mapBuilderEnvCurrentBlock (appendBlockBuilderItem (BlockInstr instr))) >> next
+  interpretF (EmitAnnotation ann next) =
+    modify (mapBuilderEnvCurrentBlock (appendBlockBuilderItem (BlockAnnotation ann))) >> next
 
 execBuilder :: IRBuilder a -> IRBuilderEnv -> IRBuilderEnv
 execBuilder b = snd . runBuilder b
@@ -28,12 +28,12 @@ execBuilder b = snd . runBuilder b
 testFB :: FunctionBuilder
 testFB =
   FunctionBuilder
-    { functionBuilderName = "test",
-      functionBuilderLinkage = LExternal,
-      functionBuilderRetType = TInt 32,
-      functionBuilderArgs = [],
-      functionBuilderBlocks = [],
-      functionBuilderAttributes = []
+    { functionBuilderName = "test"
+    , functionBuilderLinkage = LExternal
+    , functionBuilderRetType = TInt 32
+    , functionBuilderArgs = []
+    , functionBuilderBlocks = []
+    , functionBuilderAttributes = []
     }
 
 spec :: Spec

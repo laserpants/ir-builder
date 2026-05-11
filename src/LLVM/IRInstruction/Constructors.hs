@@ -163,7 +163,7 @@ fcmp cc t a b = emitWithResult i1 (IFCmp cc t a b)
 
 -- | Allocate space on the stack for a value of the given type.
 alloca :: IRType -> IROperand -> IRBuilder IROperand
-alloca t op = emitWithResult (TPtr t) (IAlloca t op)
+alloca t op = emitWithResult TPtr (IAlloca t op)
 
 -- | Load a value from memory.
 load :: IRType -> IROperand -> IRBuilder IROperand
@@ -175,7 +175,7 @@ store op ptr = emitVoid (IStore op ptr)
 
 -- | Compute a GEP (get element pointer) address.
 gep :: IRType -> IROperand -> IROperand -> IROperand -> IRBuilder IROperand
-gep t base idx0 idx1 = emitWithResult (TPtr t) (IGep t base idx0 idx1)
+gep t base idx0 idx1 = emitWithResult TPtr (IGep t base idx0 idx1)
 
 -- * Type Casts
 

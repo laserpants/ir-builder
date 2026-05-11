@@ -10,7 +10,7 @@ data IRType
   | TDouble
   | TVoid
   | TFun IRType [IRType]
-  | TPtr IRType
+  | TPtr
   | TStruct [IRType]
   | TArray Int IRType
   | TNamed Name

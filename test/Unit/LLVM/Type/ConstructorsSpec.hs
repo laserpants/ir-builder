@@ -25,23 +25,10 @@ spec = describe "LLVM.IRType.Constructors" $ do
       i64 `shouldBe` TInt 64
 
   describe "ptr" $ do
-    it "wraps a type in TPtr" $
-      ptr (TInt 32) `shouldBe` TPtr (TInt 32)
-
-    it "works with nested pointer types" $
-      ptr (ptr (TInt 8)) `shouldBe` TPtr (TPtr (TInt 8))
-
-    it "works with float" $
-      ptr TFloat `shouldBe` TPtr TFloat
-
-  describe "i8Ptr" $
-    it "produces TPtr (TInt 8)" $
-      i8Ptr `shouldBe` TPtr (TInt 8)
+    it "produces TPtr" $
+      ptr `shouldBe` TPtr
 
   describe "consistency" $ do
-    it "i8Ptr equals ptr i8" $
-      i8Ptr `shouldBe` ptr i8
-
     it "all integer constructors produce distinct types" $ do
       let types = [i1, i8, i32, i64]
       length types `shouldBe` length (foldr (\t acc -> if t `elem` acc then acc else t : acc) [] types)

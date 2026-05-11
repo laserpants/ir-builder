@@ -2,7 +2,7 @@
 
 module Main (main) where
 
-import qualified Data.Text.IO 
+import qualified Data.Text.IO
 import LLVM.IRBuilder
 import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..))
 import LLVM.IRInstruction (IRTailMarker (..))
@@ -24,12 +24,12 @@ helloWorld = do
   -- define i32 @main()
   defineFunction
     FunctionBuilder
-      { functionBuilderName = "main",
-        functionBuilderLinkage = LExternal,
-        functionBuilderRetType = i32,
-        functionBuilderArgs = [],
-        functionBuilderBlocks = [],
-        functionBuilderAttributes = []
+      { functionBuilderName = "main"
+      , functionBuilderLinkage = LExternal
+      , functionBuilderRetType = i32
+      , functionBuilderArgs = []
+      , functionBuilderBlocks = []
+      , functionBuilderAttributes = []
       }
     $ do
       beginBlock "entry"
@@ -38,7 +38,7 @@ helloWorld = do
       strPtr <-
         gep
           (TArray 14 i8)
-          (OGlobal (TPtr (TArray 14 i8)) ".str")
+          (OGlobal TPtr ".str")
           (OConstant (CInt 32 0))
           (OConstant (CInt 32 0))
 

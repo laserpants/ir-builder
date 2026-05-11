@@ -79,10 +79,10 @@ typeVoid :: IRType
 typeVoid = TVoid
 
 typePtr :: IRType
-typePtr = TPtr (TInt 32)
+typePtr = TPtr
 
 typePtr32 :: IRType
-typePtr32 = TPtr (TInt 32)
+typePtr32 = TPtr
 
 typeArray :: IRType
 typeArray = TArray 10 (TInt 32)

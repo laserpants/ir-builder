@@ -24,8 +24,8 @@ spec = describe "LLVM.IRType" $ do
 
   describe "TPtr" $ do
     it "creates pointer types" $ do
-      typePtr `shouldBe` TPtr (TInt 32)
-      TPtr TFloat `shouldBe` TPtr TFloat
+      typePtr `shouldBe` TPtr
+      TPtr `shouldBe` TPtr
 
   describe "TArray" $ do
     it "creates array types" $ do

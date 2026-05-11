@@ -4,7 +4,6 @@ module LLVM.IRType.Constructors (
   i32,
   i64,
   ptr,
-  i8Ptr,
   void,
 )
 where
@@ -28,12 +27,8 @@ i64 :: IRType
 i64 = TInt 64
 
 {-# INLINE ptr #-}
-ptr :: IRType -> IRType
+ptr :: IRType
 ptr = TPtr
-
-{-# INLINE i8Ptr #-}
-i8Ptr :: IRType
-i8Ptr = ptr i8
 
 {-# INLINE void #-}
 void :: IRType

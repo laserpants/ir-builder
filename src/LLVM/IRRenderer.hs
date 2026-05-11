@@ -238,11 +238,12 @@ renderInstrOp =
       aStr <- renderOperand a
       bStr <- renderOperand b
       pure $ "fcmp " <> renderFCmpCond cond <> " " <> tyStr <> " " <> aStr <> ", " <> bStr
-    ILoad _typ ptr -> do
+    ILoad typ ptr -> do
+      tyStr <- renderType typ
       ptrStr <- renderOperand ptr
-      pure $ "load ptr " <> ptrStr
+      pure $ "load " <> tyStr <> ", ptr " <> ptrStr
     IStore val ptr -> do
-      valStr <- renderOperand val
+      valStr <- renderTypedOperand val
       ptrStr <- renderOperand ptr
       pure $ "store " <> valStr <> ", ptr " <> ptrStr
     IAlloca typ n -> do
@@ -282,7 +283,7 @@ renderInstrOp =
     ICall marker retTy fn args -> do
       retTyStr <- renderType retTy
       fnStr <- renderOperand fn
-      argsStrs <- mapM renderOperand args
+      argsStrs <- mapM renderTypedOperand args
       let callStr = "call " <> tailMarkerStr marker <> retTyStr <> " " <> fnStr <> "(" <> Text.intercalate ", " argsStrs <> ")"
       pure callStr
      where
@@ -310,7 +311,7 @@ renderTerminator :: IRTerminator -> IRRenderer Text
 renderTerminator =
   \case
     IRet op -> do
-      opStr <- renderOperand op
+      opStr <- renderTypedOperand op
       pure $ "ret " <> opStr
     IBr target ->
       pure $ "br label %" <> target
@@ -318,9 +319,9 @@ renderTerminator =
       condStr <- renderOperand cond
       pure $ "br i1 " <> condStr <> ", label %" <> t <> ", label %" <> f
     ISwitch val default_ cases -> do
-      valStr <- renderOperand val
+      valStr <- renderTypedOperand val
       casesStrs <- mapM renderSwitchCase cases
-      pure $ "switch i32 " <> valStr <> ", label %" <> default_ <> " [" <> Text.unlines casesStrs <> "  ]"
+      pure $ "switch " <> valStr <> ", label %" <> default_ <> " [" <> Text.unlines casesStrs <> "  ]"
      where
       renderSwitchCase (caseVal, caseTarget) = do
         caseValStr <- renderConstant caseVal
@@ -328,7 +329,7 @@ renderTerminator =
     IUnreachable ->
       pure "unreachable"
 
--- | Render an operand
+-- | Render an operand without its type (used where the type is already stated by the op)
 renderOperand :: IROperand -> IRRenderer Text
 renderOperand =
   \case
@@ -338,6 +339,32 @@ renderOperand =
       pure $ "@" <> name
     OConstant c ->
       renderConstant c
+
+-- | Render an operand prefixed with its type (used in ret, call args, store value)
+renderTypedOperand :: IROperand -> IRRenderer Text
+renderTypedOperand op = do
+  tyStr <- renderType (operandType op)
+  opStr <- renderOperand op
+  pure $ tyStr <> " " <> opStr
+
+-- | Extract the type of an operand
+operandType :: IROperand -> IRType
+operandType =
+  \case
+    OLocal t _ -> t
+    OGlobal t _ -> t
+    OConstant c -> constantType c
+
+-- | Derive the type of a constant
+constantType :: IRConstant -> IRType
+constantType =
+  \case
+    CInt n _ -> TInt n
+    CFloat _ -> TFloat
+    CDouble _ -> TDouble
+    CNull t -> t
+    CStruct cs -> TStruct (map constantType cs)
+    CArray t _ -> t
 
 -- | Render a type
 renderType :: IRType -> IRRenderer Text
@@ -351,7 +378,7 @@ renderType =
       pure "double"
     TVoid ->
       pure "void"
-    TPtr _t ->
+    TPtr ->
       pure "ptr"
     TStruct ts -> do
       tsStrs <- mapM renderType ts

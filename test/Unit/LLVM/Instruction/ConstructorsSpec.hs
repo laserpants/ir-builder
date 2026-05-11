@@ -153,16 +153,16 @@ spec = describe "LLVM.IRInstruction.Constructors" $ do
           (result, items) = runInstrBuilder (alloca (TInt 32) n)
       lastInstrOp items `shouldBe` Just (IAlloca (TInt 32) n)
       case result of
-        OLocal (TPtr (TInt 32)) _ -> pure ()
-        _ -> expectationFailure "expected OLocal (TPtr (TInt 32))"
+        OLocal TPtr _ -> pure ()
+        _ -> expectationFailure "expected OLocal TPtr"
 
     it "load emits ILoad" $ do
-      let ptr = OGlobal (TPtr (TInt 32)) "g"
+      let ptr = OGlobal TPtr "g"
           (_, items) = runInstrBuilder (load (TInt 32) ptr)
       lastInstrOp items `shouldBe` Just (ILoad (TInt 32) ptr)
 
     it "store emits IStore with no result" $ do
-      let ptr = OGlobal (TPtr (TInt 32)) "g"
+      let ptr = OGlobal TPtr "g"
           initialEnv =
             emptyIRBuilderEnv
               { builderEnvCurrentBlock =
@@ -176,14 +176,14 @@ spec = describe "LLVM.IRInstruction.Constructors" $ do
       lastInstrOp items `shouldBe` Just (IStore a32 ptr)
 
     it "gep emits IGep and returns ptr" $ do
-      let base = OGlobal (TPtr (TInt 32)) "arr"
+      let base = OGlobal TPtr "arr"
           idx0 = OConstant (CInt 32 0)
           idx1 = OConstant (CInt 32 1)
           (result, items) = runInstrBuilder (gep (TInt 32) base idx0 idx1)
       lastInstrOp items `shouldBe` Just (IGep (TInt 32) base idx0 idx1)
       case result of
-        OLocal (TPtr (TInt 32)) _ -> pure ()
-        _ -> expectationFailure "expected OLocal (TPtr (TInt 32))"
+        OLocal TPtr _ -> pure ()
+        _ -> expectationFailure "expected OLocal TPtr"
 
   describe "Casts" $ do
     it "bitcast emits IBitcast" $ do
@@ -203,11 +203,11 @@ spec = describe "LLVM.IRInstruction.Constructors" $ do
       lastInstrOp items `shouldBe` Just (ITrunc a32 (TInt 8))
 
     it "inttoptr emits IInttoptr" $ do
-      let (_, items) = runInstrBuilder (inttoptr a32 (TPtr (TInt 8)))
-      lastInstrOp items `shouldBe` Just (IInttoptr a32 (TPtr (TInt 8)))
+      let (_, items) = runInstrBuilder (inttoptr a32 TPtr)
+      lastInstrOp items `shouldBe` Just (IInttoptr a32 TPtr)
 
     it "ptrtoint emits IPtrtoint" $ do
-      let ptrOp = OLocal (TPtr (TInt 8)) "p"
+      let ptrOp = OLocal TPtr "p"
           (_, items) = runInstrBuilder (ptrtoint ptrOp (TInt 64))
       lastInstrOp items `shouldBe` Just (IPtrtoint ptrOp (TInt 64))
 
