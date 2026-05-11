@@ -5,11 +5,11 @@ module Examples.Factorial (factorialModule) where
 
 import LLVM.IRBuilder
 import LLVM.IRInstruction (IRICmpCond (..), IRTailMarker (..))
-import LLVM.IRInstruction.Constructors (call, icmp, mul, phi, sub, trunc)
-import LLVM.IRModule (IRLinkage (..))
+import LLVM.IRInstruction.Constructors (call, callVoid, icmp, mul, phi, sub)
+import LLVM.IRModule (IRGlobal (..), IRLinkage (..))
 import LLVM.IROperand (IRConstant (..), IROperand (..))
 import LLVM.IRTerminator.Constructors (br, condbr, ret)
-import LLVM.IRType.Constructors (i32, i64)
+import LLVM.IRType.Constructors (i32, i64, ptr)
 
 -- | Build LLVM IR for a 64-bit iterative factorial function plus a @main
 -- that calls @fact(5) and returns the result.
@@ -35,11 +35,15 @@ import LLVM.IRType.Constructors (i32, i64)
 -- > define i32 @main() {
 -- > entry:
 -- >   %6 = call i64 @fact(i64 5)
--- >   %7 = trunc i64 %6 to i32
--- >   ret i32 %7
+-- >   call i32 (ptr, ...) @printf(ptr @.fmt, i64 %6)
+-- >   ret i32 0
 -- > }
 factorialModule :: IRBuilder ()
 factorialModule = do
+  emitGlobal (IRExtern "printf" i32 [ptr])
+
+  emitGlobal (IRString LPrivate ".fmt" "fact(5) = %ld\n\0")
+
   define i64 "fact" [(i64, "n")] LExternal [] $ mdo
     beginBlock "entry"
     br "loop"
@@ -61,5 +65,5 @@ factorialModule = do
   define i32 "main" [] LExternal [] $ do
     beginBlock "entry"
     result <- call NoTail i64 (OGlobal i64 "fact") [OConstant (CInt 64 5)]
-    result32 <- trunc result i32
-    ret result32
+    callVoid NoTail i32 (OGlobal i32 "printf") [OGlobal ptr ".fmt", result]
+    ret (OConstant (CInt 32 0))
