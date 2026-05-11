@@ -16,6 +16,9 @@ import LLVM.IRType.Constructors (i32, i64, ptr)
 --
 -- Emits:
 --
+-- > @.fmt = private constant [15 x i8] c"fact(5) = %ld\0a\00"
+-- > declare i32 @printf(ptr)
+-- >
 -- > define i64 @fact(i64 %n) {
 -- > entry:
 -- >   br label %loop
