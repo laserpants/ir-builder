@@ -8,7 +8,7 @@ import LLVM.IRBuilder (IRBuilder, beginBlock, unpackIRBuilder)
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv)
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
-import LLVM.IRTerminator.Constructors
+import LLVM.IRTerminator.Constructors (br, condbr, ret, switch, unreachable)
 import Test.Hspec (Spec, describe, it, shouldBe)
 
 execBuilder :: IRBuilder a -> IRBuilderEnv -> IRBuilderEnv

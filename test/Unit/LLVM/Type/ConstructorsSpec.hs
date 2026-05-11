@@ -3,8 +3,8 @@
 module Unit.LLVM.Type.ConstructorsSpec (spec) where
 
 import LLVM.IRType (IRType (..))
-import LLVM.IRType.Constructors
-import Test.Hspec
+import LLVM.IRType.Constructors (i1, i32, i64, i8, ptr)
+import Test.Hspec (Spec, describe, it, shouldBe)
 
 spec :: Spec
 spec = describe "LLVM.IRType.Constructors" $ do

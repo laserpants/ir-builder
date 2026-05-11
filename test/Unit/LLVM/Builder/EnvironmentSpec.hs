@@ -3,7 +3,7 @@
 module Unit.LLVM.Builder.EnvironmentSpec (spec) where
 
 import LLVM.IRBuilder.Environment
-import Test.Hspec
+import Test.Hspec (Spec, describe, it, shouldBe)
 
 spec :: Spec
 spec = describe "LLVM.IRBuilder.Environment" $ do
