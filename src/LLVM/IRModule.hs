@@ -3,17 +3,17 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StrictData #-}
 
-module LLVM.IRModule
-  ( IRLinkage (..),
-    IRModule (..),
-    IRDecl (..),
-    IRGlobal (..),
-    IRAttribute (..),
-    IRFunction (..),
-    IRBlockItem (..),
-    IRBlock (..),
-    verifyModule,
-  )
+module LLVM.IRModule (
+  IRLinkage (..),
+  IRModule (..),
+  IRDecl (..),
+  IRGlobal (..),
+  IRAttribute (..),
+  IRFunction (..),
+  IRBlockItem (..),
+  IRBlock (..),
+  verifyModule,
+)
 where
 
 import Common (Name)
@@ -35,16 +35,16 @@ data IRLinkage
   deriving (Show, Eq, Ord)
 
 data IRModule = IRModule
-  { moduleName :: Name,
-    moduleDecls :: [IRDecl],
-    moduleGlobals :: [IRGlobal],
-    moduleFunctions :: [IRFunction]
+  { moduleName :: Name
+  , moduleDecls :: [IRDecl]
+  , moduleGlobals :: [IRGlobal]
+  , moduleFunctions :: [IRFunction]
   }
   deriving (Show, Eq, Ord)
 
 data IRDecl = IRDecl
-  { declName :: Name,
-    declType :: IRType
+  { declName :: Name
+  , declType :: IRType
   }
   deriving (Show, Eq, Ord)
 
@@ -71,12 +71,12 @@ data IRAttribute
   deriving (Show, Eq, Ord)
 
 data IRFunction = IRFunction
-  { functionName :: Name,
-    functionLinkage :: IRLinkage,
-    functionRetType :: IRType,
-    functionArgs :: [(IRType, Name)],
-    functionBlocks :: [IRBlock],
-    functionAttributes :: [IRAttribute]
+  { functionName :: Name
+  , functionLinkage :: IRLinkage
+  , functionRetType :: IRType
+  , functionArgs :: [(IRType, Name)]
+  , functionBlocks :: [IRBlock]
+  , functionAttributes :: [IRAttribute]
   }
   deriving (Show, Eq, Ord)
 
@@ -86,14 +86,14 @@ data IRBlockItem
   deriving (Show, Eq, Ord)
 
 data IRBlock = IRBlock
-  { blockLabel :: Name,
-    blockItems :: [IRBlockItem],
-    blockTerminator :: IRTerminator
+  { blockLabel :: Name
+  , blockItems :: [IRBlockItem]
+  , blockTerminator :: IRTerminator
   }
   deriving (Show, Eq, Ord)
 
 verifyModule :: IRModule -> Either String ()
-verifyModule IRModule {moduleFunctions} = mapM_ verifyFunction moduleFunctions
+verifyModule IRModule{moduleFunctions} = mapM_ verifyFunction moduleFunctions
 
 verifyFunction :: IRFunction -> Either String ()
 verifyFunction f = do
@@ -102,7 +102,7 @@ verifyFunction f = do
   verifyBranchTargetsExist f
 
 verifyNoDuplicateBlockNames :: IRFunction -> Either String ()
-verifyNoDuplicateBlockNames IRFunction {functionName, functionBlocks} =
+verifyNoDuplicateBlockNames IRFunction{functionName, functionBlocks} =
   if null duplicates
     then Right ()
     else
@@ -111,12 +111,12 @@ verifyNoDuplicateBlockNames IRFunction {functionName, functionBlocks} =
           ++ Text.unpack functionName
           ++ " has duplicate block names: "
           ++ show (map Text.unpack duplicates)
-  where
-    labels = map blockLabel functionBlocks
-    duplicates = labels \\ nub labels
+ where
+  labels = map blockLabel functionBlocks
+  duplicates = labels \\ nub labels
 
 verifyNoDuplicateSSANames :: IRFunction -> Either String ()
-verifyNoDuplicateSSANames IRFunction {functionName, functionBlocks} =
+verifyNoDuplicateSSANames IRFunction{functionName, functionBlocks} =
   if null duplicates
     then Right ()
     else
@@ -125,12 +125,12 @@ verifyNoDuplicateSSANames IRFunction {functionName, functionBlocks} =
           ++ Text.unpack functionName
           ++ " has duplicate SSA names: "
           ++ show (map Text.unpack duplicates)
-  where
-    ssaNames = concatMap extractSSANamesFromBlock functionBlocks
-    duplicates = ssaNames \\ nub ssaNames
+ where
+  ssaNames = concatMap extractSSANamesFromBlock functionBlocks
+  duplicates = ssaNames \\ nub ssaNames
 
 extractSSANamesFromBlock :: IRBlock -> [Name]
-extractSSANamesFromBlock IRBlock {blockItems} =
+extractSSANamesFromBlock IRBlock{blockItems} =
   concatMap extractSSANamesFromItem blockItems
 
 extractSSANamesFromItem :: IRBlockItem -> [Name]
@@ -140,7 +140,7 @@ extractSSANamesFromItem =
     BlockAnnotation _ -> []
 
 verifyBranchTargetsExist :: IRFunction -> Either String ()
-verifyBranchTargetsExist IRFunction {functionName, functionBlocks} =
+verifyBranchTargetsExist IRFunction{functionName, functionBlocks} =
   if null invalidTargets
     then Right ()
     else
@@ -149,12 +149,12 @@ verifyBranchTargetsExist IRFunction {functionName, functionBlocks} =
           ++ Text.unpack functionName
           ++ " has invalid branch targets: "
           ++ show (map Text.unpack invalidTargets)
-  where
-    validLabels = Set.fromList (map blockLabel functionBlocks)
-    invalidTargets = concatMap (findInvalidBranchTargets validLabels) functionBlocks
+ where
+  validLabels = Set.fromList (map blockLabel functionBlocks)
+  invalidTargets = concatMap (findInvalidBranchTargets validLabels) functionBlocks
 
 findInvalidBranchTargets :: Set Name -> IRBlock -> [Name]
-findInvalidBranchTargets validLabels IRBlock {blockTerminator} =
+findInvalidBranchTargets validLabels IRBlock{blockTerminator} =
   case blockTerminator of
     IBr target ->
       [target | target `Set.notMember` validLabels]
