@@ -16,6 +16,7 @@ module LLVM.IRBuilder
     finalizeCurrentBlock,
     beginFunction,
     endFunction,
+    defineFunction,
     emitInstruction,
     emitAnnotation,
     appendInstruction,
@@ -170,6 +171,13 @@ endFunction = do
         builderEnvFunctions = builderEnvFunctions <> [fun],
         ..
       }
+
+defineFunction :: FunctionBuilder -> IRBuilder a -> IRBuilder a
+defineFunction builder body = do
+  beginFunction builder
+  result <- body
+  endFunction
+  pure result
 
 beginBlock :: Name -> IRBuilder ()
 beginBlock label = do

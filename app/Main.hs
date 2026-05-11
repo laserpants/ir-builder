@@ -5,6 +5,7 @@ module Main (main) where
 import Control.Monad.State (modify)
 import qualified Data.Text.IO as TIO
 import LLVM.IRBuilder
+import LLVM.IRBuilder.Environment (IRBuilderEnv (..))
 import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..))
 import LLVM.IRInstruction (IRTailMarker (..))
 import LLVM.IRInstruction.Constructors (callVoid, gep)
@@ -28,7 +29,7 @@ helloWorld = do
   emitGlobal (IRString LPrivate ".str" "Hello, World!\0")
 
   -- define i32 @main()
-  beginFunction
+  defineFunction
     FunctionBuilder
       { functionBuilderName = "main",
         functionBuilderLinkage = LExternal,
@@ -37,24 +38,22 @@ helloWorld = do
         functionBuilderBlocks = [],
         functionBuilderAttributes = []
       }
+    $ do
+      beginBlock "entry"
 
-  beginBlock "entry"
+      -- %1 = getelementptr [14 x i8], ptr @.str, i32 0, i32 0
+      strPtr <-
+        gep
+          (TArray 14 i8)
+          (OGlobal (TPtr (TArray 14 i8)) ".str")
+          (OConstant (CInt 32 0))
+          (OConstant (CInt 32 0))
 
-  -- %1 = getelementptr [14 x i8], ptr @.str, i32 0, i32 0
-  strPtr <-
-    gep
-      (TArray 14 i8)
-      (OGlobal (TPtr (TArray 14 i8)) ".str")
-      (OConstant (CInt 32 0))
-      (OConstant (CInt 32 0))
+      -- call i32 @puts(%1)
+      callVoid NoTail i32 (OGlobal i32 "puts") [strPtr]
 
-  -- call i32 @puts(%1)
-  callVoid NoTail i32 (OGlobal i32 "puts") [strPtr]
-
-  -- ret i32 0
-  ret (OConstant (CInt 32 0))
-
-  endFunction
+      -- ret i32 0
+      ret (OConstant (CInt 32 0))
 
 main :: IO ()
 main = TIO.putStrLn (compileModule "hello_world" helloWorld)
