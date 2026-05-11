@@ -11,12 +11,12 @@ import LLVM.IRModule (IRGlobal (..), IRLinkage (..))
 import LLVM.IROperand (IRConstant (..), IROperand (..))
 import LLVM.IRTerminator.Constructors (ret)
 import LLVM.IRType (IRType (..))
-import LLVM.IRType.Constructors (i32, i8)
+import LLVM.IRType.Constructors (i32, i8, ptr)
 
 helloWorld :: IRBuilder ()
 helloWorld = do
-  -- declare i32 @puts(i8*)
-  emitGlobal (IRExtern "puts" i32)
+  -- declare i32 @puts(ptr)
+  emitGlobal (IRExtern "puts" i32 [ptr])
 
   -- @.str = private constant [14 x i8] c"Hello, World!\00"
   emitGlobal (IRString LPrivate ".str" "Hello, World!\0")
@@ -24,12 +24,12 @@ helloWorld = do
   -- define i32 @main()
   defineFunction
     FunctionBuilder
-      { functionBuilderName = "main"
-      , functionBuilderLinkage = LExternal
-      , functionBuilderRetType = i32
-      , functionBuilderArgs = []
-      , functionBuilderBlocks = []
-      , functionBuilderAttributes = []
+      { functionBuilderName = "main",
+        functionBuilderLinkage = LExternal,
+        functionBuilderRetType = i32,
+        functionBuilderArgs = [],
+        functionBuilderBlocks = [],
+        functionBuilderAttributes = []
       }
     $ do
       beginBlock "entry"
