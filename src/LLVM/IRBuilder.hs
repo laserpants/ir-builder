@@ -34,10 +34,9 @@ import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..), appendBlockBuilderItem, s
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv, mapBuilderEnvCurrentBlock)
 import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..), appendFunctionBuilderBlock)
 import LLVM.IRInstruction (IRInstruction)
-import LLVM.IRModule (IRBlock (..), IRBlockItem (..), IRFunction (..), IRLinkage, IRModule (..))
+import LLVM.IRModule (IRBlock (..), IRBlockItem (..), IRFunction (..), IRModule (..))
 import LLVM.IROperand (IRTerminator)
 import LLVM.IRRenderer (renderModule, runIRRenderer)
-import LLVM.IRType (IRType)
 
 data IRBuilderF next
   = EmitInstr IRInstruction next
@@ -123,31 +122,21 @@ buildModule name builder = finalizeModule name env
 compileModule :: Name -> IRBuilder a -> Text
 compileModule name = runIRRenderer . renderModule . buildModule name
 
-beginFunction :: Name -> IRLinkage -> IRType -> [(IRType, Name)] -> IRBuilder ()
-beginFunction name linkage retType args = do
+beginFunction :: FunctionBuilder -> IRBuilder ()
+beginFunction builder = do
   modify finalizeCurrentBlock
 
   IRBuilderEnv{..} <- get
 
   case builderEnvCurrentFunction of
     Just _ ->
-      error "A current function already active"
+      error "A current function is already active"
     Nothing ->
       pure ()
 
-  let fun =
-        FunctionBuilder
-          { functionBuilderName = name
-          , functionBuilderLinkage = linkage
-          , functionBuilderRetType = retType
-          , functionBuilderArgs = args
-          , functionBuilderBlocks = []
-          , functionBuilderAttributes = []
-          }
-
   put $
     IRBuilderEnv
-      { builderEnvCurrentFunction = Just fun
+      { builderEnvCurrentFunction = Just builder
       , builderEnvCurrentBlock = Nothing
       , ..
       }
