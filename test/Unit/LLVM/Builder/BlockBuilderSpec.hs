@@ -8,21 +8,21 @@ import LLVM.IRInstruction (IRInstrOp (..), IRInstruction (..))
 import LLVM.IRModule (IRBlockItem (..))
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
 import LLVM.IRType (IRType (..))
-import Test.Hspec
+import Test.Hspec (Spec, describe, it, shouldBe)
 
 emptyBlock :: BlockBuilder
 emptyBlock =
   BlockBuilder
-    { blockBuilderLabel = "entry"
-    , blockBuilderItems = []
-    , blockBuilderTerminator = Nothing
+    { blockBuilderLabel = "entry",
+      blockBuilderItems = [],
+      blockBuilderTerminator = Nothing
     }
 
 testInstr :: IRInstruction
 testInstr =
   IRInstruction
-    { instrResult = Just ("r", TInt 32)
-    , instrOp = IAdd (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b")
+    { instrResult = Just ("r", TInt 32),
+      instrOp = IAdd (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b")
     }
 
 spec :: Spec
