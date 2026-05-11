@@ -1,12 +1,12 @@
-module LLVM.IRType.Constructors
-  ( i1,
-    i8,
-    i32,
-    i64,
-    ptr,
-    i8Ptr,
-    void,
-  )
+module LLVM.IRType.Constructors (
+  i1,
+  i8,
+  i32,
+  i64,
+  ptr,
+  i8Ptr,
+  void,
+)
 where
 
 import LLVM.IRType (IRType (..))

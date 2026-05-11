@@ -10,7 +10,10 @@ module LLVM.IRBuilder.Environment (
   overBuilderEnvCurrentFunction,
   mapBuilderEnvCurrentFunction,
   clearBuilderEnvCurrentBlock,
-) where
+  overBuilderEnvGlobals,
+  appendBuilderEnvGlobals,
+)
+where
 
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
 import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..))
@@ -80,3 +83,13 @@ clearBuilderEnvCurrentBlock IRBuilderEnv{..} =
     { builderEnvCurrentBlock = Nothing
     , ..
     }
+
+overBuilderEnvGlobals :: ([IRGlobal] -> [IRGlobal]) -> IRBuilderEnv -> IRBuilderEnv
+overBuilderEnvGlobals fn IRBuilderEnv{..} =
+  IRBuilderEnv
+    { builderEnvGlobals = fn builderEnvGlobals
+    , ..
+    }
+
+appendBuilderEnvGlobals :: [IRGlobal] -> IRBuilderEnv -> IRBuilderEnv
+appendBuilderEnvGlobals globals = overBuilderEnvGlobals (<> globals)

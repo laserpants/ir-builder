@@ -2,10 +2,8 @@
 
 module Main (main) where
 
-import Control.Monad.State (modify)
 import qualified Data.Text.IO as TIO
 import LLVM.IRBuilder
-import LLVM.IRBuilder.Environment (IRBuilderEnv (..))
 import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..))
 import LLVM.IRInstruction (IRTailMarker (..))
 import LLVM.IRInstruction.Constructors (callVoid, gep)
@@ -14,11 +12,6 @@ import LLVM.IROperand (IRConstant (..), IROperand (..))
 import LLVM.IRTerminator.Constructors (ret)
 import LLVM.IRType (IRType (..))
 import LLVM.IRType.Constructors (i32, i8)
-
--- | Emit a global declaration into the module being built.
-emitGlobal :: IRGlobal -> IRBuilder ()
-emitGlobal g = modify $ \env ->
-  env {builderEnvGlobals = builderEnvGlobals env <> [g]}
 
 helloWorld :: IRBuilder ()
 helloWorld = do
