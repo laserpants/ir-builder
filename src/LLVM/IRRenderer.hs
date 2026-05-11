@@ -298,7 +298,7 @@ renderInstrOp =
       incomingStrs <- mapM renderPhiIncoming incoming
       pure $ "phi " <> tyStr <> " " <> Text.intercalate ", " (map (\s -> "[ " <> s <> " ]") incomingStrs)
      where
-      renderPhiIncoming (blockName, op) = do
+      renderPhiIncoming (op, blockName) = do
         opStr <- renderOperand op
         pure $ opStr <> ", %" <> blockName
     ISelect typ cond t f -> do

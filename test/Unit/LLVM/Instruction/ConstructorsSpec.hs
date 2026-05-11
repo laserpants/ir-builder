@@ -16,36 +16,36 @@ import LLVM.IRType (IRType (..))
 import Test.Hspec (Spec, describe, expectationFailure, it, shouldBe)
 import Prelude hiding (and, or)
 
-{- | Run a builder action that emits instructions and return the last-emitted operand result
-plus the collected block items via interpretting EmitInstr effects directly
--}
+-- | Run a builder action that emits instructions and return the last-emitted operand result
+-- plus the collected block items via interpretting EmitInstr effects directly
 runInstrBuilder :: IRBuilder IROperand -> (IROperand, [IRBlockItem])
 runInstrBuilder action = (result, blockBuilderItems bb)
- where
-  initialEnv =
-    emptyIRBuilderEnv
-      { builderEnvCurrentBlock =
-          Just
-            BlockBuilder
-              { blockBuilderLabel = "entry"
-              , blockBuilderItems = []
-              , blockBuilderTerminator = Nothing
-              }
-      }
-  (result, finalEnv) = runState (iterT interpretF (unpackIRBuilder action)) initialEnv
-  bb = case builderEnvCurrentBlock finalEnv of
-    Just b -> b
-    Nothing -> error "no current block"
-  interpretF (EmitInstr instr next) =
-    modify (mapBuilderEnvCurrentBlock (appendBlockBuilderItem (BlockInstr instr))) >> next
-  interpretF (EmitAnnotation _ next) = next
+  where
+    initialEnv =
+      emptyIRBuilderEnv
+        { builderEnvCurrentBlock =
+            Just
+              BlockBuilder
+                { blockBuilderLabel = "entry",
+                  blockBuilderItems = [],
+                  blockBuilderTerminator = Nothing
+                }
+        }
+    (result, finalEnv) = runState (iterT interpretF (unpackIRBuilder action)) initialEnv
+    bb = case builderEnvCurrentBlock finalEnv of
+      Just b -> b
+      Nothing -> error "no current block"
+    interpretF (EmitInstr instr next) =
+      modify (mapBuilderEnvCurrentBlock (appendBlockBuilderItem (BlockInstr instr))) >> next
+    interpretF (EmitAnnotation _ next) = next
 
 -- | Extract the instrOp from the last block item
 lastInstrOp :: [IRBlockItem] -> Maybe IRInstrOp
 lastInstrOp [] = Nothing
-lastInstrOp items = case last items of
-  BlockInstr i -> Just (instrOp i)
-  _ -> Nothing
+lastInstrOp items =
+  case last items of
+    BlockInstr i -> Just (instrOp i)
+    _ -> Nothing
 
 a32, b32 :: IROperand
 a32 = OLocal (TInt 32) "a"
@@ -166,7 +166,7 @@ spec = describe "LLVM.IRInstruction.Constructors" $ do
           initialEnv =
             emptyIRBuilderEnv
               { builderEnvCurrentBlock =
-                  Just BlockBuilder{blockBuilderLabel = "entry", blockBuilderItems = [], blockBuilderTerminator = Nothing}
+                  Just BlockBuilder {blockBuilderLabel = "entry", blockBuilderItems = [], blockBuilderTerminator = Nothing}
               }
           (_, finalEnv) = runState (iterT interpretF (unpackIRBuilder (store a32 ptr))) initialEnv
           interpretF (EmitInstr instr next) =
@@ -222,7 +222,7 @@ spec = describe "LLVM.IRInstruction.Constructors" $ do
 
   describe "Miscellaneous" $ do
     it "phi emits IPhi" $ do
-      let incoming = [("block1", a32), ("block2", b32)]
+      let incoming = [(a32, "block1"), (b32, "block2")]
           (_, items) = runInstrBuilder (phi (TInt 32) incoming)
       lastInstrOp items `shouldBe` Just (IPhi (TInt 32) incoming)
 

@@ -74,7 +74,7 @@ data IRInstrOp
   | ILoad IRType IROperand
   | IMul IRType IROperand IROperand
   | IOr IRType IROperand IROperand
-  | IPhi IRType [(Name, IROperand)]
+  | IPhi IRType [(IROperand, Name)]
   | IPtrtoint IROperand IRType
   | ISDiv IRType IROperand IROperand
   | ISRem IRType IROperand IROperand

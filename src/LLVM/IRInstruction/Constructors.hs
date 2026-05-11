@@ -216,7 +216,7 @@ callVoid tm t fn args = emitVoid (ICall tm t fn args)
 -- * Miscellaneous
 
 -- | Create a phi node for multiple incoming values.
-phi :: IRType -> [(Name, IROperand)] -> IRBuilder IROperand
+phi :: IRType -> [(IROperand, Name)] -> IRBuilder IROperand
 phi t ops = emitWithResult t (IPhi t ops)
 
 -- | Select one of two values based on a condition.
