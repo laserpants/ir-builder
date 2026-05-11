@@ -16,13 +16,15 @@ module LLVM.IRBuilder (
   finalizeCurrentBlock,
   beginFunction,
   endFunction,
-  defineFunction,
+  define,
   emitInstruction,
   emitAnnotation,
   appendInstruction,
   appendAnnotation,
   emitTerminator,
   emitGlobal,
+  allocReg,
+  (<#>),
 )
 where
 
@@ -32,14 +34,16 @@ import Control.Monad.State (MonadState, State, execState, get, gets, modify, put
 import Control.Monad.Trans.Free (FreeT, MonadFree, iterT)
 import Data.Maybe (isJust)
 import Data.Text (Text)
+import qualified Data.Text as Text
 import LLVM.IRAnnotation (IRAnnotation (..))
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..), appendBlockBuilderItem, setBlockBuilderTerminator)
-import LLVM.IRBuilder.Environment (IRBuilderEnv (..), appendBuilderEnvGlobals, emptyIRBuilderEnv, mapBuilderEnvCurrentBlock)
+import LLVM.IRBuilder.Environment (IRBuilderEnv (..), appendBuilderEnvGlobals, emptyIRBuilderEnv, mapBuilderEnvCurrentBlock, overBuilderEnvFresh)
 import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..), appendFunctionBuilderBlock)
 import LLVM.IRInstruction (IRInstruction)
-import LLVM.IRModule (IRBlock (..), IRBlockItem (..), IRFunction (..), IRGlobal, IRModule (..))
-import LLVM.IROperand (IRTerminator)
+import LLVM.IRModule (IRAttribute (..), IRBlock (..), IRBlockItem (..), IRFunction (..), IRGlobal, IRLinkage (..), IRModule (..))
+import LLVM.IROperand (IROperand (..), IRTerminator)
 import LLVM.IRRenderer (renderModule, runIRRenderer)
+import LLVM.IRType (IRType)
 
 data IRBuilderF next
   = EmitInstr IRInstruction next
@@ -173,9 +177,17 @@ endFunction = do
       , ..
       }
 
-defineFunction :: FunctionBuilder -> IRBuilder a -> IRBuilder a
-defineFunction builder body = do
-  beginFunction builder
+define :: IRType -> Name -> [(IRType, Name)] -> IRLinkage -> [IRAttribute] -> IRBuilder a -> IRBuilder a
+define retType name args linkage attributes body = do
+  beginFunction $
+    FunctionBuilder
+      { functionBuilderName = name
+      , functionBuilderLinkage = linkage
+      , functionBuilderRetType = retType
+      , functionBuilderArgs = args
+      , functionBuilderBlocks = []
+      , functionBuilderAttributes = attributes
+      }
   result <- body
   endFunction
   pure result
@@ -183,40 +195,44 @@ defineFunction builder body = do
 emitGlobal :: IRGlobal -> IRBuilder ()
 emitGlobal global = modify (appendBuilderEnvGlobals [global])
 
+{- | Pre-allocate a register for use in forward phi references.
+Does not emit any instruction; just reserves a name.
+-}
+allocReg :: IRType -> IRBuilder IROperand
+allocReg t = do
+  hint <- gets builderEnvNameHint
+  case hint of
+    Just name -> do
+      modify $ \env -> env{builderEnvNameHint = Nothing}
+      pure (OLocal t name)
+    Nothing -> do
+      modify (overBuilderEnvFresh (+ 1))
+      n <- gets builderEnvFresh
+      pure (OLocal t (Text.pack (show n)))
+
+{- | Emit an instruction, forcing its result into a pre-allocated register.
+Typical usage: @phi i64 [...] <#> myReg@
+-}
+(<#>) :: IRBuilder IROperand -> IROperand -> IRBuilder IROperand
+action <#> OLocal _ name = do
+  modify $ \env -> env{builderEnvNameHint = Just name}
+  result <- action
+  modify $ \env -> env{builderEnvNameHint = Nothing}
+  pure result
+action <#> _ = action
+
+infixl 1 <#>
+
 beginBlock :: Name -> IRBuilder ()
 beginBlock label = do
-  IRBuilderEnv{..} <- get
-
-  finalizedBlocks <-
-    case builderEnvCurrentBlock of
-      Nothing ->
-        pure builderEnvBlocks
-      Just BlockBuilder{..} ->
-        case blockBuilderTerminator of
-          Nothing ->
-            error "Cannot finalize block without terminator"
-          Just term ->
-            let finalBlock =
-                  IRBlock
-                    { blockLabel = blockBuilderLabel
-                    , blockItems = blockBuilderItems
-                    , blockTerminator = term
-                    }
-             in pure (builderEnvBlocks <> [finalBlock])
-
+  modify finalizeCurrentBlock
   let newBlock =
         BlockBuilder
           { blockBuilderLabel = label
           , blockBuilderItems = []
           , blockBuilderTerminator = Nothing
           }
-
-  put $
-    IRBuilderEnv
-      { builderEnvBlocks = finalizedBlocks
-      , builderEnvCurrentBlock = Just newBlock
-      , ..
-      }
+  modify $ \env -> env{builderEnvCurrentBlock = Just newBlock}
 
 finalizeCurrentBlock :: IRBuilderEnv -> IRBuilderEnv
 finalizeCurrentBlock IRBuilderEnv{..} =

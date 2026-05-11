@@ -262,23 +262,23 @@ renderInstrOp =
       tyStr <- renderType typ
       pure $ "bitcast " <> vStr <> " to " <> tyStr
     ISext v typ -> do
-      vStr <- renderOperand v
+      vStr <- renderTypedOperand v
       tyStr <- renderType typ
       pure $ "sext " <> vStr <> " to " <> tyStr
     IZext v typ -> do
-      vStr <- renderOperand v
+      vStr <- renderTypedOperand v
       tyStr <- renderType typ
       pure $ "zext " <> vStr <> " to " <> tyStr
     ITrunc v typ -> do
-      vStr <- renderOperand v
+      vStr <- renderTypedOperand v
       tyStr <- renderType typ
       pure $ "trunc " <> vStr <> " to " <> tyStr
     IInttoptr v typ -> do
-      vStr <- renderOperand v
+      vStr <- renderTypedOperand v
       tyStr <- renderType typ
       pure $ "inttoptr " <> vStr <> " to " <> tyStr
     IPtrtoint v typ -> do
-      vStr <- renderOperand v
+      vStr <- renderTypedOperand v
       tyStr <- renderType typ
       pure $ "ptrtoint " <> vStr <> " to " <> tyStr
     ICall marker retTy fn args -> do
@@ -293,9 +293,10 @@ renderInstrOp =
           NoTail -> ""
           Tail -> "tail "
           MustTail -> "musttail "
-    IPhi _typ incoming -> do
+    IPhi typ incoming -> do
+      tyStr <- renderType typ
       incomingStrs <- mapM renderPhiIncoming incoming
-      pure $ "phi [" <> Text.intercalate ", " incomingStrs <> "]"
+      pure $ "phi " <> tyStr <> " " <> Text.intercalate ", " (map (\s -> "[ " <> s <> " ]") incomingStrs)
      where
       renderPhiIncoming (blockName, op) = do
         opStr <- renderOperand op

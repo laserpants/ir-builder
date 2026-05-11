@@ -15,12 +15,14 @@ module LLVM.IRBuilder.Environment (
 )
 where
 
+import Common (Name)
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
 import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..))
 import LLVM.IRModule (IRBlock, IRDecl, IRFunction, IRGlobal)
 
 data IRBuilderEnv = IRBuilderEnv
   { builderEnvFresh :: Int
+  , builderEnvNameHint :: Maybe Name
   , builderEnvCurrentBlock :: Maybe BlockBuilder
   , builderEnvCurrentFunction :: Maybe FunctionBuilder
   , builderEnvBlocks :: [IRBlock]
@@ -34,6 +36,7 @@ emptyIRBuilderEnv :: IRBuilderEnv
 emptyIRBuilderEnv =
   IRBuilderEnv
     { builderEnvFresh = 0
+    , builderEnvNameHint = Nothing
     , builderEnvCurrentBlock = Nothing
     , builderEnvCurrentFunction = Nothing
     , builderEnvBlocks = mempty
