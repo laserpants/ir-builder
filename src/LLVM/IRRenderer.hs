@@ -8,43 +8,46 @@ module LLVM.IRRenderer (IRRenderer (..), runIRRenderer, renderModule) where
 
 import Common (Name)
 import Control.Monad.State (MonadState, State, evalState)
+import Data.ByteString (ByteString)
+import qualified Data.ByteString as BS
+import Data.Char (intToDigit)
 import Data.Text (Text)
 import qualified Data.Text as Text
 import LLVM.IRAnnotation (IRAnnotation (..))
-import LLVM.IRInstruction (
-  IRFCmpCond (..),
-  IRICmpCond (..),
-  IRInstrOp (..),
-  IRInstruction (..),
-  IRTailMarker (..),
- )
-import LLVM.IRModule (
-  IRAttribute (..),
-  IRBlock (..),
-  IRBlockItem (..),
-  IRDecl (..),
-  IRFunction (..),
-  IRGlobal (..),
-  IRLinkage (..),
-  IRModule (..),
- )
+import LLVM.IRInstruction
+  ( IRFCmpCond (..),
+    IRICmpCond (..),
+    IRInstrOp (..),
+    IRInstruction (..),
+    IRTailMarker (..),
+  )
+import LLVM.IRModule
+  ( IRAttribute (..),
+    IRBlock (..),
+    IRBlockItem (..),
+    IRDecl (..),
+    IRFunction (..),
+    IRGlobal (..),
+    IRLinkage (..),
+    IRModule (..),
+  )
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
 import LLVM.IRRenderer.State (IRRendererState (..), emptyIRRendererState)
 import LLVM.IRType (IRType (..))
 
 newtype IRRenderer a = IRRenderer {unpackIRRenderer :: State IRRendererState a}
   deriving
-    ( Functor
-    , Applicative
-    , Monad
-    , MonadState IRRendererState
+    ( Functor,
+      Applicative,
+      Monad,
+      MonadState IRRendererState
     )
 
 runIRRenderer :: IRRenderer a -> a
 runIRRenderer irRenderer = evalState (unpackIRRenderer irRenderer) emptyIRRendererState
 
 renderModule :: IRModule -> IRRenderer Text
-renderModule IRModule{moduleDecls, moduleGlobals, moduleFunctions} = do
+renderModule IRModule {moduleDecls, moduleGlobals, moduleFunctions} = do
   decls <- traverse renderDecl moduleDecls
   globs <- traverse renderGlobal moduleGlobals
   funs <- traverse renderFunction moduleFunctions
@@ -52,7 +55,7 @@ renderModule IRModule{moduleDecls, moduleGlobals, moduleFunctions} = do
 
 -- | Render a type declaration (e.g., "%Type = type { i32, i32 }")
 renderDecl :: IRDecl -> IRRenderer Text
-renderDecl IRDecl{declName, declType} = do
+renderDecl IRDecl {declName, declType} = do
   typeStr <- renderType declType
   pure $ "%" <> declName <> " = type " <> typeStr
 
@@ -60,9 +63,11 @@ renderDecl IRDecl{declName, declType} = do
 renderGlobal :: IRGlobal -> IRRenderer Text
 renderGlobal =
   \case
-    IRString linkage name _bs ->
+    IRString linkage name bs ->
       let linkageStr = renderLinkage linkage
-       in pure $ "@" <> name <> " = " <> linkageStr <> " constant [8 x i8] c\"string\""
+          len = BS.length bs
+          content = renderByteStringLiteral bs
+       in pure $ "@" <> name <> " = " <> linkageStr <> "constant [" <> Text.pack (show len) <> " x i8] c\"" <> content <> "\""
     IRConstant linkage name typ val -> do
       typeStr <- renderType typ
       valStr <- renderConstant val
@@ -74,7 +79,7 @@ renderGlobal =
 
 -- | Render a function definition
 renderFunction :: IRFunction -> IRRenderer Text
-renderFunction IRFunction{functionName, functionLinkage, functionRetType, functionArgs, functionBlocks, functionAttributes} = do
+renderFunction IRFunction {functionName, functionLinkage, functionRetType, functionArgs, functionBlocks, functionAttributes} = do
   retTypeStr <- renderType functionRetType
   argsStr <- renderFunctionArgs functionArgs
   let linkageStr = renderLinkage functionLinkage
@@ -99,7 +104,7 @@ renderFunction IRFunction{functionName, functionLinkage, functionRetType, functi
 
 -- | Render a single block
 renderBlock :: IRBlock -> IRRenderer Text
-renderBlock IRBlock{blockLabel, blockItems, blockTerminator} = do
+renderBlock IRBlock {blockLabel, blockItems, blockTerminator} = do
   itemsStrs <- mapM renderBlockItem blockItems
   termStr <- renderTerminator blockTerminator
   pure $
@@ -122,7 +127,7 @@ renderBlockItem =
 
 -- | Render an instruction
 renderInstruction :: IRInstruction -> IRRenderer Text
-renderInstruction IRInstruction{instrResult, instrOp} = do
+renderInstruction IRInstruction {instrResult, instrOp} = do
   opStr <- renderInstrOp instrOp
   case instrResult of
     Nothing ->
@@ -280,19 +285,19 @@ renderInstrOp =
       argsStrs <- mapM renderOperand args
       let callStr = "call " <> tailMarkerStr marker <> retTyStr <> " " <> fnStr <> "(" <> Text.intercalate ", " argsStrs <> ")"
       pure callStr
-     where
-      tailMarkerStr =
-        \case
-          NoTail -> ""
-          Tail -> "tail "
-          MustTail -> "musttail "
+      where
+        tailMarkerStr =
+          \case
+            NoTail -> ""
+            Tail -> "tail "
+            MustTail -> "musttail "
     IPhi _typ incoming -> do
       incomingStrs <- mapM renderPhiIncoming incoming
       pure $ "phi [" <> Text.intercalate ", " incomingStrs <> "]"
-     where
-      renderPhiIncoming (blockName, op) = do
-        opStr <- renderOperand op
-        pure $ opStr <> ", %" <> blockName
+      where
+        renderPhiIncoming (blockName, op) = do
+          opStr <- renderOperand op
+          pure $ opStr <> ", %" <> blockName
     ISelect typ cond t f -> do
       tyStr <- renderType typ
       condStr <- renderOperand cond
@@ -316,10 +321,10 @@ renderTerminator =
       valStr <- renderOperand val
       casesStrs <- mapM renderSwitchCase cases
       pure $ "switch i32 " <> valStr <> ", label %" <> default_ <> " [" <> Text.unlines casesStrs <> "  ]"
-     where
-      renderSwitchCase (caseVal, caseTarget) = do
-        caseValStr <- renderConstant caseVal
-        pure $ "    i32 " <> caseValStr <> ", label %" <> caseTarget
+      where
+        renderSwitchCase (caseVal, caseTarget) = do
+          caseValStr <- renderConstant caseVal
+          pure $ "    i32 " <> caseValStr <> ", label %" <> caseTarget
     IUnreachable ->
       pure "unreachable"
 
@@ -450,3 +455,12 @@ renderAttribute =
     InlineHint -> "inlinehint"
     NoAlias -> "noalias"
     GC txt -> "gc \"" <> txt <> "\""
+
+-- | Render a ByteString as an LLVM c"..." literal body, escaping non-printable
+-- bytes as \XX hex escape sequences.
+renderByteStringLiteral :: ByteString -> Text
+renderByteStringLiteral = Text.pack . concatMap renderByte . BS.unpack
+  where
+    renderByte b
+      | b >= 32 && b <= 126 && b /= 34 && b /= 92 = [toEnum (fromIntegral b)]
+      | otherwise = '\\' : [intToDigit (fromIntegral b `div` 16), intToDigit (fromIntegral b `mod` 16)]

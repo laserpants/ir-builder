@@ -6,22 +6,23 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StrictData #-}
 
-module LLVM.IRBuilder (
-  IRBuilderF (..),
-  IRBuilder (..),
-  IRBuilderEnv (..),
-  compileModule,
-  setTerminator,
-  beginBlock,
-  finalizeCurrentBlock,
-  beginFunction,
-  endFunction,
-  emitInstruction,
-  emitAnnotation,
-  appendInstruction,
-  appendAnnotation,
-  emitTerminator,
-) where
+module LLVM.IRBuilder
+  ( IRBuilderF (..),
+    IRBuilder (..),
+    IRBuilderEnv (..),
+    compileModule,
+    setTerminator,
+    beginBlock,
+    finalizeCurrentBlock,
+    beginFunction,
+    endFunction,
+    emitInstruction,
+    emitAnnotation,
+    appendInstruction,
+    appendAnnotation,
+    emitTerminator,
+  )
+where
 
 import Common (Name)
 import Control.Monad.Free (liftF)
@@ -47,11 +48,11 @@ newtype IRBuilder a = IRBuilder
   { unpackIRBuilder :: FreeT IRBuilderF (State IRBuilderEnv) a
   }
   deriving
-    ( Functor
-    , Applicative
-    , Monad
-    , MonadState IRBuilderEnv
-    , MonadFree IRBuilderF
+    ( Functor,
+      Applicative,
+      Monad,
+      MonadState IRBuilderEnv,
+      MonadFree IRBuilderF
     )
 
 execIRBuilder :: IRBuilder a -> State IRBuilderEnv a
@@ -92,7 +93,7 @@ emitTerminator :: IRTerminator -> IRBuilder ()
 emitTerminator term = do
   block <- gets builderEnvCurrentBlock
   case block of
-    Just BlockBuilder{blockBuilderTerminator}
+    Just BlockBuilder {blockBuilderTerminator}
       | isJust blockBuilderTerminator ->
           error "Block already terminated"
     Nothing ->
@@ -103,12 +104,12 @@ emitTerminator term = do
   setTerminator term
 
 finalizeModule :: Name -> IRBuilderEnv -> IRModule
-finalizeModule name env@IRBuilderEnv{builderEnvGlobals, builderEnvDecls} =
+finalizeModule name env@IRBuilderEnv {builderEnvGlobals, builderEnvDecls} =
   IRModule
-    { moduleName = name
-    , moduleDecls = reverse builderEnvDecls
-    , moduleGlobals = reverse builderEnvGlobals
-    , moduleFunctions = finalizeFunctions env
+    { moduleName = name,
+      moduleDecls = reverse builderEnvDecls,
+      moduleGlobals = reverse builderEnvGlobals,
+      moduleFunctions = finalizeFunctions env
     }
 
 finalizeFunctions :: IRBuilderEnv -> [IRFunction]
@@ -116,8 +117,8 @@ finalizeFunctions = builderEnvFunctions
 
 buildModule :: Name -> IRBuilder a -> IRModule
 buildModule name builder = finalizeModule name env
- where
-  env = execState (execIRBuilder builder) emptyIRBuilderEnv
+  where
+    env = execState (execIRBuilder builder) emptyIRBuilderEnv
 
 compileModule :: Name -> IRBuilder a -> Text
 compileModule name = runIRRenderer . renderModule . buildModule name
@@ -126,7 +127,7 @@ beginFunction :: FunctionBuilder -> IRBuilder ()
 beginFunction builder = do
   modify finalizeCurrentBlock
 
-  IRBuilderEnv{..} <- get
+  IRBuilderEnv {..} <- get
 
   case builderEnvCurrentFunction of
     Just _ ->
@@ -136,94 +137,94 @@ beginFunction builder = do
 
   put $
     IRBuilderEnv
-      { builderEnvCurrentFunction = Just builder
-      , builderEnvCurrentBlock = Nothing
-      , ..
+      { builderEnvCurrentFunction = Just builder,
+        builderEnvCurrentBlock = Nothing,
+        ..
       }
 
 endFunction :: IRBuilder ()
 endFunction = do
   modify finalizeCurrentBlock
 
-  IRBuilderEnv{..} <- get
+  IRBuilderEnv {..} <- get
 
   fun <-
     case builderEnvCurrentFunction of
       Nothing ->
         error "No current function"
-      Just FunctionBuilder{..} ->
+      Just FunctionBuilder {..} ->
         pure $
           IRFunction
-            { functionName = functionBuilderName
-            , functionLinkage = functionBuilderLinkage
-            , functionRetType = functionBuilderRetType
-            , functionArgs = functionBuilderArgs
-            , functionBlocks = functionBuilderBlocks
-            , functionAttributes = functionBuilderAttributes
+            { functionName = functionBuilderName,
+              functionLinkage = functionBuilderLinkage,
+              functionRetType = functionBuilderRetType,
+              functionArgs = functionBuilderArgs,
+              functionBlocks = functionBuilderBlocks,
+              functionAttributes = functionBuilderAttributes
             }
 
   put $
     IRBuilderEnv
-      { builderEnvCurrentFunction = Nothing
-      , builderEnvCurrentBlock = Nothing
-      , builderEnvFunctions = builderEnvFunctions <> [fun]
-      , ..
+      { builderEnvCurrentFunction = Nothing,
+        builderEnvCurrentBlock = Nothing,
+        builderEnvFunctions = builderEnvFunctions <> [fun],
+        ..
       }
 
 beginBlock :: Name -> IRBuilder ()
 beginBlock label = do
-  IRBuilderEnv{..} <- get
+  IRBuilderEnv {..} <- get
 
   finalizedBlocks <-
     case builderEnvCurrentBlock of
       Nothing ->
         pure builderEnvBlocks
-      Just BlockBuilder{..} ->
+      Just BlockBuilder {..} ->
         case blockBuilderTerminator of
           Nothing ->
             error "Cannot finalize block without terminator"
           Just term ->
             let finalBlock =
                   IRBlock
-                    { blockLabel = blockBuilderLabel
-                    , blockItems = reverse blockBuilderItems
-                    , blockTerminator = term
+                    { blockLabel = blockBuilderLabel,
+                      blockItems = blockBuilderItems,
+                      blockTerminator = term
                     }
              in pure (builderEnvBlocks <> [finalBlock])
 
   let newBlock =
         BlockBuilder
-          { blockBuilderLabel = label
-          , blockBuilderItems = []
-          , blockBuilderTerminator = Nothing
+          { blockBuilderLabel = label,
+            blockBuilderItems = [],
+            blockBuilderTerminator = Nothing
           }
 
   put $
     IRBuilderEnv
-      { builderEnvBlocks = finalizedBlocks
-      , builderEnvCurrentBlock = Just newBlock
-      , ..
+      { builderEnvBlocks = finalizedBlocks,
+        builderEnvCurrentBlock = Just newBlock,
+        ..
       }
 
 finalizeCurrentBlock :: IRBuilderEnv -> IRBuilderEnv
-finalizeCurrentBlock IRBuilderEnv{..} =
+finalizeCurrentBlock IRBuilderEnv {..} =
   case builderEnvCurrentBlock of
     Nothing ->
-      IRBuilderEnv{..}
-    Just BlockBuilder{blockBuilderLabel, blockBuilderItems, blockBuilderTerminator} ->
+      IRBuilderEnv {..}
+    Just BlockBuilder {blockBuilderLabel, blockBuilderItems, blockBuilderTerminator} ->
       case blockBuilderTerminator of
         Nothing ->
           error "Cannot finalize block without terminator"
         Just term -> do
           let block =
                 IRBlock
-                  { blockLabel = blockBuilderLabel
-                  , blockItems = reverse blockBuilderItems
-                  , blockTerminator = term
+                  { blockLabel = blockBuilderLabel,
+                    blockItems = blockBuilderItems,
+                    blockTerminator = term
                   }
 
           IRBuilderEnv
-            { builderEnvCurrentBlock = Nothing
-            , builderEnvCurrentFunction = fmap (appendFunctionBuilderBlock block) builderEnvCurrentFunction
-            , ..
+            { builderEnvCurrentBlock = Nothing,
+              builderEnvCurrentFunction = fmap (appendFunctionBuilderBlock block) builderEnvCurrentFunction,
+              ..
             }
