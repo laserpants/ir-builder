@@ -74,9 +74,10 @@ renderGlobal =
 
 -- | Render a function definition
 renderFunction :: IRFunction -> IRRenderer Text
-renderFunction IRFunction{functionName, functionRetType, functionArgs, functionBlocks, functionAttributes} = do
+renderFunction IRFunction{functionName, functionLinkage, functionRetType, functionArgs, functionBlocks, functionAttributes} = do
   retTypeStr <- renderType functionRetType
   argsStr <- renderFunctionArgs functionArgs
+  let linkageStr = renderLinkage functionLinkage
   let attrsStr =
         if null functionAttributes
           then ""
@@ -84,6 +85,7 @@ renderFunction IRFunction{functionName, functionRetType, functionArgs, functionB
   blocksStr <- mapM renderBlock functionBlocks
   pure $
     "define "
+      <> linkageStr
       <> retTypeStr
       <> " @"
       <> functionName
