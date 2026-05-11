@@ -2,7 +2,7 @@
 
 module Main (main) where
 
-import qualified Data.Text.IO as TIO
+import qualified Data.Text.IO 
 import LLVM.IRBuilder
 import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..))
 import LLVM.IRInstruction (IRTailMarker (..))
@@ -49,4 +49,4 @@ helloWorld = do
       ret (OConstant (CInt 32 0))
 
 main :: IO ()
-main = TIO.putStrLn (compileModule "hello_world" helloWorld)
+main = Data.Text.IO.putStrLn (compileModule "hello_world" helloWorld)
