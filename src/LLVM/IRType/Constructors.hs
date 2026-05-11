@@ -1,11 +1,13 @@
-module LLVM.IRType.Constructors (
-  i1,
-  i8,
-  i32,
-  i64,
-  ptr,
-  i8Ptr,
-) where
+module LLVM.IRType.Constructors
+  ( i1,
+    i8,
+    i32,
+    i64,
+    ptr,
+    i8Ptr,
+    void,
+  )
+where
 
 import LLVM.IRType (IRType (..))
 
@@ -32,3 +34,7 @@ ptr = TPtr
 {-# INLINE i8Ptr #-}
 i8Ptr :: IRType
 i8Ptr = ptr i8
+
+{-# INLINE void #-}
+void :: IRType
+void = TVoid
