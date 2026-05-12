@@ -537,11 +537,17 @@ define i32 "add" [(i32, "a"), (i32, "b")] LExternal [] $ do
 __Throws:__ Any error from body computation or finalization
 -}
 define ::
+  -- | Return type of the function
   IRType ->
+  -- | Function name
   Name ->
+  -- | Parameter list as @(type, name)@ pairs
   [(IRType, Name)] ->
+  -- | Linkage visibility (e.g. 'LExternal', 'LInternal')
   IRLinkage ->
+  -- | Function attributes (e.g. @[NoInline, NoReturn]@)
   [IRAttribute] ->
+  -- | Body computation that builds the function
   IRBuilder a ->
   IRBuilder a
 define retType name args linkage attributes body = do
