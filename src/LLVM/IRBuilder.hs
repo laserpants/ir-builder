@@ -27,11 +27,31 @@ import Control.Monad.State (MonadState, State, execState, get, gets, modify, put
 import Data.Maybe (isJust)
 import Data.Text (Text)
 import LLVM.IRAnnotation (IRAnnotation (..))
-import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..), appendBlockBuilderItem, setBlockBuilderTerminator)
-import LLVM.IRBuilder.Environment (IRBuilderEnv (..), appendBuilderEnvGlobals, emptyIRBuilderEnv, mapBuilderEnvCurrentBlock)
-import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..), appendFunctionBuilderBlock)
+import LLVM.IRBuilder.BlockBuilder (
+  BlockBuilder (..),
+  appendBlockBuilderItem,
+  setBlockBuilderTerminator,
+ )
+import LLVM.IRBuilder.Environment (
+  IRBuilderEnv (..),
+  appendBuilderEnvGlobals,
+  emptyIRBuilderEnv,
+  mapBuilderEnvCurrentBlock,
+ )
+import LLVM.IRBuilder.FunctionBuilder (
+  FunctionBuilder (..),
+  appendFunctionBuilderBlock,
+ )
 import LLVM.IRInstruction (IRInstruction (..))
-import LLVM.IRModule (IRAttribute (..), IRBlock (..), IRBlockItem (..), IRFunction (..), IRGlobal, IRLinkage (..), IRModule (..))
+import LLVM.IRModule (
+  IRAttribute (..),
+  IRBlock (..),
+  IRBlockItem (..),
+  IRFunction (..),
+  IRGlobal,
+  IRLinkage (..),
+  IRModule (..),
+ )
 import LLVM.IROperand (IRTerminator)
 import LLVM.IRRenderer (renderModule, runIRRenderer)
 import LLVM.IRType (IRType)
