@@ -2,23 +2,30 @@
 
 module Unit.LLVM.Builder.SupplySpec (spec) where
 
-import Control.Monad.State (runState)
+import Control.Monad.Identity (runIdentity)
+import Control.Monad.State (runStateT)
+import Control.Monad.Except (runExceptT)
 import Data.List (nub)
 import LLVM.IRBuilder (IRBuilder (..))
+import LLVM.IRBuilder.Error (IRBuilderError)
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv)
 import LLVM.IRBuilder.Supply (fresh, freshOperand)
 import LLVM.IROperand (IROperand (..))
 import LLVM.IRType (IRType (..))
 import Test.Hspec (Spec, describe, expectationFailure, it, shouldBe)
 
-runBuilder :: IRBuilder a -> IRBuilderEnv -> (a, IRBuilderEnv)
-runBuilder b env = runState (runIRBuilder b) env
+runBuilder :: IRBuilder a -> IRBuilderEnv -> Either IRBuilderError (a, IRBuilderEnv)
+runBuilder b env = runIdentity (runExceptT (runStateT (runIRBuilder b) env))
 
 evalBuilder :: IRBuilder a -> IRBuilderEnv -> a
-evalBuilder b env = fst (runBuilder b env)
+evalBuilder b env = case runBuilder b env of
+  Right (a, _) -> a
+  Left err -> error $ show err
 
 execBuilder :: IRBuilder a -> IRBuilderEnv -> IRBuilderEnv
-execBuilder b env = snd (runBuilder b env)
+execBuilder b env = case runBuilder b env of
+  Right (_, e) -> e
+  Left err -> error $ show err
 
 spec :: Spec
 spec = describe "LLVM.IRBuilder.Supply" $ do

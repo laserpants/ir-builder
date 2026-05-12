@@ -2,10 +2,13 @@
 
 module Unit.LLVM.Instruction.ConstructorsSpec (spec) where
 
-import Control.Monad.State (runState)
+import Control.Monad.Identity (runIdentity)
+import Control.Monad.State (runStateT)
+import Control.Monad.Except (runExceptT)
 import LLVM.IRBuilder (IRBuilder (..))
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv)
+import LLVM.IRBuilder.Error (IRBuilderError)
 import LLVM.IRInstruction (IRFCmpCond (..), IRICmpCond (..), IRInstrOp (..), IRInstruction (..), IRTailMarker (..))
 import LLVM.IRInstruction.Constructors
 import LLVM.IRModule (IRBlockItem (..))
@@ -13,6 +16,9 @@ import LLVM.IROperand (IRConstant (..), IROperand (..))
 import LLVM.IRType (IRType (..))
 import Test.Hspec (Spec, describe, expectationFailure, it, shouldBe)
 import Prelude hiding (and, or)
+
+runBuilder :: IRBuilder a -> IRBuilderEnv -> Either IRBuilderError (a, IRBuilderEnv)
+runBuilder b env = runIdentity (runExceptT (runStateT (runIRBuilder b) env))
 
 {- | Run a builder action that emits instructions and return the last-emitted operand result
 plus the collected block items via interpretting EmitInstr effects directly
@@ -30,7 +36,9 @@ runInstrBuilder action = (result, blockBuilderItems bb)
               , blockBuilderTerminator = Nothing
               }
       }
-  (result, finalEnv) = runState (runIRBuilder action) initialEnv
+  (result, finalEnv) = case runBuilder action initialEnv of
+    Right (r, e) -> (r, e)
+    Left err -> error $ show err
   bb = case builderEnvCurrentBlock finalEnv of
     Just b -> b
     Nothing -> error "no current block"
@@ -164,7 +172,9 @@ spec = describe "LLVM.IRInstruction.Constructors" $ do
               { builderEnvCurrentBlock =
                   Just BlockBuilder{blockBuilderLabel = "entry", blockBuilderItems = [], blockBuilderTerminator = Nothing}
               }
-          (_, finalEnv) = runState (runIRBuilder (store a32 ptr)) initialEnv
+          (_, finalEnv) = case runBuilder (store a32 ptr) initialEnv of
+            Right (_, e) -> ((), e)
+            Left err -> error $ show err
           items = maybe [] blockBuilderItems (builderEnvCurrentBlock finalEnv)
       lastInstrOp items `shouldBe` Just (IStore a32 ptr)
 

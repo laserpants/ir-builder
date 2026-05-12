@@ -2,16 +2,24 @@
 
 module Unit.LLVM.Terminator.ConstructorsSpec (spec) where
 
-import Control.Monad.State (runState)
+import Control.Monad.Identity (runIdentity)
+import Control.Monad.State (runStateT)
+import Control.Monad.Except (runExceptT)
 import LLVM.IRBuilder (IRBuilder (..), beginBlock)
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv)
+import LLVM.IRBuilder.Error (IRBuilderError)
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
 import LLVM.IRTerminator.Constructors (br, condbr, ret, switch, unreachable)
 import Test.Hspec (Spec, describe, it, shouldBe)
 
+runBuilder :: IRBuilder a -> IRBuilderEnv -> Either IRBuilderError (a, IRBuilderEnv)
+runBuilder b env = runIdentity (runExceptT (runStateT (runIRBuilder b) env))
+
 execBuilder :: IRBuilder a -> IRBuilderEnv -> IRBuilderEnv
-execBuilder b env = snd $ runState (runIRBuilder b) env
+execBuilder b env = case runBuilder b env of
+  Right (_, e) -> e
+  Left err -> error $ show err
 
 currentTerminator :: IRBuilderEnv -> Maybe IRTerminator
 currentTerminator env = blockBuilderTerminator =<< builderEnvCurrentBlock env

@@ -2,21 +2,26 @@
 
 module Unit.LLVM.IRBuilderSpec (spec) where
 
-import Control.Monad.State (runState)
+import Control.Monad.Identity (runIdentity)
+import Control.Monad.State (runStateT)
+import Control.Monad.Except (runExceptT)
 import LLVM.IRBuilder
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
 import LLVM.IRBuilder.Environment (emptyIRBuilderEnv)
+import LLVM.IRBuilder.Error (IRBuilderError)
 import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..))
 import LLVM.IRModule (IRFunction (..), IRLinkage (..))
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
 import LLVM.IRType (IRType (..))
 import Test.Hspec (Spec, describe, expectationFailure, it, shouldBe)
 
-runBuilder :: IRBuilder a -> IRBuilderEnv -> (a, IRBuilderEnv)
-runBuilder b env = runState (runIRBuilder b) env
+runBuilder :: IRBuilder a -> IRBuilderEnv -> Either IRBuilderError (a, IRBuilderEnv)
+runBuilder b env = runIdentity (runExceptT (runStateT (runIRBuilder b) env))
 
 execBuilder :: IRBuilder a -> IRBuilderEnv -> IRBuilderEnv
-execBuilder b = snd . runBuilder b
+execBuilder b env = case runBuilder b env of
+  Right (_, e) -> e
+  Left err -> error $ show err
 
 testFB :: FunctionBuilder
 testFB =

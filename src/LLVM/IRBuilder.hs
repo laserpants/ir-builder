@@ -7,6 +7,9 @@ module LLVM.IRBuilder (
   IRBuilder (..),
   IRBuilderEnv (..),
   compileModule,
+  compileModuleWith,
+  buildModuleWith,
+  buildModule,
   setTerminator,
   beginBlock,
   finalizeCurrentBlock,
@@ -17,16 +20,22 @@ module LLVM.IRBuilder (
   emitAnnotation,
   emitTerminator,
   emitGlobal,
+  getCurrentBlockM,
+  getCurrentFunctionM,
+  liftEither,
   (<##>),
 )
 where
 
 import Common (Name)
+import Control.Monad.Except (ExceptT, MonadError, runExceptT, throwError)
 import Control.Monad.Fix (MonadFix)
-import Control.Monad.State (MonadState, State, execState, get, gets, modify, put)
+import Control.Monad.Identity (Identity, runIdentity)
+import Control.Monad.State (MonadState, StateT, get, gets, modify, put, runStateT)
 import Data.Maybe (isJust)
 import Data.Text (Text)
 import LLVM.IRAnnotation (IRAnnotation (..))
+import LLVM.IRBuilder.Error (IRBuilderError (..))
 import LLVM.IRBuilder.BlockBuilder (
   BlockBuilder (..),
   appendBlockBuilderItem,
@@ -58,15 +67,36 @@ import LLVM.IRRenderer (renderModule, runIRRenderer)
 import LLVM.IRType (IRType)
 
 newtype IRBuilder a = IRBuilder
-  { runIRBuilder :: State IRBuilderEnv a
+  { runIRBuilder :: StateT IRBuilderEnv (ExceptT IRBuilderError Identity) a
   }
   deriving
     ( Functor
     , Applicative
     , Monad
     , MonadState IRBuilderEnv
+    , MonadError IRBuilderError
     , MonadFix
     )
+
+-- | Get the current block, throwing NoCurrentBlock if none exists
+getCurrentBlockM :: IRBuilder BlockBuilder
+getCurrentBlockM = do
+  maybeBlock <- gets builderEnvCurrentBlock
+  case maybeBlock of
+    Just block -> pure block
+    Nothing -> throwError NoCurrentBlock
+
+-- | Get the current function, throwing NoCurrentFunction if none exists
+getCurrentFunctionM :: IRBuilder FunctionBuilder
+getCurrentFunctionM = do
+  maybeFunc <- gets builderEnvCurrentFunction
+  case maybeFunc of
+    Just func -> pure func
+    Nothing -> throwError NoCurrentFunction
+
+-- Private helper function (not exported, but useful for the error handling layer)
+liftEither :: Either IRBuilderError a -> IRBuilder a
+liftEither = either throwError pure
 
 setTerminator :: IRTerminator -> IRBuilder ()
 setTerminator term = modify $ mapBuilderEnvCurrentBlock (setBlockBuilderTerminator term)
@@ -92,32 +122,34 @@ m <##> comment = m <* modifyLastInstructionComment comment
 
 -- | Internal: modify the last emitted instruction to attach a comment
 modifyLastInstructionComment :: Text -> IRBuilder ()
-modifyLastInstructionComment comment =
-  modify $ mapBuilderEnvCurrentBlock updateLastItemComment
- where
-  updateLastItemComment bb@BlockBuilder{blockBuilderItems} =
-    case blockBuilderItems of
-      [] ->
-        error "No instruction to attach comment to"
-      items ->
-        let allButLast = init items
-            lastItem = last items
-         in case lastItem of
-              BlockInstr instr ->
-                let updatedInstr = instr{instrMetadata = Just comment}
-                 in bb{blockBuilderItems = allButLast <> [BlockInstr updatedInstr]}
-              BlockAnnotation _ ->
-                error "Cannot attach comment to annotation; must attach to instruction"
+modifyLastInstructionComment comment = do
+  block <- gets builderEnvCurrentBlock
+  case block of
+    Nothing ->
+      throwError NoCurrentBlock
+    Just bb@BlockBuilder{blockBuilderItems} ->
+      case blockBuilderItems of
+        [] ->
+          throwError NoInstructionForComment
+        items ->
+          let allButLast = init items
+              lastItem = last items
+           in case lastItem of
+                BlockInstr instr -> do
+                  let updatedInstr = instr{instrMetadata = Just comment}
+                  modify (\env -> env{builderEnvCurrentBlock = Just (bb{blockBuilderItems = allButLast <> [BlockInstr updatedInstr]})})
+                BlockAnnotation ann ->
+                  throwError (CommentOnAnnotation ann)
 
 emitTerminator :: IRTerminator -> IRBuilder ()
 emitTerminator term = do
   block <- gets builderEnvCurrentBlock
   case block of
-    Just BlockBuilder{blockBuilderTerminator}
+    Just BlockBuilder{blockBuilderTerminator, blockBuilderLabel}
       | isJust blockBuilderTerminator ->
-          error "Block already terminated"
+          throwError (BlockAlreadyTerminated blockBuilderLabel)
     Nothing ->
-      error "No current block"
+      throwError NoCurrentBlock
     _ ->
       pure ()
 
@@ -135,13 +167,29 @@ finalizeModule name env@IRBuilderEnv{builderEnvGlobals, builderEnvDecls} =
 finalizeFunctions :: IRBuilderEnv -> [IRFunction]
 finalizeFunctions = builderEnvFunctions
 
+buildModuleWith :: Name -> IRBuilder a -> Either IRBuilderError (IRModule, a)
+buildModuleWith name builder = do
+  let result = runExceptT (runStateT (runIRBuilder builder) emptyIRBuilderEnv)
+  (a, env) <- runIdentity result
+  let module_ = finalizeModule name env
+  pure (module_, a)
+
 buildModule :: Name -> IRBuilder a -> IRModule
-buildModule name builder = finalizeModule name env
- where
-  env = execState (runIRBuilder builder) emptyIRBuilderEnv
+buildModule name builder =
+  case buildModuleWith name builder of
+    Left err -> error $ "IRBuilder failed: " ++ show err
+    Right (m, _) -> m
+
+compileModuleWith :: Name -> IRBuilder a -> Either IRBuilderError Text
+compileModuleWith name builder = do
+  (module_, _) <- buildModuleWith name builder
+  pure $ runIRRenderer $ renderModule module_
 
 compileModule :: Name -> IRBuilder a -> Text
-compileModule name = runIRRenderer . renderModule . buildModule name
+compileModule name builder =
+  case compileModuleWith name builder of
+    Left err -> error $ "IRBuilder compilation failed: " ++ show err
+    Right t -> t
 
 beginFunction :: FunctionBuilder -> IRBuilder ()
 beginFunction builder = do
@@ -150,8 +198,8 @@ beginFunction builder = do
   IRBuilderEnv{..} <- get
 
   case builderEnvCurrentFunction of
-    Just _ ->
-      error "A current function is already active"
+    Just (FunctionBuilder{..}) ->
+      throwError (CurrentFunctionActive functionBuilderName)
     Nothing ->
       pure ()
 
@@ -171,7 +219,7 @@ endFunction = do
   fun <-
     case builderEnvCurrentFunction of
       Nothing ->
-        error "No current function"
+        throwError NoCurrentFunction
       Just FunctionBuilder{..} ->
         pure $
           IRFunction
