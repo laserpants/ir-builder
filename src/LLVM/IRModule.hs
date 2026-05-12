@@ -132,9 +132,9 @@ function declarations.
 
 __Constructors:__
 
-* `IRString linkage name bytes`: A string literal with the given byte content
-* `IRConstant linkage name type value`: A constant global with an initial value
-* `IRExtern name retType paramTypes`: External function (similar to 'IRDecl')
+* `IRString`: A string literal with the given byte content
+* `IRConstant`: A constant global with an initial value
+* `IRExtern`: External function (similar to 'IRDecl')
 -}
 data IRGlobal
   = IRString IRLinkage Name ByteString
@@ -228,8 +228,8 @@ annotations provide documentation in the output.
 
 __Constructors:__
 
-* `BlockInstr instr`: An LLVM instruction with optional inline comment
-* `BlockAnnotation ann`: A comment annotation for documentation
+* `BlockInstr`: An LLVM instruction with optional inline comment
+* `BlockAnnotation`: A comment annotation for documentation
 -}
 data IRBlockItem
   = BlockInstr (IRInstruction (Maybe Text))
