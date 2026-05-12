@@ -162,7 +162,7 @@ __Common attributes:__
 * `Hot`: Indicates function is frequently called
 * `InlineHint`: Suggest inlining to the backend optimizer
 * `NoAlias`: Arguments and return value do not alias
-* `GC text`: Specifies the garbage collection strategy for this function
+* `GC`: Specifies the garbage collection strategy for this function
 -}
 data IRAttribute
   = NoReturn
