@@ -123,6 +123,7 @@ import LLVM.IRType (IRType)
 {- | The 'IRBuilder' monad for constructing LLVM IR.
 
 This is the main monad used for all IR construction operations. It combines:
+
 - 'StateT' for maintaining the builder environment (current function, block, etc.)
 - 'ExceptT' for error handling with typed 'IRBuilderError' exceptions
 - 'Identity' as the base monad
@@ -189,11 +190,14 @@ liftEither = either throwError pure
 {- | Emit a terminator instruction for the current block.
 
 Every basic block must end with exactly one terminator (e.g., 'ret', 'br', 'condbr').
+
 This function validates that:
+
 1. A block is currently active
 2. The block doesn't already have a terminator
 
 __Throws:__
+
 - 'NoCurrentBlock' if no block is active
 - 'BlockAlreadyTerminated' if the block already has a terminator
 -}
@@ -274,6 +278,7 @@ This renders as:
 @
 
 __Throws:__
+
 - 'NoCurrentBlock' if no block is active
 - 'NoInstructionForComment' if no instruction was just emitted
 - 'CommentOnAnnotation' if applied to an annotation block instead of an instruction
@@ -327,10 +332,12 @@ computation and returns the result as an 'Either', allowing callers to handle
 errors explicitly rather than via @error@.
 
 __Args:__
+
 - First argument: module name
 - Second argument: builder computation
 
 __Returns:__ @'Either' 'IRBuilderError' ('IRModule', a)@ where:
+
   - Left: construction error
   - Right: tuple of (module, builder result)
 
@@ -352,6 +359,7 @@ construction, the program terminates with 'error'.
 For explicit error handling, use 'buildModuleWith'.
 
 __Args:__
+
 - First argument: module name
 - Second argument: builder computation
 
@@ -373,10 +381,12 @@ finalizes all blocks and functions, and renders the module to LLVM assembly text
 For automatic error handling (terminates on error), use 'compileModule'.
 
 __Args:__
+
 - First argument: module name
 - Second argument: builder computation
 
 __Returns:__ @'Either' 'IRBuilderError' 'Text'@ where:
+
   - Left: construction or rendering error
   - Right: LLVM assembly text
 
@@ -408,6 +418,7 @@ putStrLn code
 @
 
 __Args:__
+
 - First argument: module name
 - Second argument: builder computation
 
@@ -430,6 +441,7 @@ compileModule name builder =
 This is a lower-level operation. For a higher-level interface, prefer 'define'.
 
 This function:
+
 1. Finalizes the current block (if any)
 2. Verifies no function is already active
 3. Activates the given function
@@ -460,6 +472,7 @@ beginFunction builder = do
 This is a lower-level operation. For a higher-level interface, prefer 'define'.
 
 This function:
+
 1. Finalizes the current block (if any)
 2. Constructs the function from current state
 3. Adds it to the module's function list
@@ -502,6 +515,7 @@ This is the primary high-level interface for function definition. It combines
 'beginFunction' and 'endFunction' around a computation.
 
 __Args:__
+
 - @retType@: the return type
 - @name@: function name
 - @args@: list of (type, name) parameter pairs
@@ -551,6 +565,7 @@ define retType name args linkage attributes body = do
 {- | Emit a global value (declaration or constant) into the module.
 
 Global values include:
+
 - External declarations (functions, global variables)
 - Constant globals
 - String constants
@@ -570,7 +585,9 @@ emitGlobal global = modify (appendBuilderEnvGlobals [global])
 {- | Begin a new basic block within the current function.
 
 Each block has a label and contains instructions ending with a terminator.
+
 This function:
+
 1. Finalizes the previous block (if any)
 2. Creates a new empty block with the given label
 3. Makes it the current block
@@ -606,6 +623,7 @@ This is normally called automatically by 'beginBlock', 'beginFunction', and
 'endFunction'. It's exported for advanced use cases.
 
 This function:
+
 1. Validates the current block has a terminator
 2. Constructs an 'IRBlock' from current state
 3. Adds it to the current function

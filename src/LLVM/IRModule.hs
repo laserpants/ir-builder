@@ -239,6 +239,7 @@ data IRBlockItem
 {- | A basic block in LLVM IR.
 
 Basic blocks are maximal sequences of instructions with:
+
 * A single entry point (the label)
 * No control flow within the block
 * A single exit point (the terminator)
