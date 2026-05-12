@@ -7,6 +7,7 @@ module LLVM.IRBuilder.Environment (
   overBuilderEnvFresh,
   overBuilderEnvCurrentBlock,
   mapBuilderEnvCurrentBlock,
+  setBuilderEnvCurrentBlock,
   overBuilderEnvCurrentFunction,
   mapBuilderEnvCurrentFunction,
   clearBuilderEnvCurrentBlock,
@@ -62,6 +63,9 @@ mapBuilderEnvCurrentBlock fn IRBuilderEnv{..} =
     { builderEnvCurrentBlock = fmap fn builderEnvCurrentBlock
     , ..
     }
+
+setBuilderEnvCurrentBlock :: BlockBuilder -> IRBuilderEnv -> IRBuilderEnv
+setBuilderEnvCurrentBlock block = overBuilderEnvCurrentBlock (const (Just block))
 
 overBuilderEnvCurrentFunction :: (Maybe FunctionBuilder -> Maybe FunctionBuilder) -> IRBuilderEnv -> IRBuilderEnv
 overBuilderEnvCurrentFunction fn IRBuilderEnv{..} =

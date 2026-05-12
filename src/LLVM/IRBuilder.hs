@@ -37,6 +37,7 @@ import LLVM.IRBuilder.Environment (
   appendBuilderEnvGlobals,
   emptyIRBuilderEnv,
   mapBuilderEnvCurrentBlock,
+  setBuilderEnvCurrentBlock,
  )
 import LLVM.IRBuilder.FunctionBuilder (
   FunctionBuilder (..),
@@ -224,7 +225,7 @@ beginBlock label = do
           , blockBuilderItems = []
           , blockBuilderTerminator = Nothing
           }
-  modify $ \env -> env{builderEnvCurrentBlock = Just newBlock}
+  modify (setBuilderEnvCurrentBlock newBlock)
 
 finalizeCurrentBlock :: IRBuilderEnv -> IRBuilderEnv
 finalizeCurrentBlock IRBuilderEnv{..} =
