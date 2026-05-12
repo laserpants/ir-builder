@@ -143,7 +143,14 @@ endFunction = do
       , ..
       }
 
-define :: IRType -> Name -> [(IRType, Name)] -> IRLinkage -> [IRAttribute] -> IRBuilder a -> IRBuilder a
+define ::
+  IRType ->
+  Name ->
+  [(IRType, Name)] ->
+  IRLinkage ->
+  [IRAttribute] ->
+  IRBuilder a ->
+  IRBuilder a
 define retType name args linkage attributes body = do
   beginFunction $
     FunctionBuilder

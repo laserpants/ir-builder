@@ -44,7 +44,6 @@ import LLVM.IRType.Constructors (i32, i64, ptr)
 factorialModule :: IRBuilder ()
 factorialModule = do
   emitGlobal (IRExtern "printf" i32 [ptr])
-
   emitGlobal (IRString LPrivate ".fmt" "fact(5) = %ld\n\0")
 
   define i64 "fact" [(i64, "n")] LExternal [] $ mdo
