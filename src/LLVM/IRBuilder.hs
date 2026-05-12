@@ -163,7 +163,7 @@ getCurrentBlockM = do
     Just block -> pure block
     Nothing -> throwError NoCurrentBlock
 
--- | Get the current function, throwing NoCurrentFunction if none exists
+-- | Get the current function, throwing 'NoCurrentFunction' if none exists
 getCurrentFunctionM :: IRBuilder FunctionBuilder
 getCurrentFunctionM = do
   maybeFunc <- gets builderEnvCurrentFunction
