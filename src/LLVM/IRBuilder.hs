@@ -193,7 +193,7 @@ compileModule name builder =
 
 beginFunction :: FunctionBuilder -> IRBuilder ()
 beginFunction builder = do
-  modify finalizeCurrentBlock
+  finalizeCurrentBlock
 
   IRBuilderEnv{..} <- get
 
@@ -212,7 +212,7 @@ beginFunction builder = do
 
 endFunction :: IRBuilder ()
 endFunction = do
-  modify finalizeCurrentBlock
+  finalizeCurrentBlock
 
   IRBuilderEnv{..} <- get
 
@@ -266,7 +266,7 @@ emitGlobal global = modify (appendBuilderEnvGlobals [global])
 
 beginBlock :: Name -> IRBuilder ()
 beginBlock label = do
-  modify finalizeCurrentBlock
+  finalizeCurrentBlock
   let newBlock =
         BlockBuilder
           { blockBuilderLabel = label
@@ -275,15 +275,16 @@ beginBlock label = do
           }
   modify (setBuilderEnvCurrentBlock newBlock)
 
-finalizeCurrentBlock :: IRBuilderEnv -> IRBuilderEnv
-finalizeCurrentBlock IRBuilderEnv{..} =
+finalizeCurrentBlock :: IRBuilder ()
+finalizeCurrentBlock = do
+  IRBuilderEnv{..} <- get
   case builderEnvCurrentBlock of
     Nothing ->
-      IRBuilderEnv{..}
+      pure ()
     Just BlockBuilder{blockBuilderLabel, blockBuilderItems, blockBuilderTerminator} ->
       case blockBuilderTerminator of
         Nothing ->
-          error "Cannot finalize block without terminator"
+          throwError (BlockMissingTerminator blockBuilderLabel)
         Just term -> do
           let block =
                 IRBlock
@@ -292,8 +293,9 @@ finalizeCurrentBlock IRBuilderEnv{..} =
                   , blockTerminator = term
                   }
 
-          IRBuilderEnv
-            { builderEnvCurrentBlock = Nothing
-            , builderEnvCurrentFunction = fmap (appendFunctionBuilderBlock block) builderEnvCurrentFunction
-            , ..
-            }
+          put $
+            IRBuilderEnv
+              { builderEnvCurrentBlock = Nothing
+              , builderEnvCurrentFunction = fmap (appendFunctionBuilderBlock block) builderEnvCurrentFunction
+              , ..
+              }
