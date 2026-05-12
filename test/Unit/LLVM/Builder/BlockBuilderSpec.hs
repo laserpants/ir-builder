@@ -2,6 +2,7 @@
 
 module Unit.LLVM.Builder.BlockBuilderSpec (spec) where
 
+import Data.Text (Text)
 import LLVM.IRAnnotation (IRAnnotation (..))
 import LLVM.IRBuilder.BlockBuilder
 import LLVM.IRInstruction (IRInstrOp (..), IRInstruction (..))
@@ -13,16 +14,17 @@ import Test.Hspec (Spec, describe, it, shouldBe)
 emptyBlock :: BlockBuilder
 emptyBlock =
   BlockBuilder
-    { blockBuilderLabel = "entry"
-    , blockBuilderItems = []
-    , blockBuilderTerminator = Nothing
+    { blockBuilderLabel = "entry",
+      blockBuilderItems = [],
+      blockBuilderTerminator = Nothing
     }
 
-testInstr :: IRInstruction
+testInstr :: IRInstruction (Maybe Text)
 testInstr =
   IRInstruction
-    { instrResult = Just ("r", TInt 32)
-    , instrOp = IAdd (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b")
+    { instrResult = Just ("r", TInt 32),
+      instrOp = IAdd (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b"),
+      instrMetadata = Nothing
     }
 
 spec :: Spec

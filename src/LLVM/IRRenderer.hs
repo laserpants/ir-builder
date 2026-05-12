@@ -124,17 +124,22 @@ renderBlockItem =
     BlockAnnotation ann ->
       case ann of
         Comment txt -> pure $ "  ; " <> txt
-        CommentBlock txts -> pure $ "  ; " <> Text.unlines (map ("; " <>) txts)
+        CommentBlock txts -> pure $ Text.unlines [("  ; " <>) line | line <- txts]
 
 -- | Render an instruction
-renderInstruction :: IRInstruction -> IRRenderer Text
-renderInstruction IRInstruction{instrResult, instrOp} = do
+renderInstruction :: IRInstruction (Maybe Text) -> IRRenderer Text
+renderInstruction IRInstruction{instrResult, instrOp, instrMetadata} = do
   opStr <- renderInstrOp instrOp
-  case instrResult of
+  let baseStr = case instrResult of
+        Nothing ->
+          "  " <> opStr
+        Just (name, _typ) ->
+          "  %" <> name <> " = " <> opStr
+  case instrMetadata of
     Nothing ->
-      pure $ "  " <> opStr
-    Just (name, _typ) ->
-      pure $ "  %" <> name <> " = " <> opStr
+      pure baseStr
+    Just comment ->
+      pure $ baseStr <> "  ; " <> comment
 
 -- | Render the instruction operation
 renderInstrOp :: IRInstrOp -> IRRenderer Text

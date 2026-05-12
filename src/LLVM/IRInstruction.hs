@@ -90,8 +90,9 @@ data IRInstrOp
   | IZext IROperand IRType
   deriving (Show, Eq, Ord)
 
-data IRInstruction = IRInstruction
+data IRInstruction a = IRInstruction
   { instrResult :: Maybe (Name, IRType)
   , instrOp :: IRInstrOp
+  , instrMetadata :: a
   }
   deriving (Show, Eq, Ord)

@@ -81,7 +81,7 @@ data IRFunction = IRFunction
   deriving (Show, Eq, Ord)
 
 data IRBlockItem
-  = BlockInstr IRInstruction
+  = BlockInstr (IRInstruction (Maybe Text))
   | BlockAnnotation IRAnnotation
   deriving (Show, Eq, Ord)
 

@@ -2,6 +2,7 @@
 
 module Unit.LLVM.IRInstructionSpec (spec) where
 
+import Data.Text (Text)
 import Fixtures.TestData
 import LLVM.IRInstruction
 import LLVM.IROperand (IROperand (OLocal))
@@ -17,22 +18,22 @@ spec = describe "LLVM.IRInstruction" $ do
   describe "IRFCmpCond" $ do
     it "creates all fcmp conditions" $ do
       length
-        [ FCmpOEq
-        , FCmpOGt
-        , FCmpOGe
-        , FCmpOLt
-        , FCmpOLe
-        , FCmpONe
-        , FCmpUeq
-        , FCmpUGt
-        , FCmpUGe
-        , FCmpULt
-        , FCmpULe
-        , FCmpUNe
-        , FCmpOrd
-        , FCmpUno
-        , FCmpTrue
-        , FCmpFalse
+        [ FCmpOEq,
+          FCmpOGt,
+          FCmpOGe,
+          FCmpOLt,
+          FCmpOLe,
+          FCmpONe,
+          FCmpUeq,
+          FCmpUGt,
+          FCmpUGe,
+          FCmpULt,
+          FCmpULe,
+          FCmpUNe,
+          FCmpOrd,
+          FCmpUno,
+          FCmpTrue,
+          FCmpFalse
         ]
         `shouldBe` 16
 
@@ -48,25 +49,31 @@ spec = describe "LLVM.IRInstruction" $ do
 
   describe "IRInstruction" $ do
     it "creates instructions with results" $ do
-      let instr =
+      let instr :: IRInstruction (Maybe Text)
+          instr =
             IRInstruction
-              { instrResult = Just ("result", typeI32)
-              , instrOp = instrAdd
+              { instrResult = Just ("result", typeI32),
+                instrOp = instrAdd,
+                instrMetadata = Nothing
               }
       instr
         `shouldBe` IRInstruction
-          { instrResult = Just ("result", typeI32)
-          , instrOp = instrAdd
+          { instrResult = Just ("result", typeI32),
+            instrOp = instrAdd,
+            instrMetadata = Nothing
           }
 
     it "creates instructions without results" $ do
-      let instr =
+      let instr :: IRInstruction (Maybe Text)
+          instr =
             IRInstruction
-              { instrResult = Nothing
-              , instrOp = instrStore
+              { instrResult = Nothing,
+                instrOp = instrStore,
+                instrMetadata = Nothing
               }
       instr
         `shouldBe` IRInstruction
-          { instrResult = Nothing
-          , instrOp = instrStore
+          { instrResult = Nothing,
+            instrOp = instrStore,
+            instrMetadata = Nothing
           }

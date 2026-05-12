@@ -17,6 +17,7 @@ module LLVM.IRBuilder (
   emitAnnotation,
   emitTerminator,
   emitGlobal,
+  (<##>),
 )
 where
 
@@ -29,7 +30,7 @@ import LLVM.IRAnnotation (IRAnnotation (..))
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..), appendBlockBuilderItem, setBlockBuilderTerminator)
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), appendBuilderEnvGlobals, emptyIRBuilderEnv, mapBuilderEnvCurrentBlock)
 import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..), appendFunctionBuilderBlock)
-import LLVM.IRInstruction (IRInstruction)
+import LLVM.IRInstruction (IRInstruction (..))
 import LLVM.IRModule (IRAttribute (..), IRBlock (..), IRBlockItem (..), IRFunction (..), IRGlobal, IRLinkage (..), IRModule (..))
 import LLVM.IROperand (IRTerminator)
 import LLVM.IRRenderer (renderModule, runIRRenderer)
@@ -49,7 +50,7 @@ newtype IRBuilder a = IRBuilder
 setTerminator :: IRTerminator -> IRBuilder ()
 setTerminator term = modify $ mapBuilderEnvCurrentBlock (setBlockBuilderTerminator term)
 
-emitInstruction :: IRInstruction -> IRBuilder ()
+emitInstruction :: IRInstruction (Maybe Text) -> IRBuilder ()
 emitInstruction instr =
   modify $
     mapBuilderEnvCurrentBlock
@@ -60,6 +61,32 @@ emitAnnotation ann =
   modify $
     mapBuilderEnvCurrentBlock
       (appendBlockBuilderItem (BlockAnnotation ann))
+
+{- | Attach an inline comment to the previously emitted instruction.
+Usage: @reg <- add ... <##> "comment"@
+Renders as: @%reg = add ...  ; comment@
+-}
+(<##>) :: IRBuilder a -> Text -> IRBuilder a
+m <##> comment = m <* modifyLastInstructionComment comment
+
+-- | Internal: modify the last emitted instruction to attach a comment
+modifyLastInstructionComment :: Text -> IRBuilder ()
+modifyLastInstructionComment comment =
+  modify $ mapBuilderEnvCurrentBlock updateLastItemComment
+ where
+  updateLastItemComment bb@BlockBuilder{blockBuilderItems} =
+    case blockBuilderItems of
+      [] ->
+        error "No instruction to attach comment to"
+      items ->
+        let allButLast = init items
+            lastItem = last items
+         in case lastItem of
+              BlockInstr instr ->
+                let updatedInstr = instr{instrMetadata = Just comment}
+                 in bb{blockBuilderItems = allButLast <> [BlockInstr updatedInstr]}
+              BlockAnnotation _ ->
+                error "Cannot attach comment to annotation; must attach to instruction"
 
 emitTerminator :: IRTerminator -> IRBuilder ()
 emitTerminator term = do

@@ -64,12 +64,12 @@ import Prelude hiding (and, or)
 emitWithResult :: IRType -> IRInstrOp -> IRBuilder IROperand
 emitWithResult t op = do
   reg <- freshOperand t
-  emitInstruction $ IRInstruction{instrResult = opComponents reg, instrOp = op}
+  emitInstruction $ IRInstruction{instrResult = opComponents reg, instrOp = op, instrMetadata = Nothing}
   return reg
 
 -- | Emit an instruction that produces no result.
 emitVoid :: IRInstrOp -> IRBuilder ()
-emitVoid op = emitInstruction $ IRInstruction{instrResult = Nothing, instrOp = op}
+emitVoid op = emitInstruction $ IRInstruction{instrResult = Nothing, instrOp = op, instrMetadata = Nothing}
 
 -- * Arithmetic Operations
 
