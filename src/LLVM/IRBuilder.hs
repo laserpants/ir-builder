@@ -11,7 +11,7 @@ common failure modes.
 Example usage:
 
 @
-module <- compileModule "myModule" $ do
+module <- compileModule "my_module" $ do
   define i32 "main" [] LExternal [] $ do
     beginBlock "entry"
     result <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
@@ -409,7 +409,7 @@ For explicit error handling, use 'compileModuleWith'.
 __Example:__
 
 @
-let code = compileModule "myModule" $ do
+let code = compileModule "my_module" $ do
   define i32 "main" [] LExternal [] $ do
     beginBlock "entry"
     x <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))

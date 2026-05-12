@@ -20,7 +20,7 @@ Once compiled using 'LLVM.IRBuilder.buildModule', a module can be verified
 and rendered:
 
 @
-let module = buildModule "mymod" $ define i32 "main" [] LExternal [] $ do
+let module = buildModule "my_module" $ define i32 "main" [] LExternal [] $ do
       b0 <- beginBlock "entry"
       ret (int32 42)
 case verifyModule module of
