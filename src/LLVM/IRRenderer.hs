@@ -4,6 +4,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
+{- |
+This module provides functionality for rendering LLVM IR data structures into their
+textual LLVM IR representation. It handles the conversion of IR modules, functions,
+blocks, instructions, types, and operands into properly formatted LLVM assembly code.
+
+The renderer maintains state for formatting and uses a monadic interface for
+composing rendering operations. The primary entry point is 'renderModule', which
+takes an 'IRModule' and produces the complete textual IR output.
+-}
 module LLVM.IRRenderer (IRRenderer (..), runIRRenderer, renderModule) where
 
 import Common (Name)
@@ -35,6 +44,17 @@ import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
 import LLVM.IRRenderer.State (IRRendererState (..), emptyIRRendererState)
 import LLVM.IRType (IRType (..))
 
+{- |
+The IRRenderer monad provides a stateful context for rendering LLVM IR constructs.
+
+This newtype wraps a State monad that carries 'IRRendererState' through the rendering
+process. It provides monadic composition of rendering operations while maintaining
+internal state needed for proper IR formatting (such as fresh name generation or
+tracking of defined symbols).
+
+The renderer is typically executed using 'runIRRenderer' which evaluates the
+stateful computation and returns the final result.
+-}
 newtype IRRenderer a = IRRenderer {unpackIRRenderer :: State IRRendererState a}
   deriving
     ( Functor
@@ -43,9 +63,43 @@ newtype IRRenderer a = IRRenderer {unpackIRRenderer :: State IRRendererState a}
     , MonadState IRRendererState
     )
 
+{- |
+Execute an IRRenderer computation and extract the result.
+
+This function runs the renderer monad with an initial empty state and returns
+the final computed value. The state is discarded after execution.
+
+==== __Example__
+
+@
+result = runIRRenderer $ renderModule myModule
+@
+-}
 runIRRenderer :: IRRenderer a -> a
 runIRRenderer irRenderer = evalState (unpackIRRenderer irRenderer) emptyIRRendererState
 
+{- |
+Render an LLVM IR module to its textual representation.
+
+This is the primary entry point for rendering complete LLVM IR modules. It processes
+all module components in order:
+
+1. Type declarations (structs, named types)
+2. Global variables and constants
+3. Function definitions
+
+The output is a complete, well-formed LLVM IR text that can be written to a .ll file
+or passed to LLVM tools like llc or opt.
+
+==== __Parameters__
+
+* 'IRModule' - The module containing declarations, globals, and functions to render
+
+==== __Returns__
+
+A 'Text' value containing the complete LLVM IR representation of the module,
+with proper formatting and newline separation between top-level definitions.
+-}
 renderModule :: IRModule -> IRRenderer Text
 renderModule IRModule{moduleDecls, moduleGlobals, moduleFunctions} = do
   decls <- traverse renderDecl moduleDecls
