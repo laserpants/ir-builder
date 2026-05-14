@@ -1,12 +1,7 @@
 {-# LANGUAGE StrictData #-}
 
 {- |
-This module defines the type system for LLVM IR, providing a representation
-of all LLVM types including primitives, aggregates, and function types.
-
-The 'IRType' data type captures LLVM's type system including integers of
-arbitrary bit width, floating-point types, pointers, structures, arrays,
-vectors, and function types. It supports both anonymous and named types.
+This module defines the type system for LLVM IR.
 -}
 module LLVM.IRType (IRType (..)) where
 
@@ -15,9 +10,9 @@ import Common (Name)
 {- |
 Represents LLVM IR types.
 
-This data type models the complete LLVM type system, supporting both
-primitive types and complex aggregate types. Types can be anonymous
-or named, and the type system includes support for SIMD vectors.
+This data type models the LLVM type system, supporting both primitive
+types and complex aggregate types. Types can be anonymous or named,
+and the type system includes support for SIMD vectors.
 
 ==== __Constructors__
 
