@@ -9,17 +9,17 @@ This module provides functionality for rendering LLVM IR data structures into th
 textual LLVM IR representation. It handles the conversion of IR modules, functions,
 blocks, instructions, types, and operands into properly formatted LLVM assembly code.
 
-The renderer maintains state for formatting and uses a monadic interface for
-composing rendering operations. The primary entry point is 'renderModule', which
-takes an 'IRModule' and produces the complete textual IR output.
+The renderer uses a monadic transformer interface allowing it to run in any monad
+context (pure, IO, or custom monad stacks). The primary entry point is 'renderModule',
+which takes an 'IRModule' and produces the complete textual IR output.
 -}
-module LLVM.IRRenderer (IRRenderer (..), runIRRenderer, renderModule) where
+module LLVM.IRRenderer (IRRenderer, IRRendererT (..), runIRRenderer, runIRRendererT, renderModule) where
 
 import Common (Name)
-import Control.Monad.State (MonadState, State, evalState)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
 import Data.Char (intToDigit)
+import Data.Functor.Identity (Identity (runIdentity))
 import Data.Text (Text)
 import qualified Data.Text as Text
 import LLVM.IRAnnotation (IRAnnotation (..))
@@ -41,33 +41,57 @@ import LLVM.IRModule (
   IRModule (..),
  )
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
-import LLVM.IRRenderer.State (IRRendererState (..), emptyIRRendererState)
 import LLVM.IRType (IRType (..))
 
 {- |
-The IRRenderer monad provides a stateful context for rendering LLVM IR constructs.
+The IRRendererT monad transformer provides a flexible context for rendering LLVM IR.
 
-This newtype wraps a State monad that carries 'IRRendererState' through the rendering
-process. It provides monadic composition of rendering operations while maintaining
-internal state needed for proper IR formatting (such as fresh name generation or
-tracking of defined symbols).
+This newtype wraps any monad, allowing rendering operations to be composed in pure
+code, IO, or any custom monad stack. It provides a clean abstraction for rendering
+while allowing users to choose their execution context.
 
-The renderer is typically executed using 'runIRRenderer' which evaluates the
-stateful computation and returns the final result.
+For pure rendering, use the 'IRRenderer' type alias with 'runIRRenderer'.
+For rendering in other monads (IO, Either, etc.), use 'runIRRendererT'.
 -}
-newtype IRRenderer a = IRRenderer {unpackIRRenderer :: State IRRendererState a}
+newtype IRRendererT m a = IRRendererT {unpackIRRendererT :: m a}
   deriving
     ( Functor
     , Applicative
     , Monad
-    , MonadState IRRendererState
     )
 
 {- |
-Execute an IRRenderer computation and extract the result.
+Type alias for pure rendering computations.
 
-This function runs the renderer monad with an initial empty state and returns
-the final computed value. The state is discarded after execution.
+This is the most common use case for rendering LLVM IR in a pure context.
+-}
+type IRRenderer = IRRendererT Identity
+
+{- |
+Execute an IRRendererT computation in any monad.
+
+This function unwraps the renderer transformer and returns the underlying
+monadic computation.
+
+==== __Example__
+
+@
+-- Pure rendering
+result :: Text
+result = runIdentity $ runIRRendererT $ renderModule myModule
+
+-- Rendering with IO
+resultIO :: IO Text
+resultIO = runIRRendererT $ renderModule myModule
+@
+-}
+runIRRendererT :: IRRendererT m a -> m a
+runIRRendererT = unpackIRRendererT
+
+{- |
+Execute a pure IRRenderer computation and extract the result.
+
+This is a convenience function for the common case of pure rendering.
 
 ==== __Example__
 
@@ -76,7 +100,7 @@ result = runIRRenderer $ renderModule myModule
 @
 -}
 runIRRenderer :: IRRenderer a -> a
-runIRRenderer irRenderer = evalState (unpackIRRenderer irRenderer) emptyIRRendererState
+runIRRenderer = runIdentity . runIRRendererT
 
 {- |
 Render an LLVM IR module to its textual representation.
@@ -100,7 +124,7 @@ or passed to LLVM tools like llc or opt.
 A 'Text' value containing the complete LLVM IR representation of the module,
 with proper formatting and newline separation between top-level definitions.
 -}
-renderModule :: IRModule -> IRRenderer Text
+renderModule :: (Monad m) => IRModule -> IRRendererT m Text
 renderModule IRModule{moduleDecls, moduleGlobals, moduleFunctions} = do
   decls <- traverse renderDecl moduleDecls
   globs <- traverse renderGlobal moduleGlobals
@@ -108,13 +132,13 @@ renderModule IRModule{moduleDecls, moduleGlobals, moduleFunctions} = do
   pure $ Text.unlines $ concat [decls, globs, funs]
 
 -- | Render a type declaration (e.g., "%Type = type { i32, i32 }")
-renderDecl :: IRDecl -> IRRenderer Text
+renderDecl :: (Monad m) => IRDecl -> IRRendererT m Text
 renderDecl IRDecl{declName, declType} = do
   typeStr <- renderType declType
   pure $ "%" <> declName <> " = type " <> typeStr
 
 -- | Render a global variable or external declaration
-renderGlobal :: IRGlobal -> IRRenderer Text
+renderGlobal :: (Monad m) => IRGlobal -> IRRendererT m Text
 renderGlobal =
   \case
     IRString linkage name bs ->
@@ -133,7 +157,7 @@ renderGlobal =
       pure $ "declare " <> retTyStr <> " @" <> name <> "(" <> Text.intercalate ", " argTyStrs <> ")"
 
 -- | Render a function definition
-renderFunction :: IRFunction -> IRRenderer Text
+renderFunction :: (Monad m) => IRFunction -> IRRendererT m Text
 renderFunction IRFunction{functionName, functionLinkage, functionRetType, functionArgs, functionBlocks, functionAttributes} = do
   retTypeStr <- renderType functionRetType
   argsStr <- renderFunctionArgs functionArgs
@@ -158,7 +182,7 @@ renderFunction IRFunction{functionName, functionLinkage, functionRetType, functi
       <> "}\n"
 
 -- | Render a single block
-renderBlock :: IRBlock -> IRRenderer Text
+renderBlock :: (Monad m) => IRBlock -> IRRendererT m Text
 renderBlock IRBlock{blockLabel, blockItems, blockTerminator} = do
   itemsStrs <- mapM renderBlockItem blockItems
   termStr <- renderTerminator blockTerminator
@@ -170,7 +194,7 @@ renderBlock IRBlock{blockLabel, blockItems, blockTerminator} = do
       <> termStr
 
 -- | Render a block item (instruction or annotation)
-renderBlockItem :: IRBlockItem -> IRRenderer Text
+renderBlockItem :: (Monad m) => IRBlockItem -> IRRendererT m Text
 renderBlockItem =
   \case
     BlockInstr instr ->
@@ -181,7 +205,7 @@ renderBlockItem =
         CommentBlock txts -> pure $ Text.unlines [("  ; " <>) line | line <- txts]
 
 -- | Render an instruction
-renderInstruction :: IRInstruction (Maybe Text) -> IRRenderer Text
+renderInstruction :: (Monad m) => IRInstruction (Maybe Text) -> IRRendererT m Text
 renderInstruction IRInstruction{instrResult, instrOp, instrMetadata} = do
   opStr <- renderInstrOp instrOp
   let baseStr = case instrResult of
@@ -196,7 +220,7 @@ renderInstruction IRInstruction{instrResult, instrOp, instrMetadata} = do
       pure $ baseStr <> "  ; " <> comment
 
 -- | Render the instruction operation
-renderInstrOp :: IRInstrOp -> IRRenderer Text
+renderInstrOp :: (Monad m) => IRInstrOp -> IRRendererT m Text
 renderInstrOp =
   \case
     IAdd typ a b -> do
@@ -368,7 +392,7 @@ renderInstrOp =
       pure $ "select i1 " <> condStr <> ", " <> tyStr <> " " <> tStr <> ", " <> tyStr <> " " <> fStr
 
 -- | Render a terminator instruction
-renderTerminator :: IRTerminator -> IRRenderer Text
+renderTerminator :: (Monad m) => IRTerminator -> IRRendererT m Text
 renderTerminator =
   \case
     IRet op -> do
@@ -391,7 +415,7 @@ renderTerminator =
       pure "unreachable"
 
 -- | Render an operand without its type (used where the type is already stated by the op)
-renderOperand :: IROperand -> IRRenderer Text
+renderOperand :: (Monad m) => IROperand -> IRRendererT m Text
 renderOperand =
   \case
     OLocal _ name ->
@@ -402,7 +426,7 @@ renderOperand =
       renderConstant c
 
 -- | Render an operand prefixed with its type (used in ret, call args, store value)
-renderTypedOperand :: IROperand -> IRRenderer Text
+renderTypedOperand :: (Monad m) => IROperand -> IRRendererT m Text
 renderTypedOperand op = do
   tyStr <- renderType (operandType op)
   opStr <- renderOperand op
@@ -434,7 +458,7 @@ constantType =
       t
 
 -- | Render a type
-renderType :: IRType -> IRRenderer Text
+renderType :: (Monad m) => IRType -> IRRendererT m Text
 renderType =
   \case
     TInt n ->
@@ -464,7 +488,7 @@ renderType =
       pure $ "<" <> Text.pack (show n) <> " x " <> tStr <> ">"
 
 -- | Render a constant value
-renderConstant :: IRConstant -> IRRenderer Text
+renderConstant :: (Monad m) => IRConstant -> IRRendererT m Text
 renderConstant =
   \case
     CInt _ i ->
@@ -483,7 +507,7 @@ renderConstant =
       pure $ "[ " <> Text.intercalate ", " csStrs <> " ]"
 
 -- | Render function arguments
-renderFunctionArgs :: [(IRType, Name)] -> IRRenderer Text
+renderFunctionArgs :: (Monad m) => [(IRType, Name)] -> IRRendererT m Text
 renderFunctionArgs args = do
   argStrs <- mapM (\(typ, name) -> do tyStr <- renderType typ; pure $ tyStr <> " %" <> name) args
   pure $ Text.intercalate ", " argStrs

@@ -48,7 +48,7 @@ executables:
       - -rtsopts
       - -with-rtsopts=-N
     dependencies:
-      - proto
+      - coal-llvm-subsystem
 
 tests:
   proto-test:
@@ -61,5 +61,5 @@ tests:
     build-tools:
       - hspec-discover:hspec-discover
     dependencies:
-      - proto
+      - coal-llvm-subsystem
       - hspec >= 2.10.0
