@@ -1,9 +1,9 @@
-module LLVM.IRType.IsTyped (IRIsTyped (..)) where
+module LLVM.IRType.IsTyped (IsTypedIR (..)) where
 
 import LLVM.IRType (IRType (..))
 
-class IRIsTyped t where
+class IsTypedIR t where
   irTypeOf :: t -> IRType
 
-instance IRIsTyped IRType where
+instance IsTypedIR IRType where
   irTypeOf = id
