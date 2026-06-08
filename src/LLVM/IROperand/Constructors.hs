@@ -30,6 +30,7 @@ module LLVM.IROperand.Constructors
   ( -- * Boolean Constants
     false,
     true,
+    unit,
 
     -- * Integer Constants
     i1,
@@ -77,6 +78,16 @@ false = OConstant $ CInt 1 0
 {-# INLINE true #-}
 true :: IROperand
 true = OConstant $ CInt 1 1
+
+-- | Unit constant (i1 1).
+--
+-- Commonly used as a placeholder value or to represent a successful/present state.
+--
+-- >>> unit
+-- OConstant (CInt 1 1)
+{-# INLINE unit #-}
+unit :: IROperand
+unit = OConstant $ CInt 1 1
 
 -- * Integer Constants
 
