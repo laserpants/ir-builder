@@ -1,5 +1,5 @@
 module LLVM.IRInstruction.Constructors (
-  -- * Arithmetic Operations
+  -- * Arithmetic operations
   add,
   sub,
   mul,
@@ -8,7 +8,7 @@ module LLVM.IRInstruction.Constructors (
   srem,
   urem,
 
-  -- * Bitwise Operations
+  -- * Bitwise operations
   and,
   or,
   xor,
@@ -16,24 +16,24 @@ module LLVM.IRInstruction.Constructors (
   lshr,
   ashr,
 
-  -- * Floating-Point Arithmetic
+  -- * Floating-point arithmetic
   fadd,
   fsub,
   fmul,
   fdiv,
   fneg,
 
-  -- * Comparison Operations
+  -- * Comparison operations
   icmp,
   fcmp,
 
-  -- * Memory Operations
+  -- * Memory operations
   alloca,
   load,
   store,
   gep,
 
-  -- * Type Casts
+  -- * Type casts
   bitcast,
   sext,
   zext,
@@ -41,7 +41,7 @@ module LLVM.IRInstruction.Constructors (
   inttoptr,
   ptrtoint,
 
-  -- * Control Flow
+  -- * Control flow
   call,
   callVoid,
 
@@ -71,7 +71,7 @@ emitWithResult t op = do
 emitVoid :: IRInstrOp -> IRBuilder ()
 emitVoid op = emitInstruction $ IRInstruction{instrResult = Nothing, instrOp = op, instrMetadata = Nothing}
 
--- * Arithmetic Operations
+-- * Arithmetic operations
 
 -- | Add two integers.
 add :: IRType -> IROperand -> IROperand -> IRBuilder IROperand
@@ -101,7 +101,7 @@ srem t a b = emitWithResult t (ISRem t a b)
 urem :: IRType -> IROperand -> IROperand -> IRBuilder IROperand
 urem t a b = emitWithResult t (IURem t a b)
 
--- * Bitwise Operations
+-- * Bitwise operations
 
 -- | Bitwise AND.
 and :: IRType -> IROperand -> IROperand -> IRBuilder IROperand
@@ -127,7 +127,7 @@ lshr t a b = emitWithResult t (ILShr t a b)
 ashr :: IRType -> IROperand -> IROperand -> IRBuilder IROperand
 ashr t a b = emitWithResult t (IAShr t a b)
 
--- * Floating-Point Arithmetic
+-- * Floating-point arithmetic
 
 -- | Floating-point addition.
 fadd :: IRType -> IROperand -> IROperand -> IRBuilder IROperand
@@ -149,7 +149,7 @@ fdiv t a b = emitWithResult t (IFDiv t a b)
 fneg :: IRType -> IROperand -> IRBuilder IROperand
 fneg t a = emitWithResult t (IFNeg t a)
 
--- * Comparison Operations
+-- * Comparison operations
 
 -- | Integer comparison with the given condition code.
 icmp :: IRICmpCond -> IRType -> IROperand -> IROperand -> IRBuilder IROperand
@@ -159,7 +159,7 @@ icmp cc t a b = emitWithResult i1 (IICmp cc t a b)
 fcmp :: IRFCmpCond -> IRType -> IROperand -> IROperand -> IRBuilder IROperand
 fcmp cc t a b = emitWithResult i1 (IFCmp cc t a b)
 
--- * Memory Operations
+-- * Memory operations
 
 -- | Allocate space on the stack for a value of the given type.
 alloca :: IRType -> IROperand -> IRBuilder IROperand
@@ -177,7 +177,7 @@ store op ptr = emitVoid (IStore op ptr)
 gep :: IRType -> IROperand -> IROperand -> IROperand -> IRBuilder IROperand
 gep t base idx0 idx1 = emitWithResult TPtr (IGep t base idx0 idx1)
 
--- * Type Casts
+-- * Type casts
 
 -- | Bitcast value to a different type.
 bitcast :: IROperand -> IRType -> IRBuilder IROperand
@@ -203,7 +203,7 @@ inttoptr op t = emitWithResult t (IInttoptr op t)
 ptrtoint :: IROperand -> IRType -> IRBuilder IROperand
 ptrtoint op t = emitWithResult t (IPtrtoint op t)
 
--- * Control Flow
+-- * Control flow
 
 -- | Call a function that returns a non-void value.
 call :: IRTailMarker -> IRType -> IROperand -> [IROperand] -> IRBuilder IROperand
