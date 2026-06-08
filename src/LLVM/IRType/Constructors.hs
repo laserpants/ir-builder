@@ -34,6 +34,7 @@ module LLVM.IRType.Constructors (
   ptr,
   void,
   struct,
+  array,
 )
 where
 
@@ -66,3 +67,7 @@ void = TVoid
 {-# INLINE struct #-}
 struct :: [IRType] -> IRType
 struct = TStruct
+
+{-# INLINE array #-}
+array :: Int -> IRType -> IRType
+array = TArray
