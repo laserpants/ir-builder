@@ -95,62 +95,62 @@ unit = OConstant $ CInt 1 1
 --
 -- ==== __Parameters__
 --
--- * 'Integer' - The integer value (typically 0 or 1)
+-- * 'Integral' @a@ - The integer value (typically 0 or 1)
 --
 -- >>> i1 0
 -- OConstant (CInt 1 0)
 {-# INLINE i1 #-}
-i1 :: Integer -> IROperand
-i1 = OConstant . CInt 1
+i1 :: Integral a => a -> IROperand
+i1 = OConstant . CInt 1 . toInteger
 
 -- | Create an i8 (8-bit) integer constant.
 --
 -- ==== __Parameters__
 --
--- * 'Integer' - The integer value
+-- * 'Integral' @a@ - The integer value
 --
 -- >>> i8 42
 -- OConstant (CInt 8 42)
 {-# INLINE i8 #-}
-i8 :: Integer -> IROperand
-i8 = OConstant . CInt 8
+i8 :: Integral a => a -> IROperand
+i8 = OConstant . CInt 8 . toInteger
 
 -- | Create an i32 (32-bit) integer constant.
 --
 -- ==== __Parameters__
 --
--- * 'Integer' - The integer value
+-- * 'Integral' @a@ - The integer value
 --
 -- >>> i32 1000
 -- OConstant (CInt 32 1000)
 {-# INLINE i32 #-}
-i32 :: Integer -> IROperand
-i32 = OConstant . CInt 32
+i32 :: Integral a => a -> IROperand
+i32 = OConstant . CInt 32 . toInteger
 
 -- | Create an i64 (64-bit) integer constant.
 --
 -- ==== __Parameters__
 --
--- * 'Integer' - The integer value
+-- * 'Integral' @a@ - The integer value
 --
 -- >>> i64 9999999
 -- OConstant (CInt 64 9999999)
 {-# INLINE i64 #-}
-i64 :: Integer -> IROperand
-i64 = OConstant . CInt 64
+i64 :: Integral a => a -> IROperand
+i64 = OConstant . CInt 64 . toInteger
 
 -- | Create an integer constant with a custom bit width.
 --
 -- ==== __Parameters__
 --
 -- * 'Int' - The bit width
--- * 'Integer' - The integer value
+-- * 'Integral' @a@ - The integer value
 --
 -- >>> int 16 32768
 -- OConstant (CInt 16 32768)
 {-# INLINE int #-}
-int :: Int -> Integer -> IROperand
-int w = OConstant . CInt w
+int :: Integral a => Int -> a -> IROperand
+int w = OConstant . CInt w . toInteger
 
 -- * Floating-Point Constants
 
