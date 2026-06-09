@@ -2,14 +2,14 @@
 
 module Unit.LLVM.Builder.SupplySpec (spec) where
 
+import Control.Monad.Except (runExceptT)
 import Control.Monad.Identity (runIdentity)
 import Control.Monad.State (runStateT)
-import Control.Monad.Except (runExceptT)
 import Data.List (nub)
 import LLVM.IRBuilder (IRBuilder (..))
-import LLVM.IRBuilder.Error (IRBuilderError)
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv)
-import LLVM.IRBuilder.Supply (fresh, freshOperand)
+import LLVM.IRBuilder.Error (IRBuilderError)
+import LLVM.IRBuilder.Supply (fresh, freshLabel, freshOperand)
 import LLVM.IROperand (IROperand (..))
 import LLVM.IRType (IRType (..))
 import Test.Hspec (Spec, describe, expectationFailure, it, shouldBe)
@@ -36,7 +36,7 @@ spec = describe "LLVM.IRBuilder.Supply" $ do
 
     it "increments the counter after each call" $ do
       let env = execBuilder fresh emptyIRBuilderEnv
-      builderEnvFresh env `shouldBe` 1
+      builderEnvFreshReg env `shouldBe` 1
 
     it "generates unique names for sequential calls" $ do
       let names = evalBuilder (sequence [fresh, fresh, fresh]) emptyIRBuilderEnv
@@ -63,3 +63,24 @@ spec = describe "LLVM.IRBuilder.Supply" $ do
       case op of
         OLocal TFloat _ -> pure ()
         _ -> expectationFailure "expected OLocal TFloat"
+
+  describe "freshLabel" $ do
+    it "generates a label with the hint as a prefix" $ do
+      let label = evalBuilder (freshLabel "loop") emptyIRBuilderEnv
+      label `shouldBe` "loop.1"
+
+    it "increments the fresh label counter" $ do
+      let env = execBuilder (freshLabel "loop") emptyIRBuilderEnv
+      builderEnvFreshLabel env `shouldBe` 1
+
+    it "does not increment the fresh register counter" $ do
+      let env = execBuilder (freshLabel "loop") emptyIRBuilderEnv
+      builderEnvFreshReg env `shouldBe` 0
+
+    it "generates unique labels for sequential calls with the same hint" $ do
+      let labels = evalBuilder (sequence [freshLabel "loop", freshLabel "loop"]) emptyIRBuilderEnv
+      labels `shouldBe` ["loop.1", "loop.2"]
+
+    it "generates unique labels for sequential calls with different hints" $ do
+      let labels = evalBuilder (sequence [freshLabel "loop", freshLabel "body"]) emptyIRBuilderEnv
+      labels `shouldBe` ["loop.1", "body.2"]

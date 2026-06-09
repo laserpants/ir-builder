@@ -2,9 +2,9 @@
 
 module Unit.LLVM.IRBuilderSpec (spec) where
 
+import Control.Monad.Except (runExceptT)
 import Control.Monad.Identity (runIdentity)
 import Control.Monad.State (runStateT)
-import Control.Monad.Except (runExceptT)
 import LLVM.IRBuilder
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
 import LLVM.IRBuilder.Environment (emptyIRBuilderEnv)
@@ -23,15 +23,20 @@ execBuilder b env = case runBuilder b env of
   Right (_, e) -> e
   Left err -> error $ show err
 
+evalBuilder :: IRBuilder a -> IRBuilderEnv -> a
+evalBuilder b env = case runBuilder b env of
+  Right (a, _) -> a
+  Left err -> error $ show err
+
 testFB :: FunctionBuilder
 testFB =
   FunctionBuilder
-    { functionBuilderName = "test"
-    , functionBuilderLinkage = LExternal
-    , functionBuilderRetType = TInt 32
-    , functionBuilderArgs = []
-    , functionBuilderBlocks = []
-    , functionBuilderAttributes = []
+    { functionBuilderName = "test",
+      functionBuilderLinkage = LExternal,
+      functionBuilderRetType = TInt 32,
+      functionBuilderArgs = [],
+      functionBuilderBlocks = [],
+      functionBuilderAttributes = []
     }
 
 spec :: Spec
@@ -81,3 +86,22 @@ spec = describe "LLVM.IRBuilder" $ do
     it "produces empty output for an empty module" $ do
       let output = compileModule "test" (pure ())
       output `shouldBe` ""
+
+  describe "block" $ do
+    it "returns a name with the hint as a prefix" $ do
+      let label = evalBuilder (block "loop") emptyIRBuilderEnv
+      label `shouldBe` "loop.1"
+
+    it "creates a current block whose label matches the returned name" $ do
+      let env = execBuilder (block "loop") emptyIRBuilderEnv
+      case builderEnvCurrentBlock env of
+        Just bb -> blockBuilderLabel bb `shouldBe` "loop.1"
+        Nothing -> expectationFailure "expected a current block"
+
+    it "two calls with the same hint produce distinct labels" $ do
+      let labels = evalBuilder (do l1 <- block "loop"; setTerminator (IBr l1); l2 <- block "loop"; pure [l1, l2]) emptyIRBuilderEnv
+      labels `shouldBe` ["loop.1", "loop.2"]
+
+    it "does not increment the fresh register counter" $ do
+      let env = execBuilder (block "loop") emptyIRBuilderEnv
+      builderEnvFreshReg env `shouldBe` 0
