@@ -6,7 +6,7 @@ import Control.Monad.Except (runExceptT)
 import Control.Monad.Identity (runIdentity)
 import Control.Monad.State (runStateT)
 import Data.List (nub)
-import LLVM.IRBuilder (IRBuilder (..))
+import LLVM.IRBuilder (IRBuilder, IRBuilderT (..), runIRBuilder)
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv)
 import LLVM.IRBuilder.Error (IRBuilderError)
 import LLVM.IRBuilder.Supply (fresh, freshLabel, freshOperand)
@@ -18,14 +18,16 @@ runBuilder :: IRBuilder a -> IRBuilderEnv -> Either IRBuilderError (a, IRBuilder
 runBuilder b env = runIdentity (runExceptT (runStateT (runIRBuilder b) env))
 
 evalBuilder :: IRBuilder a -> IRBuilderEnv -> a
-evalBuilder b env = case runBuilder b env of
-  Right (a, _) -> a
-  Left err -> error $ show err
+evalBuilder b env =
+  case runBuilder b env of
+    Right (a, _) -> a
+    Left err -> error $ show err
 
 execBuilder :: IRBuilder a -> IRBuilderEnv -> IRBuilderEnv
-execBuilder b env = case runBuilder b env of
-  Right (_, e) -> e
-  Left err -> error $ show err
+execBuilder b env =
+  case runBuilder b env of
+    Right (_, e) -> e
+    Left err -> error $ show err
 
 spec :: Spec
 spec = describe "LLVM.IRBuilder.Supply" $ do

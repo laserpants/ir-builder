@@ -13,36 +13,36 @@ import Test.Hspec (Spec, describe, it, shouldBe)
 emptyFB :: FunctionBuilder
 emptyFB =
   FunctionBuilder
-    { functionBuilderName = "foo",
-      functionBuilderLinkage = LExternal,
-      functionBuilderRetType = TInt 32,
-      functionBuilderArgs = [],
-      functionBuilderBlocks = [],
-      functionBuilderAttributes = []
+    { functionBuilderName = "foo"
+    , functionBuilderLinkage = LExternal
+    , functionBuilderRetType = TInt 32
+    , functionBuilderArgs = []
+    , functionBuilderBlocks = []
+    , functionBuilderAttributes = []
     }
 
 testBlock :: IRBlock
 testBlock =
   IRBlock
-    { blockLabel = "entry",
-      blockItems = [],
-      blockTerminator = IRet (OConstant (CInt 32 0))
+    { blockLabel = "entry"
+    , blockItems = []
+    , blockTerminator = IRet (OConstant (CInt 32 0))
     }
 
 testBlock2 :: IRBlock
 testBlock2 =
   IRBlock
-    { blockLabel = "exit",
-      blockItems = [],
-      blockTerminator = IRet (OConstant (CInt 32 1))
+    { blockLabel = "exit"
+    , blockItems = []
+    , blockTerminator = IRet (OConstant (CInt 32 1))
     }
 
 testInstr :: IRInstruction (Maybe Text)
 testInstr =
   IRInstruction
-    { instrResult = Just ("r", TInt 32),
-      instrOp = IAdd (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b"),
-      instrMetadata = Nothing
+    { instrResult = Just ("r", TInt 32)
+    , instrOp = IAdd (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b")
+    , instrMetadata = Nothing
     }
 
 spec :: Spec

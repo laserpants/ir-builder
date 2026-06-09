@@ -10,7 +10,8 @@ where
 
 import Data.Text (Text)
 import LLVM.IRAnnotation (IRAnnotation (..))
-import LLVM.IRBuilder (IRBuilder, (<##>))
+import LLVM.IRBuilder ((<##>))
+import LLVM.IRBuilder.Class (MonadIRBuilder)
 
 {- | Create a single-line comment annotation.
 
@@ -50,5 +51,5 @@ Renders as:
 
 @%reg = add i32 %a, %b  ; comment explaining this@
 -}
-withComment :: Text -> IRBuilder a -> IRBuilder a
+withComment :: (MonadIRBuilder m) => Text -> m a -> m a
 withComment cmt m = m <##> cmt

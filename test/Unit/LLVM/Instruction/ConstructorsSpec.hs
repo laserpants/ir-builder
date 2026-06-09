@@ -2,10 +2,10 @@
 
 module Unit.LLVM.Instruction.ConstructorsSpec (spec) where
 
+import Control.Monad.Except (runExceptT)
 import Control.Monad.Identity (runIdentity)
 import Control.Monad.State (runStateT)
-import Control.Monad.Except (runExceptT)
-import LLVM.IRBuilder (IRBuilder (..))
+import LLVM.IRBuilder (IRBuilder, IRBuilderT (..), runIRBuilder)
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv)
 import LLVM.IRBuilder.Error (IRBuilderError)
