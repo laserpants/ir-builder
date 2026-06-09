@@ -3,8 +3,10 @@
 module Unit.LLVM.IRBuilderSpec (spec) where
 
 import Control.Monad.Except (runExceptT)
+import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Identity (runIdentity)
 import Control.Monad.State (runStateT)
+import Control.Monad.Trans (lift)
 import LLVM.IRBuilder
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
 import LLVM.IRBuilder.Environment (emptyIRBuilderEnv)
@@ -105,3 +107,23 @@ spec = describe "LLVM.IRBuilder" $ do
     it "does not increment the fresh register counter" $ do
       let env = execBuilder (block "loop") emptyIRBuilderEnv
       builderEnvFreshReg env `shouldBe` 0
+
+  describe "IRBuilderT transformer" $ do
+    it "can run in the IO monad" $ do
+      result <- runExceptT (runStateT (runIRBuilderT (pure 42 :: IRBuilderT IO Int)) emptyIRBuilderEnv)
+      case result of
+        Right (val, _) -> val `shouldBe` 42
+        Left err -> expectationFailure $ "Builder failed: " ++ show err
+
+    it "lift propagates values from the base monad" $ do
+      let action = lift (Just 100) :: IRBuilderT Maybe Int
+      let result = runStateT (runIRBuilderT action) emptyIRBuilderEnv
+      case runExceptT result of
+        Just (Right (val, _)) -> val `shouldBe` 100
+        _ -> expectationFailure "Expected Just (Right (100, _))"
+
+    it "liftIO works when base monad is IO" $ do
+      result <- runExceptT (runStateT (runIRBuilderT (liftIO (pure 999) :: IRBuilderT IO Int)) emptyIRBuilderEnv)
+      case result of
+        Right (val, _) -> val `shouldBe` 999
+        Left err -> expectationFailure $ "Builder failed: " ++ show err

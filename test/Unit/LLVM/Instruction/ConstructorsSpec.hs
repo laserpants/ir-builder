@@ -2,10 +2,10 @@
 
 module Unit.LLVM.Instruction.ConstructorsSpec (spec) where
 
+import Control.Monad.Except (runExceptT)
 import Control.Monad.Identity (runIdentity)
 import Control.Monad.State (runStateT)
-import Control.Monad.Except (runExceptT)
-import LLVM.IRBuilder (IRBuilder (..))
+import LLVM.IRBuilder (IRBuilder, IRBuilderT (..), runIRBuilder)
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv)
 import LLVM.IRBuilder.Error (IRBuilderError)
@@ -20,28 +20,27 @@ import Prelude hiding (and, or)
 runBuilder :: IRBuilder a -> IRBuilderEnv -> Either IRBuilderError (a, IRBuilderEnv)
 runBuilder b env = runIdentity (runExceptT (runStateT (runIRBuilder b) env))
 
-{- | Run a builder action that emits instructions and return the last-emitted operand result
-plus the collected block items via interpretting EmitInstr effects directly
--}
+-- | Run a builder action that emits instructions and return the last-emitted operand result
+-- plus the collected block items via interpretting EmitInstr effects directly
 runInstrBuilder :: IRBuilder IROperand -> (IROperand, [IRBlockItem])
 runInstrBuilder action = (result, blockBuilderItems bb)
- where
-  initialEnv =
-    emptyIRBuilderEnv
-      { builderEnvCurrentBlock =
-          Just
-            BlockBuilder
-              { blockBuilderLabel = "entry"
-              , blockBuilderItems = []
-              , blockBuilderTerminator = Nothing
-              }
-      }
-  (result, finalEnv) = case runBuilder action initialEnv of
-    Right (r, e) -> (r, e)
-    Left err -> error $ show err
-  bb = case builderEnvCurrentBlock finalEnv of
-    Just b -> b
-    Nothing -> error "no current block"
+  where
+    initialEnv =
+      emptyIRBuilderEnv
+        { builderEnvCurrentBlock =
+            Just
+              BlockBuilder
+                { blockBuilderLabel = "entry",
+                  blockBuilderItems = [],
+                  blockBuilderTerminator = Nothing
+                }
+        }
+    (result, finalEnv) = case runBuilder action initialEnv of
+      Right (r, e) -> (r, e)
+      Left err -> error $ show err
+    bb = case builderEnvCurrentBlock finalEnv of
+      Just b -> b
+      Nothing -> error "no current block"
 
 -- | Extract the instrOp from the last block item
 lastInstrOp :: [IRBlockItem] -> Maybe IRInstrOp
@@ -170,7 +169,7 @@ spec = describe "LLVM.IRInstruction.Constructors" $ do
           initialEnv =
             emptyIRBuilderEnv
               { builderEnvCurrentBlock =
-                  Just BlockBuilder{blockBuilderLabel = "entry", blockBuilderItems = [], blockBuilderTerminator = Nothing}
+                  Just BlockBuilder {blockBuilderLabel = "entry", blockBuilderItems = [], blockBuilderTerminator = Nothing}
               }
           (_, finalEnv) = case runBuilder (store a32 ptr) initialEnv of
             Right (_, e) -> ((), e)

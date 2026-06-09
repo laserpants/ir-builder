@@ -2,6 +2,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StrictData #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 -- | This module provides a high-level monadic DSL for constructing LLVM
 -- IR modules, functions, blocks, and instructions. The 'IRBuilder' monad
@@ -43,8 +44,12 @@
 -- Error introspection and lifting functions for explicit error handling.
 module LLVM.IRBuilder
   ( -- * Core types and compilation
-    IRBuilder (..),
+    IRBuilderT (..),
+    IRBuilder,
+    MonadIRBuilder (..),
+    runIRBuilder,
     IRBuilderEnv (..),
+    lift,
     compileModule,
     compileModuleWith,
     buildModuleWith,
@@ -79,9 +84,11 @@ where
 
 import Common (Name)
 import Control.Monad.Except (ExceptT, MonadError, runExceptT, throwError)
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.Fix (MonadFix (mfix))
+import Control.Monad.IO.Class (MonadIO (liftIO))
 import Control.Monad.Identity (Identity, runIdentity)
 import Control.Monad.State (MonadState, StateT, get, gets, modify, put, runStateT)
+import Control.Monad.Trans (MonadTrans (lift))
 import Data.Maybe (isJust)
 import Data.Text (Text, pack)
 import LLVM.IRAnnotation (IRAnnotation (..))
@@ -90,6 +97,7 @@ import LLVM.IRBuilder.BlockBuilder
     appendBlockBuilderItem,
     setBlockBuilderTerminator,
   )
+import LLVM.IRBuilder.Class (MonadIRBuilder (..))
 import LLVM.IRBuilder.Environment
   ( IRBuilderEnv (..),
     appendBuilderEnvGlobals,
@@ -103,6 +111,7 @@ import LLVM.IRBuilder.FunctionBuilder
   ( FunctionBuilder (..),
     appendFunctionBuilderBlock,
   )
+import LLVM.IRBuilder.Supply (freshLabel)
 import LLVM.IRInstruction (IRInstruction (..))
 import LLVM.IRModule
   ( IRAttribute (..),
@@ -121,28 +130,57 @@ import LLVM.IRType (IRType)
 -- Core types
 -- ============================================================================
 
--- | The 'IRBuilder' monad for constructing LLVM IR.
+-- | The 'IRBuilderT' monad transformer for constructing LLVM IR.
 --
--- This is the main monad used for all IR construction operations. It combines:
+-- This transformer allows IR construction operations to be embedded in any monad.
+-- It combines:
 --
 -- - 'StateT' for maintaining the builder environment (current function, block, etc.)
 -- - 'ExceptT' for error handling with typed 'IRBuilderError' exceptions
--- - 'Identity' as the base monad
+-- - A parameterized base monad @m@
 --
--- Use @runIRBuilder@ to extract the inner transformer stack for execution.
--- The monad supports 'MonadFix' via derived instances, enabling forward references
+-- Use @runIRBuilderT@ to extract the inner transformer stack for execution.
+-- The monad supports 'MonadFix' when the base monad does, enabling forward references
 -- with @mdo@ notation in recursive block structures like loops with phi nodes.
-newtype IRBuilder a = IRBuilder
-  { runIRBuilder :: StateT IRBuilderEnv (ExceptT IRBuilderError Identity) a
+newtype IRBuilderT m a = IRBuilderT
+  { runIRBuilderT :: StateT IRBuilderEnv (ExceptT IRBuilderError m) a
   }
   deriving
     ( Functor,
       Applicative,
       Monad,
       MonadState IRBuilderEnv,
-      MonadError IRBuilderError,
-      MonadFix
+      MonadError IRBuilderError
     )
+
+-- | Specialized 'IRBuilderT' using 'Identity' as the base monad.
+--
+-- This is the original non-transformer version, maintained for backward compatibility.
+-- Most existing code uses this type.
+type IRBuilder = IRBuilderT Identity
+
+-- | Extract the transformer stack from an 'IRBuilder' computation.
+--
+-- For backward compatibility with code that uses 'runIRBuilder' directly.
+runIRBuilder :: IRBuilder a -> StateT IRBuilderEnv (ExceptT IRBuilderError Identity) a
+runIRBuilder = runIRBuilderT
+
+-- Manual instances for constrained typeclasses
+
+instance (MonadFix m) => MonadFix (IRBuilderT m) where
+  mfix f = IRBuilderT (mfix (runIRBuilderT . f))
+
+instance MonadTrans IRBuilderT where
+  lift = IRBuilderT . lift . lift
+
+instance (MonadIO m) => MonadIO (IRBuilderT m) where
+  liftIO = lift . liftIO
+
+-- | IRBuilderT instance for MonadIRBuilder
+instance (Monad m) => MonadIRBuilder (IRBuilderT m) where
+  getIRBuilderEnv = get
+  putIRBuilderEnv = put
+  throwIRBuilderError = throwError
 
 -- ============================================================================
 -- Error handling helpers
@@ -155,20 +193,20 @@ newtype IRBuilder a = IRBuilder
 -- operations to fail.
 --
 -- __Throws:__ 'NoCurrentBlock' if no block is currently active.
-getCurrentBlockM :: IRBuilder BlockBuilder
+getCurrentBlockM :: (MonadIRBuilder m) => m BlockBuilder
 getCurrentBlockM = do
-  maybeBlock <- gets builderEnvCurrentBlock
+  maybeBlock <- getsIRBuilderEnv builderEnvCurrentBlock
   case maybeBlock of
     Just bb -> pure bb
-    Nothing -> throwError NoCurrentBlock
+    Nothing -> throwIRBuilderError NoCurrentBlock
 
 -- | Get the current function, throwing 'NoCurrentFunction' if none exists
-getCurrentFunctionM :: IRBuilder FunctionBuilder
+getCurrentFunctionM :: (MonadIRBuilder m) => m FunctionBuilder
 getCurrentFunctionM = do
-  maybeFunc <- gets builderEnvCurrentFunction
+  maybeFunc <- getsIRBuilderEnv builderEnvCurrentFunction
   case maybeFunc of
     Just func -> pure func
-    Nothing -> throwError NoCurrentFunction
+    Nothing -> throwIRBuilderError NoCurrentFunction
 
 -- | Lift an 'Either' computation into the 'IRBuilder' monad.
 --
@@ -178,8 +216,8 @@ getCurrentFunctionM = do
 -- @
 -- result <- liftEither (someExternalComputation ...)
 -- @
-liftEither :: Either IRBuilderError a -> IRBuilder a
-liftEither = either throwError pure
+liftEither :: (MonadIRBuilder m) => Either IRBuilderError a -> m a
+liftEither = either throwIRBuilderError pure
 
 -- ============================================================================
 -- Instruction emission
@@ -198,15 +236,15 @@ liftEither = either throwError pure
 --
 -- - 'NoCurrentBlock' if no block is active
 -- - 'BlockAlreadyTerminated' if the block already has a terminator
-emitTerminator :: IRTerminator -> IRBuilder ()
+emitTerminator :: (MonadIRBuilder m) => IRTerminator -> m ()
 emitTerminator term = do
-  maybeBlock <- gets builderEnvCurrentBlock
+  maybeBlock <- getsIRBuilderEnv builderEnvCurrentBlock
   case maybeBlock of
     Just BlockBuilder {blockBuilderTerminator, blockBuilderLabel}
       | isJust blockBuilderTerminator ->
-          throwError (BlockAlreadyTerminated blockBuilderLabel)
+          throwIRBuilderError (BlockAlreadyTerminated blockBuilderLabel)
     Nothing ->
-      throwError NoCurrentBlock
+      throwIRBuilderError NoCurrentBlock
     _ ->
       pure ()
 
@@ -216,8 +254,8 @@ emitTerminator term = do
 --
 -- This is a lower-level variant used internally. Prefer 'emitTerminator' for
 -- proper error handling.
-setTerminator :: IRTerminator -> IRBuilder ()
-setTerminator term = modify $ mapBuilderEnvCurrentBlock (setBlockBuilderTerminator term)
+setTerminator :: (MonadIRBuilder m) => IRTerminator -> m ()
+setTerminator term = modifyIRBuilderEnv $ mapBuilderEnvCurrentBlock (setBlockBuilderTerminator term)
 
 -- | Emit an instruction into the current block.
 --
@@ -231,9 +269,9 @@ setTerminator term = modify $ mapBuilderEnvCurrentBlock (setBlockBuilderTerminat
 -- @
 --
 -- __Throws:__ implicitly propagates 'NoCurrentBlock' if no block is active
-emitInstruction :: IRInstruction (Maybe Text) -> IRBuilder ()
+emitInstruction :: (MonadIRBuilder m) => IRInstruction (Maybe Text) -> m ()
 emitInstruction instr =
-  modify $
+  modifyIRBuilderEnv $
     mapBuilderEnvCurrentBlock
       (appendBlockBuilderItem (BlockInstr instr))
 
@@ -247,9 +285,9 @@ emitInstruction instr =
 -- @
 -- emitAnnotation (commentBlock ["Section: input validation", "Check bounds..."])
 -- @
-emitAnnotation :: IRAnnotation -> IRBuilder ()
+emitAnnotation :: (MonadIRBuilder m) => IRAnnotation -> m ()
 emitAnnotation ann =
-  modify $
+  modifyIRBuilderEnv $
     mapBuilderEnvCurrentBlock
       (appendBlockBuilderItem (BlockAnnotation ann))
 
@@ -276,29 +314,29 @@ emitAnnotation ann =
 -- - 'NoCurrentBlock' if no block is active
 -- - 'NoInstructionForComment' if no instruction was just emitted
 -- - 'CommentOnAnnotation' if applied to an annotation block instead of an instruction
-(<##>) :: IRBuilder a -> Text -> IRBuilder a
+(<##>) :: (MonadIRBuilder m) => m a -> Text -> m a
 m <##> comment = m <* modifyLastInstructionComment comment
 
 -- | Internal: modify the last emitted instruction to attach a comment
-modifyLastInstructionComment :: Text -> IRBuilder ()
+modifyLastInstructionComment :: (MonadIRBuilder m) => Text -> m ()
 modifyLastInstructionComment comment = do
-  maybeBlock <- gets builderEnvCurrentBlock
+  maybeBlock <- getsIRBuilderEnv builderEnvCurrentBlock
   case maybeBlock of
     Nothing ->
-      throwError NoCurrentBlock
+      throwIRBuilderError NoCurrentBlock
     Just bb@BlockBuilder {blockBuilderItems} ->
       case blockBuilderItems of
         [] ->
-          throwError NoInstructionForComment
+          throwIRBuilderError NoInstructionForComment
         items ->
           let allButLast = init items
               lastItem = last items
            in case lastItem of
                 BlockInstr instr -> do
                   let updatedInstr = instr {instrMetadata = Just comment}
-                  modify (\env -> env {builderEnvCurrentBlock = Just (bb {blockBuilderItems = allButLast <> [BlockInstr updatedInstr]})})
+                  modifyIRBuilderEnv (\env -> env {builderEnvCurrentBlock = Just (bb {blockBuilderItems = allButLast <> [BlockInstr updatedInstr]})})
                 BlockAnnotation ann ->
-                  throwError (CommentOnAnnotation ann)
+                  throwIRBuilderError (CommentOnAnnotation ann)
 
 -- Internal helpers (not exported)
 
@@ -436,19 +474,19 @@ compileModule name builder =
 -- 3. Activates the given function
 --
 -- __Throws:__ 'CurrentFunctionActive' if a function is already being defined
-beginFunction :: FunctionBuilder -> IRBuilder ()
+beginFunction :: (MonadIRBuilder m) => FunctionBuilder -> m ()
 beginFunction builder = do
   finalizeCurrentBlock
 
-  IRBuilderEnv {..} <- get
+  IRBuilderEnv {..} <- getIRBuilderEnv
 
   case builderEnvCurrentFunction of
     Just (FunctionBuilder {..}) ->
-      throwError (CurrentFunctionActive functionBuilderName)
+      throwIRBuilderError (CurrentFunctionActive functionBuilderName)
     Nothing ->
       pure ()
 
-  put $
+  putIRBuilderEnv $
     IRBuilderEnv
       { builderEnvCurrentFunction = Just builder,
         builderEnvCurrentBlock = Nothing,
@@ -467,16 +505,16 @@ beginFunction builder = do
 -- 4. Clears the current function context
 --
 -- __Throws:__ 'NoCurrentFunction' if no function is currently being defined
-endFunction :: IRBuilder ()
+endFunction :: (MonadIRBuilder m) => m ()
 endFunction = do
   finalizeCurrentBlock
 
-  IRBuilderEnv {..} <- get
+  IRBuilderEnv {..} <- getIRBuilderEnv
 
   fun <-
     case builderEnvCurrentFunction of
       Nothing ->
-        throwError NoCurrentFunction
+        throwIRBuilderError NoCurrentFunction
       Just FunctionBuilder {..} ->
         pure $
           IRFunction
@@ -488,7 +526,7 @@ endFunction = do
               functionAttributes = functionBuilderAttributes
             }
 
-  put $
+  putIRBuilderEnv $
     IRBuilderEnv
       { builderEnvCurrentFunction = Nothing,
         builderEnvCurrentBlock = Nothing,
@@ -523,6 +561,7 @@ endFunction = do
 --
 -- __Throws:__ Any error from body computation or finalization
 define ::
+  (MonadIRBuilder m) =>
   -- | Return type of the function
   IRType ->
   -- | Function name
@@ -534,8 +573,8 @@ define ::
   -- | Function attributes (e.g. @[NoInline, NoReturn]@)
   [IRAttribute] ->
   -- | Body computation that builds the function
-  IRBuilder a ->
-  IRBuilder a
+  m a ->
+  m a
 define retType name args linkage attributes body = do
   beginFunction $
     FunctionBuilder
@@ -570,8 +609,8 @@ define retType name args linkage attributes body = do
 -- emitGlobal (declare i32 "printf" [TPtr] ...)
 -- emitGlobal (IRGlobalConstant "myString" (IRConstantString "hello") ...)
 -- @
-emitGlobal :: IRGlobal -> IRBuilder ()
-emitGlobal global = modify (appendBuilderEnvGlobals [global])
+emitGlobal :: (MonadIRBuilder m) => IRGlobal -> m ()
+emitGlobal global = modifyIRBuilderEnv (appendBuilderEnvGlobals [global])
 
 -- | Begin a new basic block within the current function.
 --
@@ -596,7 +635,7 @@ emitGlobal global = modify (appendBuilderEnvGlobals [global])
 -- beginBlock "loop"
 -- beginBlock "exit"
 -- @
-beginBlock :: Name -> IRBuilder ()
+beginBlock :: (MonadIRBuilder m) => Name -> m ()
 beginBlock label = do
   finalizeCurrentBlock
   let newBlock =
@@ -605,7 +644,7 @@ beginBlock label = do
             blockBuilderItems = [],
             blockBuilderTerminator = Nothing
           }
-  modify (setBuilderEnvCurrentBlock newBlock)
+  modifyIRBuilderEnv (setBuilderEnvCurrentBlock newBlock)
 
 -- | Begin a fresh basic block with a suffixed label.
 --
@@ -637,11 +676,9 @@ beginBlock label = do
 -- __Returns:__ the generated block label (e.g., @"loop.1"@)
 --
 -- __Throws:__ 'BlockMissingTerminator' if the previous block lacks a terminator
-block :: Name -> IRBuilder Name
+block :: (MonadIRBuilder m) => Name -> m Name
 block hint = do
-  modify (overBuilderEnvFreshLabel (+ 1))
-  n <- gets builderEnvFreshLabel
-  let label = hint <> pack ("." <> show n)
+  label <- freshLabel hint
   beginBlock label
   pure label
 
@@ -658,16 +695,16 @@ block hint = do
 -- 4. Clears the current block context
 --
 -- __Throws:__ 'BlockMissingTerminator' if the block lacks a terminator
-finalizeCurrentBlock :: IRBuilder ()
+finalizeCurrentBlock :: (MonadIRBuilder m) => m ()
 finalizeCurrentBlock = do
-  IRBuilderEnv {..} <- get
+  IRBuilderEnv {..} <- getIRBuilderEnv
   case builderEnvCurrentBlock of
     Nothing ->
       pure ()
     Just BlockBuilder {blockBuilderLabel, blockBuilderItems, blockBuilderTerminator} ->
       case blockBuilderTerminator of
         Nothing ->
-          throwError (BlockMissingTerminator blockBuilderLabel)
+          throwIRBuilderError (BlockMissingTerminator blockBuilderLabel)
         Just term -> do
           let irBlock =
                 IRBlock
@@ -676,7 +713,7 @@ finalizeCurrentBlock = do
                     blockTerminator = term
                   }
 
-          put $
+          putIRBuilderEnv $
             IRBuilderEnv
               { builderEnvCurrentBlock = Nothing,
                 builderEnvCurrentFunction = fmap (appendFunctionBuilderBlock irBlock) builderEnvCurrentFunction,
