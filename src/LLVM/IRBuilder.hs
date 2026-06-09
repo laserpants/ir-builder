@@ -13,10 +13,10 @@ Example usage:
 
 @
 module <- compileModule "my_module" $ do
- define i32 "main" [] LExternal [] $ do
-   beginBlock "entry"
-   result <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
-   ret result
+define i32 "main" [] LExternal [] $ do
+  beginBlock "entry"
+  result <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
+  ret result
 @
 
 = Core types and compilation
@@ -55,6 +55,10 @@ module LLVM.IRBuilder (
   compileModuleWith,
   buildModuleWith,
   buildModule,
+  compileModuleM,
+  compileModuleWithM,
+  buildModuleWithM,
+  buildModuleM,
 
   -- * Function definition
   define,
@@ -367,6 +371,128 @@ finalizeFunctions = builderEnvFunctions
 -- Module compilation
 -- ============================================================================
 
+{- | Build an LLVM IR module in any 'MonadIRBuilder' context, with result.
+
+This is the generalized version of 'buildModuleWith' that works with any monad
+implementing 'MonadIRBuilder', such as custom monad stacks built on top of
+'IRBuilderT'. It isolates the module construction in a fresh environment and
+returns both the module and the computation result.
+
+The function:
+
+1. Saves the current builder environment
+2. Resets to an empty environment
+3. Executes the builder computation
+4. Extracts the final environment to construct the module
+5. Restores the original environment
+6. Returns the module and computation result
+
+__Args:__
+
+- First argument: module name
+- Second argument: builder computation in any 'MonadIRBuilder'
+
+__Returns:__ Tuple of ('IRModule', computation result)
+
+__Throws:__ Propagates any 'IRBuilderError' via 'throwIRBuilderError'
+
+__Example:__
+
+@
+moduleAndResult <- buildModuleWithM "my_module" $ do
+ define i32 "main" [] LExternal [] $ do
+   beginBlock "entry"
+   customMonadOperation  -- works with custom MonadIRBuilder instances
+   ret (OConstant (CInt 32 0))
+@
+-}
+buildModuleWithM :: (MonadIRBuilder m) => Name -> m a -> m (IRModule, a)
+buildModuleWithM name builder = do
+  savedEnv <- getIRBuilderEnv
+  putIRBuilderEnv emptyIRBuilderEnv
+  result <- builder
+  finalEnv <- getIRBuilderEnv
+  putIRBuilderEnv savedEnv
+  let module_ = finalizeModule name finalEnv
+  pure (module_, result)
+
+{- | Build an LLVM IR module in any 'MonadIRBuilder' context.
+
+This is the generalized version of 'buildModule' that works with any monad
+implementing 'MonadIRBuilder'. It's a convenience wrapper around 'buildModuleWithM'
+that discards the computation result.
+
+__Args:__
+
+- First argument: module name
+- Second argument: builder computation in any 'MonadIRBuilder'
+
+__Returns:__ The constructed 'IRModule'
+
+__Throws:__ Propagates any 'IRBuilderError' via 'throwIRBuilderError'
+
+__Example:__
+
+@
+module_ <- buildModuleM "my_module" $ do
+ define i32 "main" [] LExternal [] $ do
+   beginBlock "entry"
+   customMonadOperation
+   ret (OConstant (CInt 32 0))
+@
+-}
+buildModuleM :: (MonadIRBuilder m) => Name -> m a -> m IRModule
+buildModuleM name builder = fst <$> buildModuleWithM name builder
+
+{- | Compile an LLVM IR module to text in any 'MonadIRBuilder' context, with result.
+
+This is the generalized version of 'compileModuleWith' that works with any monad
+implementing 'MonadIRBuilder'. It builds the module and renders it to LLVM assembly,
+returning both the text and the computation result.
+
+__Args:__
+
+- First argument: module name
+- Second argument: builder computation in any 'MonadIRBuilder'
+
+__Returns:__ Tuple of (LLVM assembly 'Text', computation result)
+
+__Throws:__ Propagates any 'IRBuilderError' via 'throwIRBuilderError'
+-}
+compileModuleWithM :: (MonadIRBuilder m) => Name -> m a -> m (Text, a)
+compileModuleWithM name builder = do
+  (module_, result) <- buildModuleWithM name builder
+  let text = runIRRenderer $ renderModule module_
+  pure (text, result)
+
+{- | Compile an LLVM IR module to text in any 'MonadIRBuilder' context.
+
+This is the generalized version of 'compileModule' that works with any monad
+implementing 'MonadIRBuilder'. It's a convenience wrapper around 'compileModuleWithM'
+that discards the computation result.
+
+__Args:__
+
+- First argument: module name
+- Second argument: builder computation in any 'MonadIRBuilder'
+
+__Returns:__ LLVM assembly as 'Text'
+
+__Throws:__ Propagates any 'IRBuilderError' via 'throwIRBuilderError'
+
+__Example:__
+
+@
+text <- compileModuleM "my_module" $ do
+ define i32 "main" [] LExternal [] $ do
+   beginBlock "entry"
+   customMonadOperation
+   ret (OConstant (CInt 32 0))
+@
+-}
+compileModuleM :: (MonadIRBuilder m) => Name -> m a -> m Text
+compileModuleM name builder = fst <$> compileModuleWithM name builder
+
 {- | Build an LLVM IR module with explicit error handling.
 
 This is the result-returning variant of 'buildModule'. It executes the builder
@@ -380,8 +506,8 @@ __Args:__
 
 __Returns:__ @'Either' 'IRBuilderError' ('IRModule', a)@ where:
 
- - Left: construction error
- - Right: tuple of (module, builder result)
+- Left: construction error
+- Right: tuple of (module, builder result)
 
 __Errors:__ Returns 'Left' on any 'IRBuilderError' during construction
 -}
@@ -429,8 +555,8 @@ __Args:__
 
 __Returns:__ @'Either' 'IRBuilderError' 'Text'@ where:
 
- - Left: construction or rendering error
- - Right: LLVM assembly text
+- Left: construction or rendering error
+- Right: LLVM assembly text
 
 __Errors:__ Returns 'Left' on any 'IRBuilderError' during building
 -}
@@ -452,10 +578,10 @@ __Example:__
 
 @
 let code = compileModule "my_module" $ do
- define i32 "main" [] LExternal [] $ do
-   beginBlock "entry"
-   x <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
-   ret x
+define i32 "main" [] LExternal [] $ do
+  beginBlock "entry"
+  x <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
+  ret x
 putStrLn code
 @
 
@@ -571,9 +697,9 @@ __Example:__
 
 @
 define i32 "add" [(i32, "a"), (i32, "b")] LExternal [] $ do
- beginBlock "entry"
- result <- add i32 (OLocal i32 "a") (OLocal i32 "b")
- ret result
+beginBlock "entry"
+result <- add i32 (OLocal i32 "a") (OLocal i32 "b")
+ret result
 @
 
 __Throws:__ Any error from body computation or finalization
@@ -678,19 +804,19 @@ nested or repeated uses of the same logical name:
 @
 -- "loop" becomes e.g. "loop.1", "body" becomes "body.2"
 define i64 "fact" [(i64, "n")] LExternal [] $ mdo
- beginBlock "entry"
- br loopLabel
+beginBlock "entry"
+br loopLabel
 
- loopLabel <- block "loop"
- ...
- condbr cond bodyLabel exitLabel
+loopLabel <- block "loop"
+...
+condbr cond bodyLabel exitLabel
 
- bodyLabel <- block "body"
- ...
- br loopLabel
+bodyLabel <- block "body"
+...
+br loopLabel
 
- exitLabel <- block "exit"
- ret result
+exitLabel <- block "exit"
+ret result
 @
 
 __Returns:__ the generated block label (e.g., @"loop.1"@)
