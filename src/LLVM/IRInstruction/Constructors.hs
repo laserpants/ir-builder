@@ -1,54 +1,54 @@
-module LLVM.IRInstruction.Constructors
-  ( -- * Arithmetic operations
-    add,
-    sub,
-    mul,
-    sdiv,
-    udiv,
-    srem,
-    urem,
+module LLVM.IRInstruction.Constructors (
+  -- * Arithmetic operations
+  add,
+  sub,
+  mul,
+  sdiv,
+  udiv,
+  srem,
+  urem,
 
-    -- * Bitwise operations
-    and,
-    or,
-    xor,
-    shl,
-    lshr,
-    ashr,
+  -- * Bitwise operations
+  and,
+  or,
+  xor,
+  shl,
+  lshr,
+  ashr,
 
-    -- * Floating-point arithmetic
-    fadd,
-    fsub,
-    fmul,
-    fdiv,
-    fneg,
+  -- * Floating-point arithmetic
+  fadd,
+  fsub,
+  fmul,
+  fdiv,
+  fneg,
 
-    -- * Comparison operations
-    icmp,
-    fcmp,
+  -- * Comparison operations
+  icmp,
+  fcmp,
 
-    -- * Memory operations
-    alloca,
-    load,
-    store,
-    gep,
+  -- * Memory operations
+  alloca,
+  load,
+  store,
+  gep,
 
-    -- * Type casts
-    bitcast,
-    sext,
-    zext,
-    trunc,
-    inttoptr,
-    ptrtoint,
+  -- * Type casts
+  bitcast,
+  sext,
+  zext,
+  trunc,
+  inttoptr,
+  ptrtoint,
 
-    -- * Control flow
-    call,
-    callVoid,
+  -- * Control flow
+  call,
+  callVoid,
 
-    -- * Miscellaneous
-    phi,
-    select,
-  )
+  -- * Miscellaneous
+  phi,
+  select,
+)
 where
 
 import Common (Name)
@@ -65,12 +65,12 @@ import Prelude hiding (and, or)
 emitWithResult :: (MonadIRBuilder m) => IRType -> IRInstrOp -> m IROperand
 emitWithResult t op = do
   reg <- freshOperand t
-  emitInstruction $ IRInstruction {instrResult = opComponents reg, instrOp = op, instrMetadata = Nothing}
+  emitInstruction $ IRInstruction{instrResult = opComponents reg, instrOp = op, instrMetadata = Nothing}
   return reg
 
 -- | Emit an instruction that produces no result.
 emitVoid :: (MonadIRBuilder m) => IRInstrOp -> m ()
-emitVoid op = emitInstruction $ IRInstruction {instrResult = Nothing, instrOp = op, instrMetadata = Nothing}
+emitVoid op = emitInstruction $ IRInstruction{instrResult = Nothing, instrOp = op, instrMetadata = Nothing}
 
 -- * Arithmetic operations
 

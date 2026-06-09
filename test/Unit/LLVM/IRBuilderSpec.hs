@@ -33,12 +33,12 @@ evalBuilder b env = case runBuilder b env of
 testFB :: FunctionBuilder
 testFB =
   FunctionBuilder
-    { functionBuilderName = "test",
-      functionBuilderLinkage = LExternal,
-      functionBuilderRetType = TInt 32,
-      functionBuilderArgs = [],
-      functionBuilderBlocks = [],
-      functionBuilderAttributes = []
+    { functionBuilderName = "test"
+    , functionBuilderLinkage = LExternal
+    , functionBuilderRetType = TInt 32
+    , functionBuilderArgs = []
+    , functionBuilderBlocks = []
+    , functionBuilderAttributes = []
     }
 
 spec :: Spec

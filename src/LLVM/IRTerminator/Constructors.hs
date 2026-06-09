@@ -1,10 +1,10 @@
-module LLVM.IRTerminator.Constructors
-  ( ret,
-    br,
-    condbr,
-    switch,
-    unreachable,
-  )
+module LLVM.IRTerminator.Constructors (
+  ret,
+  br,
+  condbr,
+  switch,
+  unreachable,
+)
 where
 
 import Common (Name)
