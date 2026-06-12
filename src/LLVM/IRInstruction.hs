@@ -67,7 +67,7 @@ data IRInstrOp
   | IFMul IRType IROperand IROperand
   | IFNeg IRType IROperand
   | IFSub IRType IROperand IROperand
-  | IGep IRType IROperand IROperand IROperand
+  | IGep IRType IROperand [IROperand]
   | IICmp IRICmpCond IRType IROperand IROperand
   | IInttoptr IROperand IRType
   | ILShr IRType IROperand IROperand

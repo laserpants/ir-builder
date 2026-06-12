@@ -182,8 +182,17 @@ spec = describe "LLVM.IRInstruction.Constructors" $ do
       let base = OGlobal TPtr "arr"
           idx0 = OConstant (CInt 32 0)
           idx1 = OConstant (CInt 32 1)
-          (result, items) = runInstrBuilder (gep (TInt 32) base idx0 idx1)
-      lastInstrOp items `shouldBe` Just (IGep (TInt 32) base idx0 idx1)
+          (result, items) = runInstrBuilder (gep (TInt 32) base [idx0, idx1])
+      lastInstrOp items `shouldBe` Just (IGep (TInt 32) base [idx0, idx1])
+      case result of
+        OLocal TPtr _ -> pure ()
+        _ -> expectationFailure "expected OLocal TPtr"
+
+    it "gep supports single-index form" $ do
+      let base = OConstant (CNull TPtr)
+          idx = OConstant (CInt 32 1)
+          (result, items) = runInstrBuilder (gep (TNamed "Leaf") base [idx])
+      lastInstrOp items `shouldBe` Just (IGep (TNamed "Leaf") base [idx])
       case result of
         OLocal TPtr _ -> pure ()
         _ -> expectationFailure "expected OLocal TPtr"

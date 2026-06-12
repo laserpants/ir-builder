@@ -28,8 +28,7 @@ helloWorld = do
       gep
         (TArray 14 i8)
         (OGlobal TPtr ".str")
-        (OConstant (CInt 32 0))
-        (OConstant (CInt 32 0))
+        [OConstant (CInt 32 0), OConstant (CInt 32 0)]
 
     -- call i32 @puts(%1)
     callVoid NoTail i32 (OGlobal i32 "puts") [r1]

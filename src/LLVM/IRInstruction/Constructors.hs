@@ -175,8 +175,8 @@ store :: (MonadIRBuilder m) => IROperand -> IROperand -> m ()
 store op ptr = emitVoid (IStore op ptr)
 
 -- | Compute a GEP (get element pointer) address.
-gep :: (MonadIRBuilder m) => IRType -> IROperand -> IROperand -> IROperand -> m IROperand
-gep t base idx0 idx1 = emitWithResult TPtr (IGep t base idx0 idx1)
+gep :: (MonadIRBuilder m) => IRType -> IROperand -> [IROperand] -> m IROperand
+gep t base idxs = emitWithResult TPtr (IGep t base idxs)
 
 -- * Type casts
 

@@ -334,12 +334,11 @@ renderInstrOp =
       tyStr <- renderType typ
       nStr <- renderOperand n
       pure $ "alloca " <> tyStr <> ", i32 " <> nStr
-    IGep typ base idx0 idx1 -> do
+    IGep typ base idxs -> do
       tyStr <- renderType typ
       baseStr <- renderOperand base
-      idx0Str <- renderOperand idx0
-      idx1Str <- renderOperand idx1
-      pure $ "getelementptr " <> tyStr <> ", ptr " <> baseStr <> ", i32 " <> idx0Str <> ", i32 " <> idx1Str
+      idxStrs <- mapM renderOperand idxs
+      pure $ "getelementptr " <> tyStr <> ", ptr " <> baseStr <> foldMap (", i32 " <>) idxStrs
     IBitcast v typ -> do
       vStr <- renderOperand v
       tyStr <- renderType typ
