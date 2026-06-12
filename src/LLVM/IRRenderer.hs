@@ -406,7 +406,7 @@ renderTerminator =
     ISwitch val default_ cases -> do
       valStr <- renderTypedOperand val
       casesStrs <- mapM renderSwitchCase cases
-      pure $ "switch " <> valStr <> ", label %" <> default_ <> " [" <> Text.unlines casesStrs <> "  ]"
+      pure $ "switch " <> valStr <> ", label %" <> default_ <> " [    \n" <> Text.unlines casesStrs <> "  ]"
      where
       renderSwitchCase (caseVal, caseTarget) = do
         caseValStr <- renderConstant caseVal
