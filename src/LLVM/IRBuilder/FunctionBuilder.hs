@@ -6,15 +6,14 @@ module LLVM.IRBuilder.FunctionBuilder (
   appendFunctionBuilderBlock,
 ) where
 
-import Common (Name)
 import LLVM.IRModule (IRAttribute, IRBlock, IRLinkage)
-import LLVM.IRType (IRType)
+import LLVM.IRType (IRName, IRType)
 
 data FunctionBuilder = FunctionBuilder
-  { functionBuilderName :: Name
+  { functionBuilderName :: IRName
   , functionBuilderLinkage :: IRLinkage
   , functionBuilderRetType :: IRType
-  , functionBuilderArgs :: [(IRType, Name)]
+  , functionBuilderArgs :: [(IRType, IRName)]
   , functionBuilderBlocks :: [IRBlock]
   , functionBuilderAttributes :: [IRAttribute]
   }

@@ -18,7 +18,6 @@ module Fixtures.Builders (
 )
 where
 
-import Common (Name)
 import Data.Text (Text)
 import LLVM.IRInstruction (IRInstruction (..))
 import LLVM.IRModule (
@@ -30,10 +29,10 @@ import LLVM.IRModule (
   IRModule (..),
  )
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
-import LLVM.IRType (IRType (..))
+import LLVM.IRType (IRName, IRType (..))
 
 -- | Build a simple block with a return terminator
-buildSimpleBlock :: Name -> IRBlock
+buildSimpleBlock :: IRName -> IRBlock
 buildSimpleBlock label =
   IRBlock
     { blockLabel = label
@@ -42,7 +41,7 @@ buildSimpleBlock label =
     }
 
 -- | Build a simple function with one entry block
-buildSimpleFunction :: Name -> IRFunction
+buildSimpleFunction :: IRName -> IRFunction
 buildSimpleFunction fname =
   IRFunction
     { functionName = fname
@@ -54,7 +53,7 @@ buildSimpleFunction fname =
     }
 
 -- | Build a simple module with one function
-buildSimpleModule :: Name -> IRModule
+buildSimpleModule :: IRName -> IRModule
 buildSimpleModule mname =
   IRModule
     { moduleName = mname
@@ -64,7 +63,7 @@ buildSimpleModule mname =
     }
 
 -- | Build a block with a specific terminator
-buildBlockWithTerminator :: Name -> IRTerminator -> IRBlock
+buildBlockWithTerminator :: IRName -> IRTerminator -> IRBlock
 buildBlockWithTerminator label term =
   IRBlock
     { blockLabel = label
@@ -73,7 +72,7 @@ buildBlockWithTerminator label term =
     }
 
 -- | Build a block with an instruction and terminator
-buildInstructionBlock :: Name -> IRInstruction (Maybe Text) -> IRTerminator -> IRBlock
+buildInstructionBlock :: IRName -> IRInstruction (Maybe Text) -> IRTerminator -> IRBlock
 buildInstructionBlock label instr term =
   IRBlock
     { blockLabel = label
@@ -82,7 +81,7 @@ buildInstructionBlock label instr term =
     }
 
 -- | Build a function with multiple blocks
-buildMultiBlockFunction :: Name -> [IRBlock] -> IRFunction
+buildMultiBlockFunction :: IRName -> [IRBlock] -> IRFunction
 buildMultiBlockFunction fname blocks =
   IRFunction
     { functionName = fname
@@ -94,7 +93,7 @@ buildMultiBlockFunction fname blocks =
     }
 
 -- | Build a function with attributes
-buildFunctionWithAttributes :: Name -> [IRAttribute] -> IRFunction
+buildFunctionWithAttributes :: IRName -> [IRAttribute] -> IRFunction
 buildFunctionWithAttributes fname attrs =
   IRFunction
     { functionName = fname

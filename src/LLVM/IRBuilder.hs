@@ -87,7 +87,6 @@ module LLVM.IRBuilder (
 )
 where
 
-import Common (Name)
 import Control.Monad.Except (ExceptT, MonadError, runExceptT, throwError)
 import Control.Monad.Fix (MonadFix (mfix))
 import Control.Monad.IO.Class (MonadIO (liftIO))
@@ -129,7 +128,7 @@ import LLVM.IRModule (
  )
 import LLVM.IROperand (IRTerminator)
 import LLVM.IRRenderer (renderModule, runIRRenderer)
-import LLVM.IRType (IRType)
+import LLVM.IRType (IRName, IRType)
 
 -- ============================================================================
 -- Core types
@@ -368,7 +367,7 @@ modifyLastInstructionComment comment = do
 
 -- Internal helpers (not exported)
 
-finalizeModule :: Name -> IRBuilderEnv -> IRModule
+finalizeModule :: IRName -> IRBuilderEnv -> IRModule
 finalizeModule name env@IRBuilderEnv{builderEnvGlobals, builderEnvDecls} =
   IRModule
     { moduleName = name
@@ -419,7 +418,7 @@ moduleAndResult <- buildModuleWithM "my_module" $ do
    ret (OConstant (CInt 32 0))
 @
 -}
-buildModuleWithM :: (MonadIRBuilder m) => Name -> m a -> m (IRModule, a)
+buildModuleWithM :: (MonadIRBuilder m) => IRName -> m a -> m (IRModule, a)
 buildModuleWithM name builder = do
   savedEnv <- getIRBuilderEnv
   putIRBuilderEnv emptyIRBuilderEnv
@@ -454,7 +453,7 @@ module_ <- buildModuleM "my_module" $ do
    ret (OConstant (CInt 32 0))
 @
 -}
-buildModuleM :: (MonadIRBuilder m) => Name -> m a -> m IRModule
+buildModuleM :: (MonadIRBuilder m) => IRName -> m a -> m IRModule
 buildModuleM name builder = fst <$> buildModuleWithM name builder
 
 {- | Compile an LLVM IR module to text in any 'MonadIRBuilder' context, with result.
@@ -472,7 +471,7 @@ __Returns:__ Tuple of (LLVM assembly 'Text', computation result)
 
 __Throws:__ Propagates any 'IRBuilderError' via 'throwIRBuilderError'
 -}
-compileModuleWithM :: (MonadIRBuilder m) => Name -> m a -> m (Text, a)
+compileModuleWithM :: (MonadIRBuilder m) => IRName -> m a -> m (Text, a)
 compileModuleWithM name builder = do
   (module_, result) <- buildModuleWithM name builder
   let text = runIRRenderer $ renderModule module_
@@ -503,7 +502,7 @@ text <- compileModuleM "my_module" $ do
    ret (OConstant (CInt 32 0))
 @
 -}
-compileModuleM :: (MonadIRBuilder m) => Name -> m a -> m Text
+compileModuleM :: (MonadIRBuilder m) => IRName -> m a -> m Text
 compileModuleM name builder = fst <$> compileModuleWithM name builder
 
 {- | Build an LLVM IR module with explicit error handling.
@@ -524,7 +523,7 @@ __Returns:__ @'Either' 'IRBuilderError' ('IRModule', a)@ where:
 
 __Errors:__ Returns 'Left' on any 'IRBuilderError' during construction
 -}
-buildModuleWith :: Name -> IRBuilder a -> Either IRBuilderError (IRModule, a)
+buildModuleWith :: IRName -> IRBuilder a -> Either IRBuilderError (IRModule, a)
 buildModuleWith name builder = do
   let result = runExceptT (runStateT (runIRBuilder builder) emptyIRBuilderEnv)
   (a, env) <- runIdentity result
@@ -548,7 +547,7 @@ __Returns:__ The constructed 'IRModule'
 
 __Throws (via error):__ Any 'IRBuilderError' encountered during construction
 -}
-buildModule :: Name -> IRBuilder a -> IRModule
+buildModule :: IRName -> IRBuilder a -> IRModule
 buildModule name builder =
   case buildModuleWith name builder of
     Left err -> error $ "IRBuilder failed: " ++ show err
@@ -573,7 +572,7 @@ __Returns:__ @'Either' 'IRBuilderError' 'Text'@ where:
 
 __Errors:__ Returns 'Left' on any 'IRBuilderError' during building
 -}
-compileModuleWith :: Name -> IRBuilder a -> Either IRBuilderError Text
+compileModuleWith :: IRName -> IRBuilder a -> Either IRBuilderError Text
 compileModuleWith name builder = do
   (module_, _) <- buildModuleWith name builder
   pure $ runIRRenderer $ renderModule module_
@@ -607,7 +606,7 @@ __Returns:__ LLVM assembly as 'Text'
 
 __Throws (via error):__ Any 'IRBuilderError' encountered during building
 -}
-compileModule :: Name -> IRBuilder a -> Text
+compileModule :: IRName -> IRBuilder a -> Text
 compileModule name builder =
   case compileModuleWith name builder of
     Left err -> error $ "IRBuilder compilation failed: " ++ show err
@@ -724,9 +723,9 @@ define ::
   -- | Return type of the function
   IRType ->
   -- | Function name
-  Name ->
+  IRName ->
   -- | Parameter list as @(type, name)@ pairs
-  [(IRType, Name)] ->
+  [(IRType, IRName)] ->
   -- | Linkage visibility (e.g. 'LExternal', 'LInternal')
   IRLinkage ->
   -- | Function attributes (e.g. @[NoInline, NoReturn]@)
@@ -796,7 +795,7 @@ beginBlock "loop"
 beginBlock "exit"
 @
 -}
-beginBlock :: (MonadIRBuilder m) => Name -> m ()
+beginBlock :: (MonadIRBuilder m) => IRName -> m ()
 beginBlock label = do
   finalizeCurrentBlock
   let newBlock =
@@ -838,7 +837,7 @@ __Returns:__ the generated block label (e.g., @"loop.1"@)
 
 __Throws:__ 'BlockMissingTerminator' if the previous block lacks a terminator
 -}
-block :: (MonadIRBuilder m) => Name -> m Name
+block :: (MonadIRBuilder m) => IRName -> m IRName
 block hint = do
   label <- freshLabel hint
   beginBlock label

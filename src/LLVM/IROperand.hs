@@ -18,8 +18,7 @@ module LLVM.IROperand (
 )
 where
 
-import Common (Name)
-import LLVM.IRType (IRType (..))
+import LLVM.IRType (IRName, IRType (..))
 
 {- |
 Represents constant values in LLVM IR.
@@ -55,13 +54,13 @@ constant. All operands are typed.
 
 ==== __Constructors__
 
-[@OLocal IRType Name@] Reference to a local SSA value (register) with its type
-[@OGlobal IRType Name@] Reference to a global symbol with its type
+[@OLocal IRType IRName@] Reference to a local SSA value (register) with its type
+[@OGlobal IRType IRName@] Reference to a global symbol with its type
 [@OConstant IRConstant@] Immediate constant value
 -}
 data IROperand
-  = OLocal IRType Name
-  | OGlobal IRType Name
+  = OLocal IRType IRName
+  | OGlobal IRType IRName
   | OConstant IRConstant
   deriving (Show, Eq, Ord)
 
@@ -76,16 +75,16 @@ unreachable code.
 ==== __Constructors__
 
 [@IRet (Maybe IROperand)@] Return from function; 'Nothing' for @ret void@, @'Just' op@ for a typed value
-[@IBr Name@] Unconditional branch to the named block
-[@ICondBr IROperand Name Name@] Conditional branch: if condition, then true block, else false block
-[@ISwitch IROperand Name [(IRConstant, Name)]@] Multi-way branch on value with default block and case list
+[@IBr IRName@] Unconditional branch to the named block
+[@ICondBr IROperand IRName IRName@] Conditional branch: if condition, then true block, else false block
+[@ISwitch IROperand IRName [(IRConstant, IRName)]@] Multi-way branch on value with default block and case list
 [@IUnreachable@] Indicates unreachable code (undefined behavior if reached)
 -}
 data IRTerminator
   = IRet (Maybe IROperand)
-  | IBr Name
-  | ICondBr IROperand Name Name
-  | ISwitch IROperand Name [(IRConstant, Name)]
+  | IBr IRName
+  | ICondBr IROperand IRName IRName
+  | ISwitch IROperand IRName [(IRConstant, IRName)]
   | IUnreachable
   deriving (Show, Eq, Ord)
 
@@ -101,10 +100,10 @@ returning 'Nothing' for constant operands which don't have names.
 
 ==== __Returns__
 
-* @Just (Name, IRType)@ for local and global operands
+* @Just (IRName, IRType)@ for local and global operands
 * @Nothing@ for constant operands
 -}
-opComponents :: IROperand -> Maybe (Name, IRType)
+opComponents :: IROperand -> Maybe (IRName, IRType)
 opComponents =
   \case
     OLocal t name ->

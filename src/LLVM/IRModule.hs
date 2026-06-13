@@ -48,7 +48,6 @@ module LLVM.IRModule (
 )
 where
 
-import Common (Name)
 import Data.ByteString (ByteString)
 import Data.List (nub, (\\))
 import Data.Set (Set)
@@ -58,7 +57,7 @@ import qualified Data.Text as Text
 import LLVM.IRAnnotation (IRAnnotation (..))
 import LLVM.IRInstruction (IRInstruction)
 import LLVM.IROperand (IRConstant, IRTerminator (..))
-import LLVM.IRType (IRType (..))
+import LLVM.IRType (IRName, IRType (..))
 
 {- | Linkage specification for functions and globals.
 
@@ -100,7 +99,7 @@ in verifyModule mod
 @
 -}
 data IRModule = IRModule
-  { moduleName :: Name
+  { moduleName :: IRName
   , moduleDecls :: [IRDecl]
   , moduleGlobals :: [IRGlobal]
   , moduleFunctions :: [IRFunction]
@@ -115,11 +114,11 @@ They specify only the function signature without an implementation.
 
 __Fields:__
 
-* `declName`: Name of the declared function
+* `declName`: IRName of the declared function
 * `declType`: Function type (typically @TFun retType paramTypes@)
 -}
 data IRDecl = IRDecl
-  { declName :: Name
+  { declName :: IRName
   , declType :: IRType
   }
   deriving (Show, Eq, Ord)
@@ -138,10 +137,10 @@ __Constructors:__
 * `IRExtern`: External function (similar to 'IRDecl')
 -}
 data IRGlobal
-  = IRString IRLinkage Name ByteString
-  | IRConstant IRLinkage Name IRType IRConstant
-  | IRVar IRLinkage Name IRType IRConstant
-  | IRExtern Name IRType [IRType]
+  = IRString IRLinkage IRName ByteString
+  | IRConstant IRLinkage IRName IRType IRConstant
+  | IRVar IRLinkage IRName IRType IRConstant
+  | IRExtern IRName IRType [IRType]
   deriving (Show, Eq, Ord)
 
 {- | Function attributes that provide optimization and correctness hints to the compiler.
@@ -213,10 +212,10 @@ in verifyFunction func
 @
 -}
 data IRFunction = IRFunction
-  { functionName :: Name
+  { functionName :: IRName
   , functionLinkage :: IRLinkage
   , functionRetType :: IRType
-  , functionArgs :: [(IRType, Name)]
+  , functionArgs :: [(IRType, IRName)]
   , functionBlocks :: [IRBlock]
   , functionAttributes :: [IRAttribute]
   }
@@ -268,7 +267,7 @@ in blockLabel block -- "entry"
 @
 -}
 data IRBlock = IRBlock
-  { blockLabel :: Name
+  { blockLabel :: IRName
   , blockItems :: [IRBlockItem]
   , blockTerminator :: IRTerminator
   }
@@ -335,11 +334,11 @@ verifyNoDuplicateSSANames IRFunction{functionName, functionBlocks} =
   ssaNames = concatMap extractSSANamesFromBlock functionBlocks
   duplicates = ssaNames \\ nub ssaNames
 
-extractSSANamesFromBlock :: IRBlock -> [Name]
+extractSSANamesFromBlock :: IRBlock -> [IRName]
 extractSSANamesFromBlock IRBlock{blockItems} =
   concatMap extractSSANamesFromItem blockItems
 
-extractSSANamesFromItem :: IRBlockItem -> [Name]
+extractSSANamesFromItem :: IRBlockItem -> [IRName]
 extractSSANamesFromItem =
   \case
     BlockInstr _ -> []
@@ -359,7 +358,7 @@ verifyBranchTargetsExist IRFunction{functionName, functionBlocks} =
   validLabels = Set.fromList (map blockLabel functionBlocks)
   invalidTargets = concatMap (findInvalidBranchTargets validLabels) functionBlocks
 
-findInvalidBranchTargets :: Set Name -> IRBlock -> [Name]
+findInvalidBranchTargets :: Set IRName -> IRBlock -> [IRName]
 findInvalidBranchTargets validLabels IRBlock{blockTerminator} =
   case blockTerminator of
     IBr target ->

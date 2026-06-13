@@ -51,13 +51,12 @@ module LLVM.IRInstruction.Constructors (
 )
 where
 
-import Common (Name)
 import LLVM.IRBuilder (emitInstruction)
 import LLVM.IRBuilder.Class (MonadIRBuilder)
 import LLVM.IRBuilder.Supply (freshOperand)
 import LLVM.IRInstruction (IRFCmpCond, IRICmpCond, IRInstrOp (..), IRInstruction (..), IRTailMarker)
 import LLVM.IROperand (IROperand (..), opComponents)
-import LLVM.IRType (IRType (..))
+import LLVM.IRType (IRName, IRType (..))
 import LLVM.IRType.Constructors (i1)
 import Prelude hiding (and, or)
 
@@ -217,7 +216,7 @@ callVoid tm t fn args = emitVoid (ICall tm t fn args)
 -- * Miscellaneous
 
 -- | Create a phi node for multiple incoming values.
-phi :: (MonadIRBuilder m) => IRType -> [(IROperand, Name)] -> m IROperand
+phi :: (MonadIRBuilder m) => IRType -> [(IROperand, IRName)] -> m IROperand
 phi t ops = emitWithResult t (IPhi t ops)
 
 -- | Select one of two values based on a condition.

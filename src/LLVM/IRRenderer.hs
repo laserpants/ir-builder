@@ -15,7 +15,6 @@ which takes an 'IRModule' and produces the complete textual IR output.
 -}
 module LLVM.IRRenderer (IRRenderer, IRRendererT (..), runIRRenderer, runIRRendererT, renderModule) where
 
-import Common (Name)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
 import Data.Char (intToDigit, isAlphaNum)
@@ -41,11 +40,11 @@ import LLVM.IRModule (
   IRModule (..),
  )
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
-import LLVM.IRType (IRType (..))
+import LLVM.IRType (IRName, IRType (..))
 
 -- | Returns True if the name contains characters that require quoting in LLVM IR.
 -- Safe (unquoted) identifiers match [-a-zA-Z$._][-a-zA-Z$._0-9]*.
-needsQuoting :: Name -> Bool
+needsQuoting :: IRName -> Bool
 needsQuoting n = case Text.uncons n of
   Nothing -> True
   Just (h, t) -> not (isSafeHead h) || Text.any (not . isSafeBody) t
@@ -55,7 +54,7 @@ needsQuoting n = case Text.uncons n of
 
 -- | Wrap a name in double-quotes when it contains characters that LLVM IR
 -- requires to be quoted; leave it bare otherwise.
-quoteIfNeeded :: Name -> Text
+quoteIfNeeded :: IRName -> Text
 quoteIfNeeded n
   | needsQuoting n = "\"" <> n <> "\""
   | otherwise = n
@@ -530,7 +529,7 @@ renderConstant =
       pure $ "[ " <> Text.intercalate ", " csStrs <> " ]"
 
 -- | Render function arguments
-renderFunctionArgs :: (Monad m) => [(IRType, Name)] -> IRRendererT m Text
+renderFunctionArgs :: (Monad m) => [(IRType, IRName)] -> IRRendererT m Text
 renderFunctionArgs args = do
   argStrs <- mapM (\(typ, name) -> do tyStr <- renderType typ; pure $ tyStr <> " %" <> quoteIfNeeded name) args
   pure $ Text.intercalate ", " argStrs

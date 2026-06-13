@@ -9,9 +9,8 @@ module LLVM.IRInstruction (
 )
 where
 
-import Common (Name)
 import LLVM.IROperand (IROperand (..))
-import LLVM.IRType (IRType (..))
+import LLVM.IRType (IRName, IRType (..))
 
 -- | icmp instruction condition codes
 data IRICmpCond
@@ -74,7 +73,7 @@ data IRInstrOp
   | ILoad IRType IROperand
   | IMul IRType IROperand IROperand
   | IOr IRType IROperand IROperand
-  | IPhi IRType [(IROperand, Name)]
+  | IPhi IRType [(IROperand, IRName)]
   | IPtrtoint IROperand IRType
   | ISDiv IRType IROperand IROperand
   | ISRem IRType IROperand IROperand
@@ -91,7 +90,7 @@ data IRInstrOp
   deriving (Show, Eq, Ord)
 
 data IRInstruction a = IRInstruction
-  { instrResult :: Maybe (Name, IRType)
+  { instrResult :: Maybe (IRName, IRType)
   , instrOp :: IRInstrOp
   , instrMetadata :: a
   }

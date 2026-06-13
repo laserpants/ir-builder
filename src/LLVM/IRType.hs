@@ -3,9 +3,15 @@
 {- |
 This module defines the type system for LLVM IR.
 -}
-module LLVM.IRType (IRType (..)) where
+module LLVM.IRType (IRType (..), IRName) where
 
-import Common (Name)
+import Data.Text (Text)
+
+{- |
+A type alias for names used in LLVM IR (block labels, register names,
+function names, type names, etc.).
+-}
+type IRName = Text
 
 {- |
 Represents LLVM IR types.
@@ -24,8 +30,8 @@ and the type system includes support for SIMD vectors.
 [@TPtr@] Opaque pointer type (replaces typed pointers in modern LLVM)
 [@TStruct [IRType]@] Structure type containing a list of field types
 [@TArray Int IRType@] Array type with element count and element type
-[@TNamed Name@] Reference to a named type defined elsewhere
-[@TOpaque Name@] Opaque type declaration (incomplete type)
+[@TNamed IRName@] Reference to a named type defined elsewhere
+[@TOpaque IRName@] Opaque type declaration (incomplete type)
 [@TVector Int IRType@] SIMD vector type with element count and element type
 -}
 data IRType
@@ -37,7 +43,7 @@ data IRType
   | TPtr
   | TStruct [IRType]
   | TArray Int IRType
-  | TNamed Name
-  | TOpaque Name
+  | TNamed IRName
+  | TOpaque IRName
   | TVector Int IRType
   deriving (Show, Eq, Ord)

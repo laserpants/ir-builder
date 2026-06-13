@@ -8,7 +8,7 @@ module LLVM.IRTerminator.Constructors (
 )
 where
 
-import Common (Name)
+import LLVM.IRType (IRName)
 import LLVM.IRBuilder (setTerminator)
 import LLVM.IRBuilder.Class (MonadIRBuilder)
 import LLVM.IROperand (IRConstant, IROperand, IRTerminator (..))
@@ -22,15 +22,15 @@ retVoid :: (MonadIRBuilder m) => m ()
 retVoid = setTerminator (IRet Nothing)
 
 -- | Unconditionally branch to the named block.
-br :: (MonadIRBuilder m) => Name -> m ()
+br :: (MonadIRBuilder m) => IRName -> m ()
 br n = setTerminator (IBr n)
 
 -- | Conditionally branch to one of two blocks based on a boolean operand.
-condbr :: (MonadIRBuilder m) => IROperand -> Name -> Name -> m ()
+condbr :: (MonadIRBuilder m) => IROperand -> IRName -> IRName -> m ()
 condbr op n1 n2 = setTerminator (ICondBr op n1 n2)
 
 -- | Branch to one of several blocks based on an integer operand, with a default target.
-switch :: (MonadIRBuilder m) => IROperand -> Name -> [(IRConstant, Name)] -> m ()
+switch :: (MonadIRBuilder m) => IROperand -> IRName -> [(IRConstant, IRName)] -> m ()
 switch op n cs = setTerminator (ISwitch op n cs)
 
 -- | Mark the current block as unreachable (undefined behaviour if executed).

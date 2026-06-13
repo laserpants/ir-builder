@@ -50,10 +50,9 @@ module Fixtures.TestData (
 )
 where
 
-import Common (Name)
 import LLVM.IRInstruction (IRInstrOp (..))
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
-import LLVM.IRType (IRType (..))
+import LLVM.IRType (IRName, IRType (..))
 
 -- * Common type values
 
@@ -129,19 +128,19 @@ constStruct = CStruct [CInt 32 1, CFloat 1.5]
 
 -- * Common name values
 
-nameA :: Name
+nameA :: IRName
 nameA = "a"
 
-nameB :: Name
+nameB :: IRName
 nameB = "b"
 
-nameC :: Name
+nameC :: IRName
 nameC = "c"
 
-nameBlock :: Name
+nameBlock :: IRName
 nameBlock = "entry"
 
-nameFunc :: Name
+nameFunc :: IRName
 nameFunc = "test_func"
 
 -- * Common instruction values

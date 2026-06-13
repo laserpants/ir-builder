@@ -58,9 +58,8 @@ module LLVM.IROperand.Constructors (
 )
 where
 
-import Common (Name)
 import LLVM.IROperand (IRConstant (..), IROperand (..))
-import LLVM.IRType (IRType (..))
+import LLVM.IRType (IRName, IRType (..))
 
 -- * Boolean constants
 
@@ -211,13 +210,13 @@ nullPtr = OConstant . CNull
 ==== __Parameters__
 
 * 'IRType' - The type of the local value
-* 'Name' - The name of the local value
+* 'IRName' - The name of the local value
 
 >>> local (TInt 32) "x"
 OLocal (TInt 32) "x"
 -}
 {-# INLINE local #-}
-local :: IRType -> Name -> IROperand
+local :: IRType -> IRName -> IROperand
 local = OLocal
 
 {- | Create a reference to a global symbol.
@@ -225,13 +224,13 @@ local = OLocal
 ==== __Parameters__
 
 * 'IRType' - The type of the global symbol
-* 'Name' - The name of the global symbol
+* 'IRName' - The name of the global symbol
 
 >>> global TPtr "printf"
 OGlobal TPtr "printf"
 -}
 {-# INLINE global #-}
-global :: IRType -> Name -> IROperand
+global :: IRType -> IRName -> IROperand
 global = OGlobal
 
 {- | Create a constant operand from an 'IRConstant'.

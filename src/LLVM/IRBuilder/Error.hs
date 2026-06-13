@@ -6,7 +6,7 @@ module LLVM.IRBuilder.Error (
 )
 where
 
-import Common (Name)
+import LLVM.IRType (IRName)
 import Data.Text (Text)
 import qualified Data.Text as Text
 import LLVM.IRAnnotation (IRAnnotation (..))
@@ -22,18 +22,18 @@ data IRBuilderError
   | -- | Cannot attach comment to annotation; comments only attach to instructions
     CommentOnAnnotation IRAnnotation
   | -- | Attempted to set terminator when block already has one
-    BlockAlreadyTerminated Name
+    BlockAlreadyTerminated IRName
   | -- | Attempted operation requiring an active block when none exists.
     -- Thrown by 'getCurrentBlockM' and the '<##>' operator.
     -- Note: the emit functions ('emitInstruction', 'emitAnnotation', 'emitTerminator')
     -- auto-create an implicit @\"entry\"@ block instead of throwing this error.
     NoCurrentBlock
   | -- | Attempted to begin a function when one is already active
-    CurrentFunctionActive Name
+    CurrentFunctionActive IRName
   | -- | Attempted to end function when no function is active
     NoCurrentFunction
   | -- | Cannot finalize a block without a terminator
-    BlockMissingTerminator Name
+    BlockMissingTerminator IRName
   deriving (Show, Eq)
 
 -- | Display an error in a human-friendly format suitable for end-user output.
