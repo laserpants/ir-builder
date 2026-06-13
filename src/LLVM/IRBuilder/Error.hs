@@ -6,10 +6,10 @@ module LLVM.IRBuilder.Error (
 )
 where
 
-import LLVM.IRType (IRName)
 import Data.Text (Text)
 import qualified Data.Text as Text
 import LLVM.IRAnnotation (IRAnnotation (..))
+import LLVM.IRType (IRName)
 
 {- | Errors that can occur during IR building.
 

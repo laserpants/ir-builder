@@ -1,6 +1,9 @@
 {-# LANGUAGE LambdaCase #-}
 
-module LLVM.IRType.HasType (HasTypeIR (..)) where
+module LLVM.IRType.HasType (
+  HasTypeIR (..),
+  irReturnTypeOf,
+) where
 
 import LLVM.IROperand (IRConstant (..), IROperand (..))
 import LLVM.IRType (IRType (..))
@@ -37,3 +40,11 @@ instance HasTypeIR IROperand where
         t
       OConstant c ->
         irTypeOf c
+
+irReturnTypeOf :: (HasTypeIR t) => t -> Maybe IRType
+irReturnTypeOf t =
+  case irTypeOf t of
+    TFun r _ ->
+      Just r
+    _ ->
+      Nothing

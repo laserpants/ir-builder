@@ -42,8 +42,9 @@ import LLVM.IRModule (
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
 import LLVM.IRType (IRName, IRType (..))
 
--- | Returns True if the name contains characters that require quoting in LLVM IR.
--- Safe (unquoted) identifiers match [-a-zA-Z$._][-a-zA-Z$._0-9]*.
+{- | Returns True if the name contains characters that require quoting in LLVM IR.
+Safe (unquoted) identifiers match [-a-zA-Z$._][-a-zA-Z$._0-9]*.
+-}
 needsQuoting :: IRName -> Bool
 needsQuoting n = case Text.uncons n of
   Nothing -> True
@@ -52,8 +53,9 @@ needsQuoting n = case Text.uncons n of
   isSafeHead c = isAlphaNum c || c == '-' || c == '$' || c == '.' || c == '_'
   isSafeBody c = isSafeHead c
 
--- | Wrap a name in double-quotes when it contains characters that LLVM IR
--- requires to be quoted; leave it bare otherwise.
+{- | Wrap a name in double-quotes when it contains characters that LLVM IR
+requires to be quoted; leave it bare otherwise.
+-}
 quoteIfNeeded :: IRName -> Text
 quoteIfNeeded n
   | needsQuoting n = "\"" <> n <> "\""

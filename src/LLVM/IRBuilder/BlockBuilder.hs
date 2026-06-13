@@ -8,9 +8,9 @@ module LLVM.IRBuilder.BlockBuilder (
 )
 where
 
-import LLVM.IRType (IRName)
 import LLVM.IRModule (IRBlockItem)
 import LLVM.IROperand (IRTerminator)
+import LLVM.IRType (IRName)
 
 data BlockBuilder = BlockBuilder
   { blockBuilderLabel :: IRName

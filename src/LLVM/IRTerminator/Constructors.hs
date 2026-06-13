@@ -8,10 +8,10 @@ module LLVM.IRTerminator.Constructors (
 )
 where
 
-import LLVM.IRType (IRName)
 import LLVM.IRBuilder (setTerminator)
 import LLVM.IRBuilder.Class (MonadIRBuilder)
 import LLVM.IROperand (IRConstant, IROperand, IRTerminator (..))
+import LLVM.IRType (IRName)
 
 -- | Return from the current function with the given operand as the return value.
 ret :: (MonadIRBuilder m) => IROperand -> m ()
