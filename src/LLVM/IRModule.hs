@@ -127,18 +127,20 @@ data IRDecl = IRDecl
 {- | An IR global variable, string constant, or external declaration.
 
 Globals represent module-level definitions that persist for the program's
-lifetime. They can be string literals, constant values, or external
-function declarations.
+lifetime. They can be string literals, constant values, mutable global
+variables, or external function declarations.
 
 __Constructors:__
 
 * `IRString`: A string literal with the given byte content
-* `IRConstant`: A constant global with an initial value
+* `IRConstant`: An immutable (constant) global with an initial value
+* `IRVar`: A mutable global variable with an initial value
 * `IRExtern`: External function (similar to 'IRDecl')
 -}
 data IRGlobal
   = IRString IRLinkage Name ByteString
   | IRConstant IRLinkage Name IRType IRConstant
+  | IRVar IRLinkage Name IRType IRConstant
   | IRExtern Name IRType [IRType]
   deriving (Show, Eq, Ord)
 

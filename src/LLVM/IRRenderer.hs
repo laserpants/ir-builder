@@ -168,6 +168,11 @@ renderGlobal =
       valStr <- renderConstant val
       let linkageStr = renderLinkage linkage
       pure $ "@" <> quoteIfNeeded name <> " = " <> linkageStr <> " constant " <> typeStr <> " " <> valStr
+    IRVar linkage name typ val -> do
+      typeStr <- renderType typ
+      valStr <- renderConstant val
+      let linkageStr = renderLinkage linkage
+      pure $ "@" <> quoteIfNeeded name <> " = " <> linkageStr <> "global " <> typeStr <> " " <> valStr
     IRExtern name retTy argTys -> do
       retTyStr <- renderType retTy
       argTyStrs <- mapM renderType argTys

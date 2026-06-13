@@ -2,6 +2,7 @@
 
 module Unit.LLVM.IRRendererSpec (spec) where
 
+import Data.List (isInfixOf)
 import Data.Text (unpack)
 import LLVM.IRInstruction
 import LLVM.IRModule (IRAttribute (..), IRBlock (..), IRBlockItem (..), IRDecl (..), IRFunction (..), IRGlobal (..), IRLinkage (..), IRModule (..))
@@ -136,6 +137,41 @@ spec = describe "LLVM.IRRenderer" $ do
       out `shouldContain` "@kVal"
       out `shouldContain` "constant"
       out `shouldContain` "42"
+
+    it "renders a mutable global variable" $ do
+      let m =
+            minimalModule
+              { moduleGlobals = [IRVar LExternal "sample_tree_cell" TPtr (CNull TPtr)]
+              }
+      let out = render m
+      out `shouldContain` "@sample_tree_cell"
+      out `shouldContain` "global"
+      out `shouldContain` "ptr null"
+
+    it "mutable global uses 'global' not 'constant'" $ do
+      let m =
+            minimalModule
+              { moduleGlobals = [IRVar LExternal "g" TPtr (CNull TPtr)]
+              }
+      let out = render m
+      out `shouldContain` "global"
+      not ("constant" `isInfixOf` out) `shouldBe` True
+
+    it "mutable global respects linkage" $ do
+      let m =
+            minimalModule
+              { moduleGlobals = [IRVar LPrivate "g" (TInt 32) (CInt 32 0)]
+              }
+      let out = render m
+      out `shouldContain` "private"
+
+    it "mutable global with special-char name renders quoted" $ do
+      let m =
+            minimalModule
+              { moduleGlobals = [IRVar LExternal "my%var" TPtr (CNull TPtr)]
+              }
+      let out = render m
+      out `shouldContain` "@\"my%var\""
 
   describe "renderModule - instructions" $ do
     it "renders add instruction" $ do
