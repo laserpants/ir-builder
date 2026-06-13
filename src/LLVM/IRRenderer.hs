@@ -18,7 +18,7 @@ module LLVM.IRRenderer (IRRenderer, IRRendererT (..), runIRRenderer, runIRRender
 import Common (Name)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
-import Data.Char (intToDigit)
+import Data.Char (intToDigit, isAlphaNum)
 import Data.Functor.Identity (Identity (runIdentity))
 import Data.Text (Text)
 import qualified Data.Text as Text
@@ -42,6 +42,23 @@ import LLVM.IRModule (
  )
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
 import LLVM.IRType (IRType (..))
+
+-- | Returns True if the name contains characters that require quoting in LLVM IR.
+-- Safe (unquoted) identifiers match [-a-zA-Z$._][-a-zA-Z$._0-9]*.
+needsQuoting :: Name -> Bool
+needsQuoting n = case Text.uncons n of
+  Nothing -> True
+  Just (h, t) -> not (isSafeHead h) || Text.any (not . isSafeBody) t
+ where
+  isSafeHead c = isAlphaNum c || c == '-' || c == '$' || c == '.' || c == '_'
+  isSafeBody c = isSafeHead c
+
+-- | Wrap a name in double-quotes when it contains characters that LLVM IR
+-- requires to be quoted; leave it bare otherwise.
+quoteIfNeeded :: Name -> Text
+quoteIfNeeded n
+  | needsQuoting n = "\"" <> n <> "\""
+  | otherwise = n
 
 {- |
 The IRRendererT monad transformer provides a flexible context for rendering LLVM IR.
@@ -135,7 +152,7 @@ renderModule IRModule{moduleDecls, moduleGlobals, moduleFunctions} = do
 renderDecl :: (Monad m) => IRDecl -> IRRendererT m Text
 renderDecl IRDecl{declName, declType} = do
   typeStr <- renderType declType
-  pure $ "%" <> declName <> " = type " <> typeStr
+  pure $ "%" <> quoteIfNeeded declName <> " = type " <> typeStr
 
 -- | Render a global variable or external declaration
 renderGlobal :: (Monad m) => IRGlobal -> IRRendererT m Text
@@ -145,16 +162,16 @@ renderGlobal =
       let linkageStr = renderLinkage linkage
           len = BS.length bs
           content = renderByteStringLiteral bs
-       in pure $ "@" <> name <> " = " <> linkageStr <> "constant [" <> Text.pack (show len) <> " x i8] c\"" <> content <> "\""
+       in pure $ "@" <> quoteIfNeeded name <> " = " <> linkageStr <> "constant [" <> Text.pack (show len) <> " x i8] c\"" <> content <> "\""
     IRConstant linkage name typ val -> do
       typeStr <- renderType typ
       valStr <- renderConstant val
       let linkageStr = renderLinkage linkage
-      pure $ "@" <> name <> " = " <> linkageStr <> " constant " <> typeStr <> " " <> valStr
+      pure $ "@" <> quoteIfNeeded name <> " = " <> linkageStr <> " constant " <> typeStr <> " " <> valStr
     IRExtern name retTy argTys -> do
       retTyStr <- renderType retTy
       argTyStrs <- mapM renderType argTys
-      pure $ "declare " <> retTyStr <> " @" <> name <> "(" <> Text.intercalate ", " argTyStrs <> ")"
+      pure $ "declare " <> retTyStr <> " @" <> quoteIfNeeded name <> "(" <> Text.intercalate ", " argTyStrs <> ")"
 
 -- | Render a function definition
 renderFunction :: (Monad m) => IRFunction -> IRRendererT m Text
@@ -172,7 +189,7 @@ renderFunction IRFunction{functionName, functionLinkage, functionRetType, functi
       <> linkageStr
       <> retTypeStr
       <> " @"
-      <> functionName
+      <> quoteIfNeeded functionName
       <> "("
       <> argsStr
       <> ")"
@@ -187,7 +204,7 @@ renderBlock IRBlock{blockLabel, blockItems, blockTerminator} = do
   itemsStrs <- mapM renderBlockItem blockItems
   termStr <- renderTerminator blockTerminator
   pure $
-    blockLabel
+    quoteIfNeeded blockLabel
       <> ":\n"
       <> Text.unlines itemsStrs
       <> "  "
@@ -212,7 +229,7 @@ renderInstruction IRInstruction{instrResult, instrOp, instrMetadata} = do
         Nothing ->
           "  " <> opStr
         Just (name, _typ) ->
-          "  %" <> name <> " = " <> opStr
+          "  %" <> quoteIfNeeded name <> " = " <> opStr
   case instrMetadata of
     Nothing ->
       pure baseStr
@@ -382,7 +399,7 @@ renderInstrOp =
      where
       renderPhiIncoming (op, blockName) = do
         opStr <- renderOperand op
-        pure $ opStr <> ", %" <> blockName
+        pure $ opStr <> ", %" <> quoteIfNeeded blockName
     ISelect typ cond t f -> do
       tyStr <- renderType typ
       condStr <- renderOperand cond
@@ -398,18 +415,18 @@ renderTerminator =
       opStr <- renderTypedOperand op
       pure $ "ret " <> opStr
     IBr target ->
-      pure $ "br label %" <> target
+      pure $ "br label %" <> quoteIfNeeded target
     ICondBr cond t f -> do
       condStr <- renderOperand cond
-      pure $ "br i1 " <> condStr <> ", label %" <> t <> ", label %" <> f
+      pure $ "br i1 " <> condStr <> ", label %" <> quoteIfNeeded t <> ", label %" <> quoteIfNeeded f
     ISwitch val default_ cases -> do
       valStr <- renderTypedOperand val
       casesStrs <- mapM renderSwitchCase cases
-      pure $ "switch " <> valStr <> ", label %" <> default_ <> " [    \n" <> Text.unlines casesStrs <> "  ]"
+      pure $ "switch " <> valStr <> ", label %" <> quoteIfNeeded default_ <> " [    \n" <> Text.unlines casesStrs <> "  ]"
      where
       renderSwitchCase (caseVal, caseTarget) = do
         caseValStr <- renderConstant caseVal
-        pure $ "    i32 " <> caseValStr <> ", label %" <> caseTarget
+        pure $ "    i32 " <> caseValStr <> ", label %" <> quoteIfNeeded caseTarget
     IUnreachable ->
       pure "unreachable"
 
@@ -418,9 +435,9 @@ renderOperand :: (Monad m) => IROperand -> IRRendererT m Text
 renderOperand =
   \case
     OLocal _ name ->
-      pure $ "%" <> name
+      pure $ "%" <> quoteIfNeeded name
     OGlobal _ name ->
-      pure $ "@" <> name
+      pure $ "@" <> quoteIfNeeded name
     OConstant c ->
       renderConstant c
 
@@ -480,8 +497,8 @@ renderType =
       retTyStr <- renderType retTy
       argTyStrs <- mapM renderType argTys
       pure $ retTyStr <> " (" <> Text.intercalate ", " argTyStrs <> ")"
-    TNamed name -> pure $ "%" <> name
-    TOpaque name -> pure $ "opaque %" <> name
+    TNamed name -> pure $ "%" <> quoteIfNeeded name
+    TOpaque name -> pure $ "opaque %" <> quoteIfNeeded name
     TVector n t -> do
       tStr <- renderType t
       pure $ "<" <> Text.pack (show n) <> " x " <> tStr <> ">"
@@ -508,7 +525,7 @@ renderConstant =
 -- | Render function arguments
 renderFunctionArgs :: (Monad m) => [(IRType, Name)] -> IRRendererT m Text
 renderFunctionArgs args = do
-  argStrs <- mapM (\(typ, name) -> do tyStr <- renderType typ; pure $ tyStr <> " %" <> name) args
+  argStrs <- mapM (\(typ, name) -> do tyStr <- renderType typ; pure $ tyStr <> " %" <> quoteIfNeeded name) args
   pure $ Text.intercalate ", " argStrs
 
 -- | Render linkage specifier

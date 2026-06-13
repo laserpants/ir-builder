@@ -291,3 +291,64 @@ spec = describe "LLVM.IRRenderer" $ do
               }
       let out = render m
       out `shouldContain` "private"
+
+  describe "name quoting" $ do
+    it "plain function name renders without quotes" $ do
+      let out = render singleFuncModule
+      out `shouldContain` "@main"
+
+    it "function name with special char renders quoted" $ do
+      let m =
+            minimalModule
+              { moduleFunctions =
+                  [ IRFunction "make_%Leaf" LExternal TPtr [] [IRBlock "entry" [] IUnreachable] []
+                  ]
+              }
+      let out = render m
+      out `shouldContain` "@\"make_%Leaf\""
+
+    it "global with special char renders quoted" $ do
+      let m =
+            minimalModule
+              { moduleGlobals = [IRConstant LPrivate "my%const" (TInt 32) (CInt 32 1)]
+              }
+      let out = render m
+      out `shouldContain` "@\"my%const\""
+
+    it "extern with special char renders quoted" $ do
+      let m =
+            minimalModule
+              { moduleGlobals = [IRExtern "printf%ext" TVoid []]
+              }
+      let out = render m
+      out `shouldContain` "@\"printf%ext\""
+
+    it "function parameter with special char renders quoted" $ do
+      let m =
+            minimalModule
+              { moduleFunctions =
+                  [ IRFunction "f" LExternal (TInt 32) [(TInt 32, "x%1")] [IRBlock "entry" [] (IRet (OConstant (CInt 32 0)))] []
+                  ]
+              }
+      let out = render m
+      out `shouldContain` "%\"x%1\""
+
+    it "TNamed type with special char renders quoted" $ do
+      let m =
+            minimalModule
+              { moduleFunctions =
+                  [ IRFunction "f" LExternal (TNamed "My%Type") [] [IRBlock "entry" [] IUnreachable] []
+                  ]
+              }
+      let out = render m
+      out `shouldContain` "%\"My%Type\""
+
+    it "plain TNamed type renders without quotes" $ do
+      let m =
+            minimalModule
+              { moduleFunctions =
+                  [ IRFunction "f" LExternal (TNamed "MyType") [] [IRBlock "entry" [] IUnreachable] []
+                  ]
+              }
+      let out = render m
+      out `shouldContain` "%MyType"
