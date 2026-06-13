@@ -233,29 +233,36 @@ liftEither = either throwIRBuilderError pure
 -- Instruction emission
 -- ============================================================================
 
+{- | Internal: ensure a current block exists, creating an implicit 'entry' block
+if none is active. This mirrors LLVM IR semantics where the first block's
+label is implicit.
+-}
+ensureBlock :: (MonadIRBuilder m) => m ()
+ensureBlock = do
+  maybeBlock <- getsIRBuilderEnv builderEnvCurrentBlock
+  case maybeBlock of
+    Just _ -> pure ()
+    Nothing -> beginBlock (pack "entry")
+
 {- | Emit a terminator instruction for the current block.
 
 Every basic block must end with exactly one terminator (e.g., 'ret', 'br', 'condbr').
 
-This function validates that:
+If no block is currently active, an implicit block labelled @"entry"@ is created
+automatically, mirroring LLVM IR semantics.
 
-1. A block is currently active
-2. The block doesn't already have a terminator
+This function validates that the block doesn't already have a terminator.
 
-__Throws:__
-
-- 'NoCurrentBlock' if no block is active
-- 'BlockAlreadyTerminated' if the block already has a terminator
+__Throws:__ 'BlockAlreadyTerminated' if the block already has a terminator
 -}
 emitTerminator :: (MonadIRBuilder m) => IRTerminator -> m ()
 emitTerminator term = do
+  ensureBlock
   maybeBlock <- getsIRBuilderEnv builderEnvCurrentBlock
   case maybeBlock of
     Just BlockBuilder{blockBuilderTerminator, blockBuilderLabel}
       | isJust blockBuilderTerminator ->
           throwIRBuilderError (BlockAlreadyTerminated blockBuilderLabel)
-    Nothing ->
-      throwIRBuilderError NoCurrentBlock
     _ ->
       pure ()
 
@@ -274,16 +281,18 @@ setTerminator term = modifyIRBuilderEnv $ mapBuilderEnvCurrentBlock (setBlockBui
 Instructions are appended to the current block's instruction list. Each
 instruction may have an optional inline comment attached via '<##>'.
 
+If no block is currently active, an implicit block labelled @"entry"@ is
+created automatically.
+
 __Example:__
 
 @
 add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2)) <##> "compute sum"
 @
-
-__Throws:__ implicitly propagates 'NoCurrentBlock' if no block is active
 -}
 emitInstruction :: (MonadIRBuilder m) => IRInstruction (Maybe Text) -> m ()
-emitInstruction instr =
+emitInstruction instr = do
+  ensureBlock
   modifyIRBuilderEnv $
     mapBuilderEnvCurrentBlock
       (appendBlockBuilderItem (BlockInstr instr))
@@ -293,6 +302,9 @@ emitInstruction instr =
 Annotations are block-level comments useful for documenting logic sections.
 Unlike inline comments (via '<##>'), annotations stand alone as 'IRBlockItem's.
 
+If no block is currently active, an implicit block labelled @"entry"@ is
+created automatically.
+
 __Example:__
 
 @
@@ -300,7 +312,8 @@ emitAnnotation (commentBlock ["Section: input validation", "Check bounds..."])
 @
 -}
 emitAnnotation :: (MonadIRBuilder m) => IRAnnotation -> m ()
-emitAnnotation ann =
+emitAnnotation ann = do
+  ensureBlock
   modifyIRBuilderEnv $
     mapBuilderEnvCurrentBlock
       (appendBlockBuilderItem (BlockAnnotation ann))
@@ -632,6 +645,8 @@ beginFunction builder = do
     IRBuilderEnv
       { builderEnvCurrentFunction = Just builder
       , builderEnvCurrentBlock = Nothing
+      , builderEnvFreshReg = 0
+      , builderEnvFreshLabel = 0
       , ..
       }
 

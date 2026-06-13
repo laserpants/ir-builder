@@ -7,12 +7,15 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Identity (runIdentity)
 import Control.Monad.State (runStateT)
 import Control.Monad.Trans (lift)
+import LLVM.IRAnnotation (IRAnnotation (..))
 import LLVM.IRBuilder
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
 import LLVM.IRBuilder.Environment (emptyIRBuilderEnv)
 import LLVM.IRBuilder.Error (IRBuilderError)
 import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..))
-import LLVM.IRModule (IRFunction (..), IRLinkage (..))
+import LLVM.IRInstruction (IRInstrOp (..), IRInstruction (..))
+import LLVM.IRBuilder.Supply (fresh, freshLabel)
+import LLVM.IRModule (IRBlockItem (..), IRFunction (..), IRLinkage (..))
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
 import LLVM.IRType (IRType (..))
 import Test.Hspec (Spec, describe, expectationFailure, it, shouldBe)
@@ -84,6 +87,33 @@ spec = describe "LLVM.IRBuilder" $ do
       let env = execBuilder (beginFunction testFB >> beginBlock "entry" >> setTerminator (IRet (OConstant (CInt 32 0))) >> endFunction) emptyIRBuilderEnv
       builderEnvCurrentFunction env `shouldBe` Nothing
 
+    it "resets the fresh register counter on beginFunction" $ do
+      let action = do
+            _ <- fresh  -- advance counter in outer scope
+            beginFunction testFB
+            builderEnvFreshReg <$> getIRBuilderEnv
+      evalBuilder action emptyIRBuilderEnv `shouldBe` 0
+
+    it "resets the fresh label counter on beginFunction" $ do
+      let action = do
+            _ <- freshLabel "x"  -- advance label counter in outer scope
+            beginFunction testFB
+            builderEnvFreshLabel <$> getIRBuilderEnv
+      evalBuilder action emptyIRBuilderEnv `shouldBe` 0
+
+    it "second function's registers start from 1 independently" $ do
+      let testFB2 = testFB{functionBuilderName = "test2"}
+          action = do
+            beginFunction testFB
+            _ <- fresh  -- %1 in first function
+            beginBlock "entry"
+            setTerminator (IRet (OConstant (CInt 32 0)))
+            endFunction
+            beginFunction testFB2
+            r <- fresh  -- should be %1 again, not %2
+            pure r
+      evalBuilder action emptyIRBuilderEnv `shouldBe` "1"
+
   describe "buildModule / compileModule" $ do
     it "produces empty output for an empty module" $ do
       let output = compileModule "test" (pure ())
@@ -127,3 +157,53 @@ spec = describe "LLVM.IRBuilder" $ do
       case result of
         Right (val, _) -> val `shouldBe` 999
         Left err -> expectationFailure $ "Builder failed: " ++ show err
+
+  describe "implicit entry block" $ do
+    let testInstr =
+          IRInstruction
+            { instrResult = Just ("r", TInt 32)
+            , instrOp = IAdd (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b")
+            , instrMetadata = Nothing
+            }
+
+    it "emitInstruction without beginBlock creates an implicit 'entry' block" $ do
+      let env = execBuilder (emitInstruction testInstr) emptyIRBuilderEnv
+      case builderEnvCurrentBlock env of
+        Just bb -> blockBuilderLabel bb `shouldBe` "entry"
+        Nothing -> expectationFailure "expected a current block"
+
+    it "emitInstruction places the instruction in the implicit block" $ do
+      let env = execBuilder (emitInstruction testInstr) emptyIRBuilderEnv
+      case builderEnvCurrentBlock env of
+        Just bb -> blockBuilderItems bb `shouldBe` [BlockInstr testInstr]
+        Nothing -> expectationFailure "expected a current block"
+
+    it "emitAnnotation without beginBlock creates an implicit 'entry' block" $ do
+      let env = execBuilder (emitAnnotation (Comment "note")) emptyIRBuilderEnv
+      case builderEnvCurrentBlock env of
+        Just bb -> blockBuilderLabel bb `shouldBe` "entry"
+        Nothing -> expectationFailure "expected a current block"
+
+    it "emitAnnotation places the annotation in the implicit block" $ do
+      let env = execBuilder (emitAnnotation (Comment "note")) emptyIRBuilderEnv
+      case builderEnvCurrentBlock env of
+        Just bb -> blockBuilderItems bb `shouldBe` [BlockAnnotation (Comment "note")]
+        Nothing -> expectationFailure "expected a current block"
+
+    it "emitTerminator without beginBlock creates an implicit 'entry' block" $ do
+      let env = execBuilder (emitTerminator (IRet (OConstant (CInt 32 0)))) emptyIRBuilderEnv
+      case builderEnvCurrentBlock env of
+        Just bb -> blockBuilderLabel bb `shouldBe` "entry"
+        Nothing -> expectationFailure "expected a current block"
+
+    it "emitTerminator sets the terminator on the implicit block" $ do
+      let env = execBuilder (emitTerminator (IRet (OConstant (CInt 32 0)))) emptyIRBuilderEnv
+      case builderEnvCurrentBlock env of
+        Just bb -> blockBuilderTerminator bb `shouldBe` Just (IRet (OConstant (CInt 32 0)))
+        Nothing -> expectationFailure "expected a current block"
+
+    it "explicit beginBlock is unaffected when block already active" $ do
+      let env = execBuilder (beginBlock "entry" >> emitInstruction testInstr) emptyIRBuilderEnv
+      case builderEnvCurrentBlock env of
+        Just bb -> blockBuilderLabel bb `shouldBe` "entry"
+        Nothing -> expectationFailure "expected a current block"

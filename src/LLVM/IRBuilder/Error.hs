@@ -23,7 +23,10 @@ data IRBuilderError
     CommentOnAnnotation IRAnnotation
   | -- | Attempted to set terminator when block already has one
     BlockAlreadyTerminated Name
-  | -- | Attempted operation (e.g., emitTerminator) without an active block
+  | -- | Attempted operation requiring an active block when none exists.
+    -- Thrown by 'getCurrentBlockM' and the '<##>' operator.
+    -- Note: the emit functions ('emitInstruction', 'emitAnnotation', 'emitTerminator')
+    -- auto-create an implicit @\"entry\"@ block instead of throwing this error.
     NoCurrentBlock
   | -- | Attempted to begin a function when one is already active
     CurrentFunctionActive Name
