@@ -10,7 +10,7 @@ import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv)
 import LLVM.IRBuilder.Error (IRBuilderError)
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
-import LLVM.IRTerminator.Constructors (br, condbr, ret, switch, unreachable)
+import LLVM.IRTerminator.Constructors (br, condbr, ret, retVoid, switch, unreachable)
 import Test.Hspec (Spec, describe, it, shouldBe)
 
 runBuilder :: IRBuilder a -> IRBuilderEnv -> Either IRBuilderError (a, IRBuilderEnv)
@@ -32,7 +32,11 @@ spec = describe "LLVM.IRTerminator.Constructors" $ do
   describe "ret" $
     it "sets IRet terminator" $ do
       let op = OConstant (CInt 32 0)
-      withBlock (ret op) emptyIRBuilderEnv `shouldBe` Just (IRet op)
+      withBlock (ret op) emptyIRBuilderEnv `shouldBe` Just (IRet (Just op))
+
+  describe "retVoid" $
+    it "sets IRet Nothing terminator" $
+      withBlock retVoid emptyIRBuilderEnv `shouldBe` Just (IRet Nothing)
 
   describe "br" $
     it "sets IBr terminator" $

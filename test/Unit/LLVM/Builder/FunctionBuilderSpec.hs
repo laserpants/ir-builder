@@ -26,7 +26,7 @@ testBlock =
   IRBlock
     { blockLabel = "entry"
     , blockItems = []
-    , blockTerminator = IRet (OConstant (CInt 32 0))
+    , blockTerminator = IRet (Just (OConstant (CInt 32 0)))
     }
 
 testBlock2 :: IRBlock
@@ -34,7 +34,7 @@ testBlock2 =
   IRBlock
     { blockLabel = "exit"
     , blockItems = []
-    , blockTerminator = IRet (OConstant (CInt 32 1))
+    , blockTerminator = IRet (Just (OConstant (CInt 32 1)))
     }
 
 testInstr :: IRInstruction (Maybe Text)

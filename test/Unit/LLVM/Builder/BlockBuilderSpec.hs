@@ -73,5 +73,5 @@ spec = describe "LLVM.IRBuilder.BlockBuilder" $ do
 
     it "does not affect existing items" $ do
       let b1 = appendBlockBuilderItem (BlockInstr testInstr) emptyBlock
-          b2 = setBlockBuilderTerminator (IRet (OConstant (CInt 32 0))) b1
+          b2 = setBlockBuilderTerminator (IRet (Just (OConstant (CInt 32 0)))) b1
       length (blockBuilderItems b2) `shouldBe` 1

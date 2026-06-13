@@ -38,7 +38,7 @@ buildSimpleBlock label =
   IRBlock
     { blockLabel = label
     , blockItems = []
-    , blockTerminator = IRet (OConstant (CInt 32 0))
+    , blockTerminator = IRet (Just (OConstant (CInt 32 0)))
     }
 
 -- | Build a simple function with one entry block

@@ -74,17 +74,17 @@ spec = describe "LLVM.IRBuilder" $ do
 
   describe "beginFunction / endFunction" $ do
     it "produces a function in the environment" $ do
-      let env = execBuilder (beginFunction testFB >> beginBlock "entry" >> setTerminator (IRet (OConstant (CInt 32 0))) >> endFunction) emptyIRBuilderEnv
+      let env = execBuilder (beginFunction testFB >> beginBlock "entry" >> setTerminator (IRet (Just (OConstant (CInt 32 0)))) >> endFunction) emptyIRBuilderEnv
       length (builderEnvFunctions env) `shouldBe` 1
 
     it "records the function name" $ do
-      let env = execBuilder (beginFunction testFB >> beginBlock "entry" >> setTerminator (IRet (OConstant (CInt 32 0))) >> endFunction) emptyIRBuilderEnv
+      let env = execBuilder (beginFunction testFB >> beginBlock "entry" >> setTerminator (IRet (Just (OConstant (CInt 32 0)))) >> endFunction) emptyIRBuilderEnv
       case builderEnvFunctions env of
         [f] -> functionName f `shouldBe` "test"
         _ -> expectationFailure "expected exactly one function"
 
     it "clears current function after endFunction" $ do
-      let env = execBuilder (beginFunction testFB >> beginBlock "entry" >> setTerminator (IRet (OConstant (CInt 32 0))) >> endFunction) emptyIRBuilderEnv
+      let env = execBuilder (beginFunction testFB >> beginBlock "entry" >> setTerminator (IRet (Just (OConstant (CInt 32 0)))) >> endFunction) emptyIRBuilderEnv
       builderEnvCurrentFunction env `shouldBe` Nothing
 
     it "resets the fresh register counter on beginFunction" $ do
@@ -107,7 +107,7 @@ spec = describe "LLVM.IRBuilder" $ do
             beginFunction testFB
             _ <- fresh  -- %1 in first function
             beginBlock "entry"
-            setTerminator (IRet (OConstant (CInt 32 0)))
+            setTerminator (IRet (Just (OConstant (CInt 32 0))))
             endFunction
             beginFunction testFB2
             r <- fresh  -- should be %1 again, not %2
@@ -191,15 +191,15 @@ spec = describe "LLVM.IRBuilder" $ do
         Nothing -> expectationFailure "expected a current block"
 
     it "emitTerminator without beginBlock creates an implicit 'entry' block" $ do
-      let env = execBuilder (emitTerminator (IRet (OConstant (CInt 32 0)))) emptyIRBuilderEnv
+      let env = execBuilder (emitTerminator (IRet (Just (OConstant (CInt 32 0))))) emptyIRBuilderEnv
       case builderEnvCurrentBlock env of
         Just bb -> blockBuilderLabel bb `shouldBe` "entry"
         Nothing -> expectationFailure "expected a current block"
 
     it "emitTerminator sets the terminator on the implicit block" $ do
-      let env = execBuilder (emitTerminator (IRet (OConstant (CInt 32 0)))) emptyIRBuilderEnv
+      let env = execBuilder (emitTerminator (IRet (Just (OConstant (CInt 32 0))))) emptyIRBuilderEnv
       case builderEnvCurrentBlock env of
-        Just bb -> blockBuilderTerminator bb `shouldBe` Just (IRet (OConstant (CInt 32 0)))
+        Just bb -> blockBuilderTerminator bb `shouldBe` Just (IRet (Just (OConstant (CInt 32 0))))
         Nothing -> expectationFailure "expected a current block"
 
     it "explicit beginBlock is unaffected when block already active" $ do

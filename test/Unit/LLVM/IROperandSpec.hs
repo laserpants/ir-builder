@@ -32,7 +32,7 @@ spec = describe "LLVM.IROperand" $ do
 
   describe "IRTerminator" $ do
     it "creates IRet terminator" $ do
-      termRet `shouldBe` IRet operandLocal32
+      termRet `shouldBe` IRet (Just operandLocal32)
 
     it "creates IBr terminator" $ do
       termBr `shouldBe` IBr "entry"

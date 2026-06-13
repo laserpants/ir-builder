@@ -38,7 +38,7 @@ singleFuncModule =
                 [ IRBlock
                     { blockLabel = "entry"
                     , blockItems = []
-                    , blockTerminator = IRet (OConstant (CInt 32 0))
+                    , blockTerminator = IRet (Just (OConstant (CInt 32 0)))
                     }
                 ]
             , functionAttributes = []
@@ -74,7 +74,7 @@ spec = describe "LLVM.IRRenderer" $ do
                       , functionRetType = TInt 32
                       , functionArgs = [(TInt 32, "x"), (TFloat, "y")]
                       , functionBlocks =
-                          [ IRBlock "entry" [] (IRet (OConstant (CInt 32 0)))
+                          [ IRBlock "entry" [] (IRet (Just (OConstant (CInt 32 0))))
                           ]
                       , functionAttributes = []
                       }
@@ -184,7 +184,7 @@ spec = describe "LLVM.IRRenderer" $ do
           m =
             minimalModule
               { moduleFunctions =
-                  [ IRFunction "f" LExternal (TInt 32) [] [IRBlock "entry" [BlockInstr instr] (IRet (OLocal (TInt 32) "r"))] []
+                  [ IRFunction "f" LExternal (TInt 32) [] [IRBlock "entry" [BlockInstr instr] (IRet (Just (OLocal (TInt 32) "r")))] []
                   ]
               }
       let out = render m
@@ -201,7 +201,7 @@ spec = describe "LLVM.IRRenderer" $ do
           m =
             minimalModule
               { moduleFunctions =
-                  [ IRFunction "f" LExternal (TInt 1) [] [IRBlock "entry" [BlockInstr instr] (IRet (OLocal (TInt 1) "cmp"))] []
+                  [ IRFunction "f" LExternal (TInt 1) [] [IRBlock "entry" [BlockInstr instr] (IRet (Just (OLocal (TInt 1) "cmp")))] []
                   ]
               }
       let out = render m
@@ -233,7 +233,7 @@ spec = describe "LLVM.IRRenderer" $ do
           m =
             minimalModule
               { moduleFunctions =
-                  [ IRFunction "f" LExternal (TInt 32) [] [IRBlock "entry" [BlockInstr instr] (IRet (OLocal (TInt 32) "r"))] []
+                  [ IRFunction "f" LExternal (TInt 32) [] [IRBlock "entry" [BlockInstr instr] (IRet (Just (OLocal (TInt 32) "r")))] []
                   ]
               }
       let out = render m
@@ -259,6 +259,16 @@ spec = describe "LLVM.IRRenderer" $ do
     it "renders ret terminator" $ do
       let out = render singleFuncModule
       out `shouldContain` "ret i32"
+
+    it "renders ret void terminator" $ do
+      let m =
+            minimalModule
+              { moduleFunctions =
+                  [ IRFunction "f" LExternal TVoid [] [IRBlock "entry" [] (IRet Nothing)] []
+                  ]
+              }
+      let out = render m
+      out `shouldContain` "ret void"
 
     it "renders br terminator" $ do
       let m =
@@ -363,7 +373,7 @@ spec = describe "LLVM.IRRenderer" $ do
       let m =
             minimalModule
               { moduleFunctions =
-                  [ IRFunction "f" LExternal (TInt 32) [(TInt 32, "x%1")] [IRBlock "entry" [] (IRet (OConstant (CInt 32 0)))] []
+                  [ IRFunction "f" LExternal (TInt 32) [(TInt 32, "x%1")] [IRBlock "entry" [] (IRet (Just (OConstant (CInt 32 0))))] []
                   ]
               }
       let out = render m

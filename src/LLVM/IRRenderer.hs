@@ -416,7 +416,9 @@ renderInstrOp =
 renderTerminator :: (Monad m) => IRTerminator -> IRRendererT m Text
 renderTerminator =
   \case
-    IRet op -> do
+    IRet Nothing ->
+      pure "ret void"
+    IRet (Just op) -> do
       opStr <- renderTypedOperand op
       pure $ "ret " <> opStr
     IBr target ->

@@ -164,7 +164,7 @@ instrStore = IStore operandLocal32 operandGlobal32
 -- * Common terminator values
 
 termRet :: IRTerminator
-termRet = IRet operandLocal32
+termRet = IRet (Just operandLocal32)
 
 termBr :: IRTerminator
 termBr = IBr nameBlock

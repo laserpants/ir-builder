@@ -27,7 +27,7 @@ spec = describe "LLVM.IRModule" $ do
     it "creates a simple block" $ do
       let b = buildSimpleBlock "entry"
       blockLabel b `shouldBe` "entry"
-      blockTerminator b `shouldBe` IRet (OConstant (CInt 32 0))
+      blockTerminator b `shouldBe` IRet (Just (OConstant (CInt 32 0)))
 
   describe "verifyModule" $ do
     it "accepts a valid simple module" $ do
@@ -36,7 +36,7 @@ spec = describe "LLVM.IRModule" $ do
 
     it "accepts a valid multi-block function" $ do
       let block1 = buildBlockWithTerminator "entry" (IBr "exit")
-          block2 = buildBlockWithTerminator "exit" (IRet (OConstant (CInt 32 0)))
+          block2 = buildBlockWithTerminator "exit" (IRet (Just (OConstant (CInt 32 0))))
           m =
             IRModule
               { moduleName = "multi"
@@ -56,8 +56,8 @@ spec = describe "LLVM.IRModule" $ do
 
     it "handles conditional branches with valid targets" $ do
       let block1 = buildBlockWithTerminator "entry" (ICondBr (OConstant (CInt 1 1)) "then" "else")
-          block2 = buildBlockWithTerminator "then" (IRet (OConstant (CInt 32 1)))
-          block3 = buildBlockWithTerminator "else" (IRet (OConstant (CInt 32 0)))
+          block2 = buildBlockWithTerminator "then" (IRet (Just (OConstant (CInt 32 1))))
+          block3 = buildBlockWithTerminator "else" (IRet (Just (OConstant (CInt 32 0))))
           m =
             IRModule
               { moduleName = "condbr"
@@ -69,7 +69,7 @@ spec = describe "LLVM.IRModule" $ do
 
     it "rejects conditional branch with invalid 'then' target" $ do
       let block1 = buildBlockWithTerminator "entry" (ICondBr (OConstant (CInt 1 1)) "invalid" "else")
-          block2 = buildBlockWithTerminator "else" (IRet (OConstant (CInt 32 0)))
+          block2 = buildBlockWithTerminator "else" (IRet (Just (OConstant (CInt 32 0))))
           m =
             IRModule
               { moduleName = "bad_condbr"
@@ -81,7 +81,7 @@ spec = describe "LLVM.IRModule" $ do
 
     it "accepts switch with valid default" $ do
       let block1 = buildBlockWithTerminator "entry" (ISwitch (OConstant (CInt 32 1)) "default" [])
-          block2 = buildBlockWithTerminator "default" (IRet (OConstant (CInt 32 0)))
+          block2 = buildBlockWithTerminator "default" (IRet (Just (OConstant (CInt 32 0))))
           m =
             IRModule
               { moduleName = "switch"

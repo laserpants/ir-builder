@@ -75,14 +75,14 @@ unreachable code.
 
 ==== __Constructors__
 
-[@IRet IROperand@] Return from function with the given value
+[@IRet (Maybe IROperand)@] Return from function; 'Nothing' for @ret void@, @'Just' op@ for a typed value
 [@IBr Name@] Unconditional branch to the named block
 [@ICondBr IROperand Name Name@] Conditional branch: if condition, then true block, else false block
 [@ISwitch IROperand Name [(IRConstant, Name)]@] Multi-way branch on value with default block and case list
 [@IUnreachable@] Indicates unreachable code (undefined behavior if reached)
 -}
 data IRTerminator
-  = IRet IROperand
+  = IRet (Maybe IROperand)
   | IBr Name
   | ICondBr IROperand Name Name
   | ISwitch IROperand Name [(IRConstant, Name)]

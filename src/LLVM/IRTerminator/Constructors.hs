@@ -1,5 +1,6 @@
 module LLVM.IRTerminator.Constructors (
   ret,
+  retVoid,
   br,
   condbr,
   switch,
@@ -14,7 +15,11 @@ import LLVM.IROperand (IRConstant, IROperand, IRTerminator (..))
 
 -- | Return from the current function with the given operand as the return value.
 ret :: (MonadIRBuilder m) => IROperand -> m ()
-ret op = setTerminator (IRet op)
+ret op = setTerminator (IRet (Just op))
+
+-- | Return from the current function with no value (@ret void@).
+retVoid :: (MonadIRBuilder m) => m ()
+retVoid = setTerminator (IRet Nothing)
 
 -- | Unconditionally branch to the named block.
 br :: (MonadIRBuilder m) => Name -> m ()
