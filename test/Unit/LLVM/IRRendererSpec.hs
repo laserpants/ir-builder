@@ -2,7 +2,7 @@
 
 module Unit.LLVM.IRRendererSpec (spec) where
 
-import Data.List (isInfixOf)
+import Data.List (isInfixOf, isPrefixOf, tails)
 import Data.Text (unpack)
 import LLVM.IRInstruction
 import LLVM.IRModule (IRAttribute (..), IRBlock (..), IRBlockItem (..), IRDecl (..), IRFunction (..), IRGlobal (..), IRLinkage (..), IRModule (..))
@@ -398,3 +398,34 @@ spec = describe "LLVM.IRRenderer" $ do
               }
       let out = render m
       out `shouldContain` "%MyType"
+
+  describe "renderModule - type declarations" $ do
+    it "renders a named struct type declaration" $ do
+      let m = minimalModule{moduleDecls = [IRDecl "Node" (TStruct [TInt 32, TPtr, TPtr])]}
+      render m `shouldContain` "%Node = type { i32, ptr, ptr }"
+
+    it "renders multiple type declarations" $ do
+      let m = minimalModule{moduleDecls = [IRDecl "Foo" (TStruct [TInt 32]), IRDecl "Bar" (TStruct [TPtr])]}
+      let out = render m
+      out `shouldContain` "%Foo = type { i32 }"
+      out `shouldContain` "%Bar = type { ptr }"
+
+    it "type declarations appear before globals and functions" $ do
+      let m =
+            minimalModule
+              { moduleDecls = [IRDecl "Node" (TStruct [TInt 32])]
+              , moduleGlobals = [IRExtern "printf" TVoid [TPtr]]
+              }
+      let out = render m
+      let nodePos = length $ takeWhile (/= '%') out
+          declPos = length $ takeWhile (not . isPrefixOf "declare") (tails out)
+      nodePos `shouldBe` min nodePos declPos
+
+  describe "renderModule - external declarations" $ do
+    it "renders a declare statement" $ do
+      let m = minimalModule{moduleGlobals = [IRExtern "printf" TVoid [TPtr]]}
+      render m `shouldContain` "declare void @printf(ptr)"
+
+    it "renders declare with multiple arg types" $ do
+      let m = minimalModule{moduleGlobals = [IRExtern "memcpy" TPtr [TPtr, TPtr, TInt 64]]}
+      render m `shouldContain` "declare ptr @memcpy(ptr, ptr, i64)"

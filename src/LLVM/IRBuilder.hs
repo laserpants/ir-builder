@@ -75,6 +75,8 @@ module LLVM.IRBuilder (
   emitAnnotation,
   emitTerminator,
   emitGlobal,
+  emitTypeDecl,
+  declare,
   setTerminator,
 
   -- * Utilities
@@ -104,6 +106,7 @@ import LLVM.IRBuilder.BlockBuilder (
 import LLVM.IRBuilder.Class (MonadIRBuilder (..))
 import LLVM.IRBuilder.Environment (
   IRBuilderEnv (..),
+  appendBuilderEnvDecls,
   appendBuilderEnvGlobals,
   emptyIRBuilderEnv,
   mapBuilderEnvCurrentBlock,
@@ -121,8 +124,9 @@ import LLVM.IRModule (
   IRAttribute (..),
   IRBlock (..),
   IRBlockItem (..),
+  IRDecl (..),
   IRFunction (..),
-  IRGlobal,
+  IRGlobal (..),
   IRLinkage (..),
   IRModule (..),
  )
@@ -770,6 +774,56 @@ emitGlobal (IRGlobalConstant "myString" (IRConstantString "hello") ...)
 -}
 emitGlobal :: (MonadIRBuilder m) => IRGlobal -> m ()
 emitGlobal global = modifyIRBuilderEnv (appendBuilderEnvGlobals [global])
+
+{- | Emit a named type declaration into the module.
+
+Renders at the top of the IR output as:
+
+@
+%IRName = type <type>
+@
+
+Duplicate declarations (same name) are silently ignored, so it is safe
+to call this function multiple times for the same type.
+
+__Example:__
+
+@
+emitTypeDecl "Node" (TStruct [TInt 32, TPtr, TPtr])
+-- renders: %Node = type { i32, ptr, ptr }
+@
+-}
+emitTypeDecl :: (MonadIRBuilder m) => IRName -> IRType -> m ()
+emitTypeDecl name ty = modifyIRBuilderEnv $ \env ->
+  if any (\d -> declName d == name) (builderEnvDecls env)
+    then env
+    else appendBuilderEnvDecls [IRDecl name ty] env
+
+{- | Emit an external function declaration into the module.
+
+Renders as:
+
+@
+declare <retType> @<name>(<argTypes>)
+@
+
+Duplicate declarations (same function name) are silently ignored, so it is
+safe to call this freely without tracking what has already been declared.
+
+__Example:__
+
+@
+declare "printf" TVoid [TPtr]
+declare "malloc" TPtr [TInt 64]
+@
+-}
+declare :: (MonadIRBuilder m) => IRName -> IRType -> [IRType] -> m ()
+declare name retTy argTys = modifyIRBuilderEnv $ \env ->
+  let isDupe (IRExtern n _ _) = n == name
+      isDupe _ = False
+   in if any isDupe (builderEnvGlobals env)
+        then env
+        else appendBuilderEnvGlobals [IRExtern name retTy argTys] env
 
 {- | Begin a new basic block within the current function.
 

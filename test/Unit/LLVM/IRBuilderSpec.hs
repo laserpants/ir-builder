@@ -15,7 +15,7 @@ import LLVM.IRBuilder.Error (IRBuilderError)
 import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..))
 import LLVM.IRInstruction (IRInstrOp (..), IRInstruction (..))
 import LLVM.IRBuilder.Supply (fresh, freshLabel)
-import LLVM.IRModule (IRBlockItem (..), IRFunction (..), IRLinkage (..))
+import LLVM.IRModule (IRBlockItem (..), IRDecl (..), IRFunction (..), IRGlobal (..), IRLinkage (..))
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
 import LLVM.IRType (IRType (..))
 import Test.Hspec (Spec, describe, expectationFailure, it, shouldBe)
@@ -207,3 +207,29 @@ spec = describe "LLVM.IRBuilder" $ do
       case builderEnvCurrentBlock env of
         Just bb -> blockBuilderLabel bb `shouldBe` "entry"
         Nothing -> expectationFailure "expected a current block"
+
+  describe "emitTypeDecl" $ do
+    it "adds an IRDecl to the environment" $ do
+      let env = execBuilder (emitTypeDecl "Node" (TStruct [TInt 32, TPtr])) emptyIRBuilderEnv
+      builderEnvDecls env `shouldBe` [IRDecl "Node" (TStruct [TInt 32, TPtr])]
+
+    it "deduplicates by name — second call is ignored" $ do
+      let env = execBuilder (emitTypeDecl "Node" (TStruct [TInt 32]) >> emitTypeDecl "Node" (TStruct [TPtr])) emptyIRBuilderEnv
+      length (builderEnvDecls env) `shouldBe` 1
+
+    it "keeps distinct names" $ do
+      let env = execBuilder (emitTypeDecl "Foo" (TStruct [TInt 32]) >> emitTypeDecl "Bar" (TStruct [TPtr])) emptyIRBuilderEnv
+      length (builderEnvDecls env) `shouldBe` 2
+
+  describe "declare" $ do
+    it "adds an IRExtern global to the environment" $ do
+      let env = execBuilder (declare "printf" TVoid [TPtr]) emptyIRBuilderEnv
+      builderEnvGlobals env `shouldBe` [IRExtern "printf" TVoid [TPtr]]
+
+    it "deduplicates by name — second call is ignored" $ do
+      let env = execBuilder (declare "printf" TVoid [TPtr] >> declare "printf" TVoid [TPtr]) emptyIRBuilderEnv
+      length (builderEnvGlobals env) `shouldBe` 1
+
+    it "keeps distinct names" $ do
+      let env = execBuilder (declare "printf" TVoid [TPtr] >> declare "malloc" TPtr [TInt 64]) emptyIRBuilderEnv
+      length (builderEnvGlobals env) `shouldBe` 2

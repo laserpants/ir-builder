@@ -14,6 +14,8 @@ module LLVM.IRBuilder.Environment (
   clearBuilderEnvCurrentBlock,
   overBuilderEnvGlobals,
   appendBuilderEnvGlobals,
+  overBuilderEnvDecls,
+  appendBuilderEnvDecls,
 )
 where
 
@@ -107,3 +109,13 @@ overBuilderEnvGlobals fn IRBuilderEnv{..} =
 
 appendBuilderEnvGlobals :: [IRGlobal] -> IRBuilderEnv -> IRBuilderEnv
 appendBuilderEnvGlobals globals = overBuilderEnvGlobals (<> globals)
+
+overBuilderEnvDecls :: ([IRDecl] -> [IRDecl]) -> IRBuilderEnv -> IRBuilderEnv
+overBuilderEnvDecls fn IRBuilderEnv{..} =
+  IRBuilderEnv
+    { builderEnvDecls = fn builderEnvDecls
+    , ..
+    }
+
+appendBuilderEnvDecls :: [IRDecl] -> IRBuilderEnv -> IRBuilderEnv
+appendBuilderEnvDecls decls = overBuilderEnvDecls (<> decls)
