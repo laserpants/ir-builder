@@ -13,6 +13,7 @@ import LLVM.IRType.Constructors (i32)
 {- | Build LLVM IR for a simple addition function with inline and block comments.
 
 Demonstrates two annotation styles:
+
 1. Block comments for explaining sections of code
 2. Inline comments for explaining individual operations
 

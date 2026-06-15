@@ -13,10 +13,11 @@ import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
 import LLVM.IRBuilder.Environment (emptyIRBuilderEnv)
 import LLVM.IRBuilder.Error (IRBuilderError)
 import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..))
-import LLVM.IRInstruction (IRInstrOp (..), IRInstruction (..))
 import LLVM.IRBuilder.Supply (fresh, freshLabel)
+import LLVM.IRInstruction (IRInstrOp (..), IRInstruction (..))
 import LLVM.IRModule (IRBlockItem (..), IRDecl (..), IRFunction (..), IRGlobal (..), IRLinkage (..))
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
+import LLVM.IRTerminator.Constructors (ret, retVoid)
 import LLVM.IRType (IRType (..))
 import Test.Hspec (Spec, describe, expectationFailure, it, shouldBe)
 
@@ -36,12 +37,12 @@ evalBuilder b env = case runBuilder b env of
 testFB :: FunctionBuilder
 testFB =
   FunctionBuilder
-    { functionBuilderName = "test"
-    , functionBuilderLinkage = LExternal
-    , functionBuilderRetType = TInt 32
-    , functionBuilderArgs = []
-    , functionBuilderBlocks = []
-    , functionBuilderAttributes = []
+    { functionBuilderName = "test",
+      functionBuilderLinkage = LExternal,
+      functionBuilderRetType = TInt 32,
+      functionBuilderArgs = [],
+      functionBuilderBlocks = [],
+      functionBuilderAttributes = []
     }
 
 spec :: Spec
@@ -89,28 +90,28 @@ spec = describe "LLVM.IRBuilder" $ do
 
     it "resets the fresh register counter on beginFunction" $ do
       let action = do
-            _ <- fresh  -- advance counter in outer scope
+            _ <- fresh -- advance counter in outer scope
             beginFunction testFB
             builderEnvFreshReg <$> getIRBuilderEnv
       evalBuilder action emptyIRBuilderEnv `shouldBe` 0
 
     it "resets the fresh label counter on beginFunction" $ do
       let action = do
-            _ <- freshLabel "x"  -- advance label counter in outer scope
+            _ <- freshLabel "x" -- advance label counter in outer scope
             beginFunction testFB
             builderEnvFreshLabel <$> getIRBuilderEnv
       evalBuilder action emptyIRBuilderEnv `shouldBe` 0
 
     it "second function's registers start from 1 independently" $ do
-      let testFB2 = testFB{functionBuilderName = "test2"}
+      let testFB2 = testFB {functionBuilderName = "test2"}
           action = do
             beginFunction testFB
-            _ <- fresh  -- %1 in first function
+            _ <- fresh -- %1 in first function
             beginBlock "entry"
             setTerminator (IRet (Just (OConstant (CInt 32 0))))
             endFunction
             beginFunction testFB2
-            r <- fresh  -- should be %1 again, not %2
+            r <- fresh -- should be %1 again, not %2
             pure r
       evalBuilder action emptyIRBuilderEnv `shouldBe` "1"
 
@@ -161,9 +162,9 @@ spec = describe "LLVM.IRBuilder" $ do
   describe "implicit entry block" $ do
     let testInstr =
           IRInstruction
-            { instrResult = Just ("r", TInt 32)
-            , instrOp = IAdd (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b")
-            , instrMetadata = Nothing
+            { instrResult = Just ("r", TInt 32),
+              instrOp = IAdd (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b"),
+              instrMetadata = Nothing
             }
 
     it "emitInstruction without beginBlock creates an implicit 'entry' block" $ do
@@ -233,3 +234,22 @@ spec = describe "LLVM.IRBuilder" $ do
     it "keeps distinct names" $ do
       let env = execBuilder (declare "printf" TVoid [TPtr] >> declare "malloc" TPtr [TInt 64]) emptyIRBuilderEnv
       length (builderEnvGlobals env) `shouldBe` 2
+
+  describe "define with implicit entry block" $ do
+    it "function with only a return statement should have one block" $ do
+      let text = compileModule "test" $ do
+            define (TInt 32) "cont1" [(TPtr, "a")] LInternal [] $ do
+              ret (OConstant (CInt 32 0))
+      text `shouldBe` "define internal i32 @cont1(ptr %a) {\nentry:\n  ret i32 0\n}\n\n"
+
+    it "function with void return should have one block" $ do
+      let text = compileModule "test" $ do
+            define TVoid "noop" [] LInternal [] $ do
+              retVoid
+      text `shouldBe` "define internal void @noop() {\nentry:\n  ret void\n}\n\n"
+
+    it "function builder should have one block in the environment" $ do
+      let env = execBuilder (beginFunction testFB >> ret (OConstant (CInt 32 0)) >> endFunction) emptyIRBuilderEnv
+      case builderEnvFunctions env of
+        [f] -> length (functionBlocks f) `shouldBe` 1
+        _ -> expectationFailure "expected exactly one function"
