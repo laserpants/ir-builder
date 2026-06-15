@@ -449,7 +449,7 @@ renderTypedOperand op = do
   opStr <- renderOperand op
   pure $ tyStr <> " " <> opStr
 
--- | Extract the type of an operand
+-- | Derive the type of an operand
 operandType :: IROperand -> IRType
 operandType =
   \case
