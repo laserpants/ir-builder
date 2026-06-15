@@ -4,15 +4,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-{- |
-This module provides functionality for rendering LLVM IR data structures into their
-textual LLVM IR representation. It handles the conversion of IR modules, functions,
-blocks, instructions, types, and operands into properly formatted LLVM assembly code.
-
-The renderer uses a monadic transformer interface allowing it to run in any monad
-context (pure, IO, or custom monad stacks). The primary entry point is 'renderModule',
-which takes an 'IRModule' and produces the complete textual IR output.
--}
+-- |
+-- This module provides functionality for rendering LLVM IR data structures into their
+-- textual LLVM IR representation. It handles the conversion of IR modules, functions,
+-- blocks, instructions, types, and operands into properly formatted LLVM assembly code.
+--
+-- The renderer uses a monadic transformer interface allowing it to run in any monad
+-- context (pure, IO, or custom monad stacks). The primary entry point is 'renderModule',
+-- which takes an 'IRModule' and produces the complete textual IR output.
 module LLVM.IRRenderer (IRRenderer, IRRendererT (..), runIRRenderer, runIRRendererT, renderModule) where
 
 import Data.ByteString (ByteString)
@@ -22,138 +21,132 @@ import Data.Functor.Identity (Identity (runIdentity))
 import Data.Text (Text)
 import qualified Data.Text as Text
 import LLVM.IRAnnotation (IRAnnotation (..))
-import LLVM.IRInstruction (
-  IRFCmpCond (..),
-  IRICmpCond (..),
-  IRInstrOp (..),
-  IRInstruction (..),
-  IRTailMarker (..),
- )
-import LLVM.IRModule (
-  IRAttribute (..),
-  IRBlock (..),
-  IRBlockItem (..),
-  IRDecl (..),
-  IRFunction (..),
-  IRGlobal (..),
-  IRLinkage (..),
-  IRModule (..),
- )
+import LLVM.IRInstruction
+  ( IRFCmpCond (..),
+    IRICmpCond (..),
+    IRInstrOp (..),
+    IRInstruction (..),
+    IRTailMarker (..),
+  )
+import LLVM.IRModule
+  ( IRAttribute (..),
+    IRBlock (..),
+    IRBlockItem (..),
+    IRDecl (..),
+    IRFunction (..),
+    IRGlobal (..),
+    IRLinkage (..),
+    IRModule (..),
+  )
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
 import LLVM.IRType (IRName, IRType (..))
 
-{- | Returns True if the name contains characters that require quoting in LLVM IR.
-Safe (unquoted) identifiers match [-a-zA-Z$._][-a-zA-Z$._0-9]*.
--}
+-- | Returns True if the name contains characters that require quoting in LLVM IR.
+-- Safe (unquoted) identifiers match [-a-zA-Z$._][-a-zA-Z$._0-9]*.
 needsQuoting :: IRName -> Bool
 needsQuoting n = case Text.uncons n of
   Nothing -> True
   Just (h, t) -> not (isSafeHead h) || Text.any (not . isSafeBody) t
- where
-  isSafeHead c = isAlphaNum c || c == '-' || c == '$' || c == '.' || c == '_'
-  isSafeBody c = isSafeHead c
+  where
+    isSafeHead c = isAlphaNum c || c == '-' || c == '$' || c == '.' || c == '_'
+    isSafeBody c = isSafeHead c
 
-{- | Wrap a name in double-quotes if it contains characters that LLVM IR
-requires to be quoted; leave it bare otherwise.
--}
+-- | Wrap a name in double-quotes if it contains characters that LLVM IR
+-- requires to be quoted; leave it bare otherwise.
 quoteIfNeeded :: IRName -> Text
 quoteIfNeeded n
   | needsQuoting n = "\"" <> n <> "\""
   | otherwise = n
 
-{- |
-The IRRendererT monad transformer provides a context for rendering LLVM IR.
-
-This newtype wraps any monad, allowing rendering operations to be composed in pure
-code, IO, or any custom monad stack. It provides a clean abstraction for rendering
-while allowing users to choose their execution context.
-
-For pure rendering, use the 'IRRenderer' type alias with 'runIRRenderer'.
-For rendering in other monads (IO, Either, etc.), use 'runIRRendererT'.
--}
+-- |
+-- The IRRendererT monad transformer provides a context for rendering LLVM IR.
+--
+-- This newtype wraps any monad, allowing rendering operations to be composed in pure
+-- code, IO, or any custom monad stack. It provides a clean abstraction for rendering
+-- while allowing users to choose their execution context.
+--
+-- For pure rendering, use the 'IRRenderer' type alias with 'runIRRenderer'.
+-- For rendering in other monads (IO, Either, etc.), use 'runIRRendererT'.
 newtype IRRendererT m a = IRRendererT {unpackIRRendererT :: m a}
   deriving
-    ( Functor
-    , Applicative
-    , Monad
+    ( Functor,
+      Applicative,
+      Monad
     )
 
-{- |
-Type alias for pure rendering computations.
-
-This is the most common use case for rendering LLVM IR in a pure context.
--}
+-- |
+-- Type alias for pure rendering computations.
+--
+-- This is the most common use case for rendering LLVM IR in a pure context.
 type IRRenderer = IRRendererT Identity
 
-{- |
-Execute an IRRendererT computation in any monad.
-
-This function unwraps the renderer transformer and returns the underlying
-monadic computation.
-
-==== __Example__
-
-@
--- Pure rendering
-result :: Text
-result = runIdentity $ runIRRendererT $ renderModule myModule
-
--- Rendering with IO
-resultIO :: IO Text
-resultIO = runIRRendererT $ renderModule myModule
-@
--}
+-- |
+-- Execute an IRRendererT computation in any monad.
+--
+-- This function unwraps the renderer transformer and returns the underlying
+-- monadic computation.
+--
+-- ==== __Example__
+--
+-- @
+-- -- Pure rendering
+-- result :: Text
+-- result = runIdentity $ runIRRendererT $ renderModule myModule
+--
+-- -- Rendering with IO
+-- resultIO :: IO Text
+-- resultIO = runIRRendererT $ renderModule myModule
+-- @
 runIRRendererT :: IRRendererT m a -> m a
 runIRRendererT = unpackIRRendererT
 
-{- |
-Execute a pure IRRenderer computation and extract the result.
-
-This is a convenience function for the common case of pure rendering.
-
-==== __Example__
-
-@
-result = runIRRenderer $ renderModule myModule
-@
--}
+-- |
+-- Execute a pure IRRenderer computation and extract the result.
+--
+-- This is a convenience function for the common case of pure rendering.
+--
+-- ==== __Example__
+--
+-- @
+-- result = runIRRenderer $ renderModule myModule
+-- @
 runIRRenderer :: IRRenderer a -> a
 runIRRenderer = runIdentity . runIRRendererT
 
-{- |
-Render an LLVM IR module to its textual representation.
-
-This is the primary entry point for rendering complete LLVM IR modules. It processes
-all module components in order:
-
-1. Type declarations (structs, named types)
-2. Global variables and constants
-3. Function definitions
-
-The output is well-formed LLVM IR that can be written to a .ll file or passed to
-LLVM tools like llc or opt.
-
-==== __Parameters__
-
-* 'IRModule' - The module containing declarations, globals, and functions to render
-
-==== __Returns__
-
-A 'Text' value containing the complete LLVM IR representation of the module,
-with proper formatting and newline separation between top-level definitions.
--}
+-- |
+-- Render an LLVM IR module to its textual representation.
+--
+-- This is the primary entry point for rendering complete LLVM IR modules. It processes
+-- all module components in order:
+--
+-- 1. Type declarations (structs, named types)
+-- 2. Global variables and constants
+-- 3. Function definitions
+--
+-- The output is well-formed LLVM IR that can be written to a .ll file or passed to
+-- LLVM tools like llc or opt.
+--
+-- ==== __Parameters__
+--
+-- * 'IRModule' - The module containing declarations, globals, and functions to render
+--
+-- ==== __Returns__
+--
+-- A 'Text' value containing the complete LLVM IR representation of the module,
+-- with proper formatting and newline separation between top-level definitions.
 renderModule :: (Monad m) => IRModule -> IRRendererT m Text
-renderModule IRModule{moduleDecls, moduleGlobals, moduleFunctions} = do
+renderModule IRModule {moduleDecls, moduleGlobals, moduleFunctions} = do
   decls <- traverse renderDecl moduleDecls
   globs <- traverse renderGlobal moduleGlobals
   funs <- traverse renderFunction moduleFunctions
-  pure $ Text.unlines $ concat [decls, globs, funs]
+  let items = concat [decls, globs, funs]
+  pure $ if null items then "" else Text.intercalate "\n" items <> "\n"
 
 -- | Render a type declaration (e.g., "%Type = type { i32, i32 }")
 renderDecl :: (Monad m) => IRDecl -> IRRendererT m Text
-renderDecl IRDecl{declName, declType} = do
+renderDecl IRDecl {declName, declType} = do
   typeStr <- renderType declType
-  pure $ "%" <> quoteIfNeeded declName <> " = type " <> typeStr
+  pure $ "%" <> quoteIfNeeded declName <> " = type " <> typeStr <> "\n"
 
 -- | Render a global variable or external declaration
 renderGlobal :: (Monad m) => IRGlobal -> IRRendererT m Text
@@ -163,25 +156,25 @@ renderGlobal =
       let linkageStr = renderLinkage linkage
           len = BS.length bs
           content = renderByteStringLiteral bs
-       in pure $ "@" <> quoteIfNeeded name <> " = " <> linkageStr <> "constant [" <> Text.pack (show len) <> " x i8] c\"" <> content <> "\""
+       in pure $ "@" <> quoteIfNeeded name <> " = " <> linkageStr <> "constant [" <> Text.pack (show len) <> " x i8] c\"" <> content <> "\"\n"
     IRConstant linkage name typ val -> do
       typeStr <- renderType typ
       valStr <- renderConstant val
       let linkageStr = renderLinkage linkage
-      pure $ "@" <> quoteIfNeeded name <> " = " <> linkageStr <> " constant " <> typeStr <> " " <> valStr
+      pure $ "@" <> quoteIfNeeded name <> " = " <> linkageStr <> " constant " <> typeStr <> " " <> valStr <> "\n"
     IRVar linkage name typ val -> do
       typeStr <- renderType typ
       valStr <- renderConstant val
       let linkageStr = renderLinkage linkage
-      pure $ "@" <> quoteIfNeeded name <> " = " <> linkageStr <> "global " <> typeStr <> " " <> valStr
+      pure $ "@" <> quoteIfNeeded name <> " = " <> linkageStr <> "global " <> typeStr <> " " <> valStr <> "\n"
     IRExtern name retTy argTys -> do
       retTyStr <- renderType retTy
       argTyStrs <- mapM renderType argTys
-      pure $ "declare " <> retTyStr <> " @" <> quoteIfNeeded name <> "(" <> Text.intercalate ", " argTyStrs <> ")"
+      pure $ "declare " <> retTyStr <> " @" <> quoteIfNeeded name <> "(" <> Text.intercalate ", " argTyStrs <> ")\n"
 
 -- | Render a function definition
 renderFunction :: (Monad m) => IRFunction -> IRRendererT m Text
-renderFunction IRFunction{functionName, functionLinkage, functionRetType, functionArgs, functionBlocks, functionAttributes} = do
+renderFunction IRFunction {functionName, functionLinkage, functionRetType, functionArgs, functionBlocks, functionAttributes} = do
   retTypeStr <- renderType functionRetType
   argsStr <- renderFunctionArgs functionArgs
   let linkageStr = renderLinkage functionLinkage
@@ -206,7 +199,7 @@ renderFunction IRFunction{functionName, functionLinkage, functionRetType, functi
 
 -- | Render a single block
 renderBlock :: (Monad m) => IRBlock -> IRRendererT m Text
-renderBlock IRBlock{blockLabel, blockItems, blockTerminator} = do
+renderBlock IRBlock {blockLabel, blockItems, blockTerminator} = do
   itemsStrs <- mapM renderBlockItem blockItems
   termStr <- renderTerminator blockTerminator
   pure $
@@ -229,7 +222,7 @@ renderBlockItem =
 
 -- | Render an instruction
 renderInstruction :: (Monad m) => IRInstruction (Maybe Text) -> IRRendererT m Text
-renderInstruction IRInstruction{instrResult, instrOp, instrMetadata} = do
+renderInstruction IRInstruction {instrResult, instrOp, instrMetadata} = do
   opStr <- renderInstrOp instrOp
   let baseStr = case instrResult of
         Nothing ->
@@ -392,20 +385,20 @@ renderInstrOp =
       argsStrs <- mapM renderTypedOperand args
       let callStr = "call " <> tailMarkerStr marker <> retTyStr <> " " <> fnStr <> "(" <> Text.intercalate ", " argsStrs <> ")"
       pure callStr
-     where
-      tailMarkerStr =
-        \case
-          NoTail -> ""
-          Tail -> "tail "
-          MustTail -> "musttail "
+      where
+        tailMarkerStr =
+          \case
+            NoTail -> ""
+            Tail -> "tail "
+            MustTail -> "musttail "
     IPhi typ incoming -> do
       tyStr <- renderType typ
       incomingStrs <- mapM renderPhiIncoming incoming
       pure $ "phi " <> tyStr <> " " <> Text.intercalate ", " (map (\s -> "[ " <> s <> " ]") incomingStrs)
-     where
-      renderPhiIncoming (op, blockName) = do
-        opStr <- renderOperand op
-        pure $ opStr <> ", %" <> quoteIfNeeded blockName
+      where
+        renderPhiIncoming (op, blockName) = do
+          opStr <- renderOperand op
+          pure $ opStr <> ", %" <> quoteIfNeeded blockName
     ISelect typ cond t f -> do
       tyStr <- renderType typ
       condStr <- renderOperand cond
@@ -431,10 +424,10 @@ renderTerminator =
       valStr <- renderTypedOperand val
       casesStrs <- mapM renderSwitchCase cases
       pure $ "switch " <> valStr <> ", label %" <> quoteIfNeeded default_ <> " [    \n" <> Text.unlines casesStrs <> "  ]"
-     where
-      renderSwitchCase (caseVal, caseTarget) = do
-        caseValStr <- renderConstant caseVal
-        pure $ "    i32 " <> caseValStr <> ", label %" <> quoteIfNeeded caseTarget
+      where
+        renderSwitchCase (caseVal, caseTarget) = do
+          caseValStr <- renderConstant caseVal
+          pure $ "    i32 " <> caseValStr <> ", label %" <> quoteIfNeeded caseTarget
     IUnreachable ->
       pure "unreachable"
 
@@ -598,12 +591,11 @@ renderAttribute =
     NoAlias -> "noalias"
     GC txt -> "gc \"" <> txt <> "\""
 
-{- | Render a ByteString as an LLVM c"..." literal body, escaping non-printable
-bytes as \XX hex escape sequences.
--}
+-- | Render a ByteString as an LLVM c"..." literal body, escaping non-printable
+-- bytes as \XX hex escape sequences.
 renderByteStringLiteral :: ByteString -> Text
 renderByteStringLiteral = Text.pack . concatMap renderByte . BS.unpack
- where
-  renderByte b
-    | b >= 32 && b <= 126 && b /= 34 && b /= 92 = [toEnum (fromIntegral b)]
-    | otherwise = '\\' : [intToDigit (fromIntegral b `div` 16), intToDigit (fromIntegral b `mod` 16)]
+  where
+    renderByte b
+      | b >= 32 && b <= 126 && b /= 34 && b /= 92 = [toEnum (fromIntegral b)]
+      | otherwise = '\\' : [intToDigit (fromIntegral b `div` 16), intToDigit (fromIntegral b `mod` 16)]
