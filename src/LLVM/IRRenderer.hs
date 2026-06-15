@@ -53,7 +53,7 @@ needsQuoting n = case Text.uncons n of
   isSafeHead c = isAlphaNum c || c == '-' || c == '$' || c == '.' || c == '_'
   isSafeBody c = isSafeHead c
 
-{- | Wrap a name in double-quotes when it contains characters that LLVM IR
+{- | Wrap a name in double-quotes if it contains characters that LLVM IR
 requires to be quoted; leave it bare otherwise.
 -}
 quoteIfNeeded :: IRName -> Text
@@ -62,7 +62,7 @@ quoteIfNeeded n
   | otherwise = n
 
 {- |
-The IRRendererT monad transformer provides a flexible context for rendering LLVM IR.
+The IRRendererT monad transformer provides a context for rendering LLVM IR.
 
 This newtype wraps any monad, allowing rendering operations to be composed in pure
 code, IO, or any custom monad stack. It provides a clean abstraction for rendering
@@ -130,8 +130,8 @@ all module components in order:
 2. Global variables and constants
 3. Function definitions
 
-The output is a complete, well-formed LLVM IR text that can be written to a .ll file
-or passed to LLVM tools like llc or opt.
+The output is well-formed LLVM IR that can be written to a .ll file or passed to
+LLVM tools like llc or opt.
 
 ==== __Parameters__
 
