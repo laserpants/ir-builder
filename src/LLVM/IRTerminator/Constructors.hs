@@ -1,11 +1,11 @@
-module LLVM.IRTerminator.Constructors
-  ( ret,
-    retVoid,
-    br,
-    condbr,
-    switch,
-    unreachable,
-  )
+module LLVM.IRTerminator.Constructors (
+  ret,
+  retVoid,
+  br,
+  condbr,
+  switch,
+  unreachable,
+)
 where
 
 import LLVM.IRBuilder (emitTerminator)
