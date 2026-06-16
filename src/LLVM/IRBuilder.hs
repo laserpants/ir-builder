@@ -14,9 +14,9 @@ Example usage:
 @
 module <- compileModule "my_module" $ do
 define i32 "main" [] LExternal [] $ do
-  beginBlock "entry"
-  result <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
-  ret result
+ beginBlock "entry"
+ result <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
+ ret result
 @
 
 = Core types and compilation
@@ -416,10 +416,10 @@ __Example:__
 
 @
 moduleAndResult <- buildModuleWithM "my_module" $ do
- define i32 "main" [] LExternal [] $ do
-   beginBlock "entry"
-   customMonadOperation  -- works with custom MonadIRBuilder instances
-   ret (OConstant (CInt 32 0))
+define i32 "main" [] LExternal [] $ do
+  beginBlock "entry"
+  customMonadOperation  -- works with custom MonadIRBuilder instances
+  ret (OConstant (CInt 32 0))
 @
 -}
 buildModuleWithM :: (MonadIRBuilder m) => IRName -> m a -> m (IRModule, a)
@@ -451,10 +451,10 @@ __Example:__
 
 @
 module_ <- buildModuleM "my_module" $ do
- define i32 "main" [] LExternal [] $ do
-   beginBlock "entry"
-   customMonadOperation
-   ret (OConstant (CInt 32 0))
+define i32 "main" [] LExternal [] $ do
+  beginBlock "entry"
+  customMonadOperation
+  ret (OConstant (CInt 32 0))
 @
 -}
 buildModuleM :: (MonadIRBuilder m) => IRName -> m a -> m IRModule
@@ -500,10 +500,10 @@ __Example:__
 
 @
 text <- compileModuleM "my_module" $ do
- define i32 "main" [] LExternal [] $ do
-   beginBlock "entry"
-   customMonadOperation
-   ret (OConstant (CInt 32 0))
+define i32 "main" [] LExternal [] $ do
+  beginBlock "entry"
+  customMonadOperation
+  ret (OConstant (CInt 32 0))
 @
 -}
 compileModuleM :: (MonadIRBuilder m) => IRName -> m a -> m Text
@@ -595,9 +595,9 @@ __Example:__
 @
 let code = compileModule "my_module" $ do
 define i32 "main" [] LExternal [] $ do
-  beginBlock "entry"
-  x <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
-  ret x
+ beginBlock "entry"
+ x <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
+ ret x
 putStrLn code
 @
 
@@ -773,7 +773,15 @@ emitGlobal (IRGlobalConstant "myString" (IRConstantString "hello") ...)
 @
 -}
 emitGlobal :: (MonadIRBuilder m) => IRGlobal -> m ()
-emitGlobal global = modifyIRBuilderEnv (appendBuilderEnvGlobals [global])
+emitGlobal global = modifyIRBuilderEnv $ \env ->
+  if any (\g -> globalName g == globalName global) (builderEnvGlobals env)
+    then env
+    else appendBuilderEnvGlobals [global] env
+ where
+  globalName (IRString _ n _) = n
+  globalName (IRConstant _ n _ _) = n
+  globalName (IRVar _ n _ _) = n
+  globalName (IRExtern n _ _) = n
 
 {- | Emit a named type declaration into the module.
 
