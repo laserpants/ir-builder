@@ -18,10 +18,10 @@ render = unpack . runIRRenderer . renderModule
 minimalModule :: IRModule
 minimalModule =
   IRModule
-    { moduleName = "test"
-    , moduleDecls = []
-    , moduleGlobals = []
-    , moduleFunctions = []
+    { moduleName = "test",
+      moduleDecls = [],
+      moduleGlobals = [],
+      moduleFunctions = []
     }
 
 -- | Build a module with a single trivial function
@@ -30,18 +30,18 @@ singleFuncModule =
   minimalModule
     { moduleFunctions =
         [ IRFunction
-            { functionName = "main"
-            , functionLinkage = LExternal
-            , functionRetType = TInt 32
-            , functionArgs = []
-            , functionBlocks =
+            { functionName = "main",
+              functionLinkage = LExternal,
+              functionRetType = TInt 32,
+              functionArgs = [],
+              functionBlocks =
                 [ IRBlock
-                    { blockLabel = "entry"
-                    , blockItems = []
-                    , blockTerminator = IRet (Just (OConstant (CInt 32 0)))
+                    { blockLabel = "entry",
+                      blockItems = [],
+                      blockTerminator = IRet (Just (OConstant (CInt 32 0)))
                     }
-                ]
-            , functionAttributes = []
+                ],
+              functionAttributes = []
             }
         ]
     }
@@ -69,14 +69,14 @@ spec = describe "LLVM.IRRenderer" $ do
             minimalModule
               { moduleFunctions =
                   [ IRFunction
-                      { functionName = "f"
-                      , functionLinkage = LExternal
-                      , functionRetType = TInt 32
-                      , functionArgs = [(TInt 32, "x"), (TFloat, "y")]
-                      , functionBlocks =
+                      { functionName = "f",
+                        functionLinkage = LExternal,
+                        functionRetType = TInt 32,
+                        functionArgs = [(TInt 32, "x"), (TFloat, "y")],
+                        functionBlocks =
                           [ IRBlock "entry" [] (IRet (Just (OConstant (CInt 32 0))))
-                          ]
-                      , functionAttributes = []
+                          ],
+                        functionAttributes = []
                       }
                   ]
               }
@@ -89,14 +89,14 @@ spec = describe "LLVM.IRRenderer" $ do
             minimalModule
               { moduleFunctions =
                   [ IRFunction
-                      { functionName = "f"
-                      , functionLinkage = LExternal
-                      , functionRetType = TVoid
-                      , functionArgs = []
-                      , functionBlocks =
+                      { functionName = "f",
+                        functionLinkage = LExternal,
+                        functionRetType = TVoid,
+                        functionArgs = [],
+                        functionBlocks =
                           [ IRBlock "entry" [] IUnreachable
-                          ]
-                      , functionAttributes = [NoReturn, NoUnwind]
+                          ],
+                        functionAttributes = [NoReturn, NoUnwind]
                       }
                   ]
               }
@@ -109,7 +109,7 @@ spec = describe "LLVM.IRRenderer" $ do
       let m =
             minimalModule
               { moduleDecls =
-                  [ IRDecl{declName = "MyType", declType = TStruct [TInt 32, TFloat]}
+                  [ IRDecl {declName = "MyType", declType = TStruct [TInt 32, TFloat]}
                   ]
               }
       let out = render m
@@ -177,9 +177,9 @@ spec = describe "LLVM.IRRenderer" $ do
     it "renders add instruction" $ do
       let instr =
             IRInstruction
-              { instrResult = Just ("r", TInt 32)
-              , instrOp = IAdd (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b")
-              , instrMetadata = Nothing
+              { instrResult = Just ("r", TInt 32),
+                instrOp = IAdd (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b"),
+                instrMetadata = Nothing
               }
           m =
             minimalModule
@@ -194,9 +194,9 @@ spec = describe "LLVM.IRRenderer" $ do
     it "renders icmp instruction" $ do
       let instr =
             IRInstruction
-              { instrResult = Just ("cmp", TInt 1)
-              , instrOp = IICmp ICmpEq (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b")
-              , instrMetadata = Nothing
+              { instrResult = Just ("cmp", TInt 1),
+                instrOp = IICmp ICmpEq (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b"),
+                instrMetadata = Nothing
               }
           m =
             minimalModule
@@ -210,9 +210,9 @@ spec = describe "LLVM.IRRenderer" $ do
     it "renders store instruction (no result)" $ do
       let instr =
             IRInstruction
-              { instrResult = Nothing
-              , instrOp = IStore (OLocal (TInt 32) "v") (OGlobal TPtr "g")
-              , instrMetadata = Nothing
+              { instrResult = Nothing,
+                instrOp = IStore (OLocal (TInt 32) "v") (OGlobal TPtr "g"),
+                instrMetadata = Nothing
               }
           m =
             minimalModule
@@ -226,9 +226,9 @@ spec = describe "LLVM.IRRenderer" $ do
     it "renders load instruction" $ do
       let instr =
             IRInstruction
-              { instrResult = Just ("r", TInt 32)
-              , instrOp = ILoad (TInt 32) (OGlobal TPtr "g")
-              , instrMetadata = Nothing
+              { instrResult = Just ("r", TInt 32),
+                instrOp = ILoad (TInt 32) (OGlobal TPtr "g"),
+                instrMetadata = Nothing
               }
           m =
             minimalModule
@@ -242,9 +242,9 @@ spec = describe "LLVM.IRRenderer" $ do
     it "renders call instruction with typed arguments" $ do
       let instr =
             IRInstruction
-              { instrResult = Nothing
-              , instrOp = ICall NoTail (TInt 32) (OGlobal (TInt 32) "puts") [OLocal TPtr "s"]
-              , instrMetadata = Nothing
+              { instrResult = Nothing,
+                instrOp = ICall NoTail (TInt 32) (OGlobal (TInt 32) "puts") [OLocal TPtr "s"],
+                instrMetadata = Nothing
               }
           m =
             minimalModule
@@ -254,6 +254,38 @@ spec = describe "LLVM.IRRenderer" $ do
               }
       let out = render m
       out `shouldContain` "call i32 @puts(ptr %s)"
+
+    it "renders tail call instruction" $ do
+      let instr =
+            IRInstruction
+              { instrResult = Nothing,
+                instrOp = ICall Tail (TInt 32) (OGlobal (TInt 32) "puts") [OLocal TPtr "s"],
+                instrMetadata = Nothing
+              }
+          m =
+            minimalModule
+              { moduleFunctions =
+                  [ IRFunction "f" LExternal TVoid [] [IRBlock "entry" [BlockInstr instr] IUnreachable] []
+                  ]
+              }
+      let out = render m
+      out `shouldContain` "tail call i32 @puts(ptr %s)"
+
+    it "renders musttail call instruction" $ do
+      let instr =
+            IRInstruction
+              { instrResult = Nothing,
+                instrOp = ICall MustTail (TInt 32) (OGlobal (TInt 32) "puts") [OLocal TPtr "s"],
+                instrMetadata = Nothing
+              }
+          m =
+            minimalModule
+              { moduleFunctions =
+                  [ IRFunction "f" LExternal TVoid [] [IRBlock "entry" [BlockInstr instr] IUnreachable] []
+                  ]
+              }
+      let out = render m
+      out `shouldContain` "musttail call i32 @puts(ptr %s)"
 
   describe "renderModule - terminators" $ do
     it "renders ret terminator" $ do
@@ -279,8 +311,8 @@ spec = describe "LLVM.IRRenderer" $ do
                       LExternal
                       TVoid
                       []
-                      [ IRBlock "entry" [] (IBr "exit")
-                      , IRBlock "exit" [] IUnreachable
+                      [ IRBlock "entry" [] (IBr "exit"),
+                        IRBlock "exit" [] IUnreachable
                       ]
                       []
                   ]
@@ -297,9 +329,9 @@ spec = describe "LLVM.IRRenderer" $ do
                       LExternal
                       TVoid
                       []
-                      [ IRBlock "entry" [] (ICondBr (OLocal (TInt 1) "c") "then" "else")
-                      , IRBlock "then" [] IUnreachable
-                      , IRBlock "else" [] IUnreachable
+                      [ IRBlock "entry" [] (ICondBr (OLocal (TInt 1) "c") "then" "else"),
+                        IRBlock "then" [] IUnreachable,
+                        IRBlock "else" [] IUnreachable
                       ]
                       []
                   ]
@@ -401,11 +433,11 @@ spec = describe "LLVM.IRRenderer" $ do
 
   describe "renderModule - type declarations" $ do
     it "renders a named struct type declaration" $ do
-      let m = minimalModule{moduleDecls = [IRDecl "Node" (TStruct [TInt 32, TPtr, TPtr])]}
+      let m = minimalModule {moduleDecls = [IRDecl "Node" (TStruct [TInt 32, TPtr, TPtr])]}
       render m `shouldContain` "%Node = type { i32, ptr, ptr }"
 
     it "renders multiple type declarations" $ do
-      let m = minimalModule{moduleDecls = [IRDecl "Foo" (TStruct [TInt 32]), IRDecl "Bar" (TStruct [TPtr])]}
+      let m = minimalModule {moduleDecls = [IRDecl "Foo" (TStruct [TInt 32]), IRDecl "Bar" (TStruct [TPtr])]}
       let out = render m
       out `shouldContain` "%Foo = type { i32 }"
       out `shouldContain` "%Bar = type { ptr }"
@@ -413,8 +445,8 @@ spec = describe "LLVM.IRRenderer" $ do
     it "type declarations appear before globals and functions" $ do
       let m =
             minimalModule
-              { moduleDecls = [IRDecl "Node" (TStruct [TInt 32])]
-              , moduleGlobals = [IRExtern "printf" TVoid [TPtr]]
+              { moduleDecls = [IRDecl "Node" (TStruct [TInt 32])],
+                moduleGlobals = [IRExtern "printf" TVoid [TPtr]]
               }
       let out = render m
       let nodePos = length $ takeWhile (/= '%') out
@@ -423,9 +455,9 @@ spec = describe "LLVM.IRRenderer" $ do
 
   describe "renderModule - external declarations" $ do
     it "renders a declare statement" $ do
-      let m = minimalModule{moduleGlobals = [IRExtern "printf" TVoid [TPtr]]}
+      let m = minimalModule {moduleGlobals = [IRExtern "printf" TVoid [TPtr]]}
       render m `shouldContain` "declare void @printf(ptr)"
 
     it "renders declare with multiple arg types" $ do
-      let m = minimalModule{moduleGlobals = [IRExtern "memcpy" TPtr [TPtr, TPtr, TInt 64]]}
+      let m = minimalModule {moduleGlobals = [IRExtern "memcpy" TPtr [TPtr, TPtr, TInt 64]]}
       render m `shouldContain` "declare ptr @memcpy(ptr, ptr, i64)"

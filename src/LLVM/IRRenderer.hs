@@ -398,14 +398,14 @@ renderInstrOp =
       retTyStr <- renderType retTy
       fnStr <- renderOperand fn
       argsStrs <- mapM renderTypedOperand args
-      let callStr = "call " <> tailMarkerStr marker <> retTyStr <> " " <> fnStr <> "(" <> Text.intercalate ", " argsStrs <> ")"
+      let callStr = callPrefix marker <> retTyStr <> " " <> fnStr <> "(" <> Text.intercalate ", " argsStrs <> ")"
       pure callStr
      where
-      tailMarkerStr =
+      callPrefix =
         \case
-          NoTail -> ""
-          Tail -> "tail "
-          MustTail -> "musttail "
+          NoTail -> "call "
+          Tail -> "tail call "
+          MustTail -> "musttail call "
     IPhi typ incoming -> do
       tyStr <- renderType typ
       incomingStrs <- mapM renderPhiIncoming incoming
