@@ -173,6 +173,31 @@ spec = describe "LLVM.IRRenderer" $ do
       let out = render m
       out `shouldContain` "@\"my%var\""
 
+  describe "renderModule - floating-point constants" $ do
+    it "renders a float constant as a 16-digit hex bit pattern" $ do
+      let m =
+            minimalModule
+              { moduleGlobals = [IRConstant LExternal "f" TFloat (CFloat 0.5)]
+              }
+      let out = render m
+      out `shouldContain` "0x3FE0000000000000"
+
+    it "renders a double constant as a 16-digit hex bit pattern" $ do
+      let m =
+            minimalModule
+              { moduleGlobals = [IRConstant LExternal "d" TDouble (CDouble 0.5)]
+              }
+      let out = render m
+      out `shouldContain` "0x3FE0000000000000"
+
+    it "renders a non-exact float using the widened double bit pattern" $ do
+      let m =
+            minimalModule
+              { moduleGlobals = [IRConstant LExternal "f" TFloat (CFloat 5.3)]
+              }
+      let out = render m
+      out `shouldContain` "0x4015333340000000"
+
   describe "renderModule - instructions" $ do
     it "renders add instruction" $ do
       let instr =
