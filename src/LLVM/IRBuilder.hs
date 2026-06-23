@@ -4,19 +4,18 @@
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-{- | This module provides a high-level monadic DSL for constructing LLVM
-IR modules, functions, blocks, and instructions. The 'IRBuilder' monad
-encapsulates the state of IR construction and provides error handling for
-common failure modes.
+{- | This module provides a high-level monadic DSL for LLVM IR modules,
+functions, blocks, and instructions. The 'IRBuilder' monad encapsulates the
+state of IR construction and provides error handling for common failure modes.
 
 Example usage:
 
 @
 module <- compileModule "my_module" $ do
 define i32 "main" [] LExternal [] $ do
- beginBlock "entry"
- result <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
- ret result
+  beginBlock "entry"
+  result <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
+  ret result
 @
 
 = Core types and compilation
