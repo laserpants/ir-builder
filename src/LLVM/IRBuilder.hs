@@ -86,6 +86,10 @@ module LLVM.IRBuilder (
   getCurrentBlockM,
   getCurrentFunctionM,
   liftEither,
+
+  -- * Atomic types
+  IRAtomicOrdering (..),
+  IRAtomicOp (..),
 )
 where
 
@@ -119,7 +123,7 @@ import LLVM.IRBuilder.FunctionBuilder (
   appendFunctionBuilderBlock,
  )
 import LLVM.IRBuilder.Supply (freshLabel)
-import LLVM.IRInstruction (IRInstruction (..))
+import LLVM.IRInstruction (IRAtomicOp (..), IRAtomicOrdering (..), IRInstruction (..))
 import LLVM.IRModule (
   IRAttribute (..),
   IRBlock (..),

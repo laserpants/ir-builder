@@ -48,14 +48,31 @@ module LLVM.IRInstruction.Constructors (
   -- * Miscellaneous
   phi,
   select,
+
+  -- * Aggregate operations
+  extractValue,
+  insertValue,
+
+  -- * Vector operations
+  extractElement,
+  insertElement,
+  shuffleVector,
+
+  -- * Atomics
+  atomicRMW,
+  cmpXchg,
+  fence,
+
+  -- * Freeze
+  freeze,
 )
 where
 
 import LLVM.IRBuilder (emitInstruction)
 import LLVM.IRBuilder.Class (MonadIRBuilder)
 import LLVM.IRBuilder.Supply (freshOperand)
-import LLVM.IRInstruction (IRFCmpCond, IRICmpCond, IRInstrOp (..), IRInstruction (..), IRTailMarker)
-import LLVM.IROperand (IROperand (..), opComponents)
+import LLVM.IRInstruction (IRAtomicOp (..), IRAtomicOrdering (..), IRFCmpCond, IRICmpCond, IRInstrOp (..), IRInstruction (..), IRTailMarker)
+import LLVM.IROperand (IROperand (..), opComponents, operandType)
 import LLVM.IRType (IRName, IRType (..))
 import LLVM.IRType.Constructors (i1)
 import Prelude hiding (and, or)
@@ -222,3 +239,48 @@ phi t ops = emitWithResult t (IPhi t ops)
 -- | Select one of two values based on a condition.
 select :: (MonadIRBuilder m) => IRType -> IROperand -> IROperand -> IROperand -> m IROperand
 select t op1 op2 op3 = emitWithResult t (ISelect t op1 op2 op3)
+
+-- * Aggregate operations
+
+-- | Extract a value from an aggregate (struct or array) at the given index path.
+extractValue :: (MonadIRBuilder m) => IRType -> IROperand -> [Int] -> m IROperand
+extractValue retTy agg idxs = emitWithResult retTy (IExtractValue agg idxs)
+
+-- | Insert a value into an aggregate (struct or array) at the given index path.
+insertValue :: (MonadIRBuilder m) => IROperand -> IROperand -> [Int] -> m IROperand
+insertValue agg elt idxs = emitWithResult (operandType agg) (IInsertValue agg elt idxs)
+
+-- * Vector operations
+
+-- | Extract a scalar element from a vector.
+extractElement :: (MonadIRBuilder m) => IRType -> IROperand -> IROperand -> m IROperand
+extractElement retTy vec idx = emitWithResult retTy (IExtractElement vec idx)
+
+-- | Insert a scalar element into a vector at the given position.
+insertElement :: (MonadIRBuilder m) => IROperand -> IROperand -> IROperand -> m IROperand
+insertElement vec elt idx = emitWithResult (operandType vec) (IInsertElement vec elt idx)
+
+-- | Shuffle two vectors according to a mask (use -1 for undef slots).
+shuffleVector :: (MonadIRBuilder m) => IRType -> IROperand -> IROperand -> [Int] -> m IROperand
+shuffleVector retTy v1 v2 mask = emitWithResult retTy (IShuffleVector v1 v2 mask)
+
+-- * Atomics
+
+-- | Atomic read-modify-write on a memory location.
+atomicRMW :: (MonadIRBuilder m) => IRAtomicOrdering -> IRAtomicOp -> IROperand -> IROperand -> m IROperand
+atomicRMW ord op ptr val = emitWithResult (operandType val) (IAtomicRMW ord op ptr val)
+
+-- | Atomic compare-and-exchange. Returns @{ <ty>, i1 }@.
+cmpXchg :: (MonadIRBuilder m) => IRAtomicOrdering -> IRAtomicOrdering -> IROperand -> IROperand -> IROperand -> m IROperand
+cmpXchg succOrd failOrd ptr cmp new_ =
+  emitWithResult (TStruct [operandType new_, TInt 1]) (ICmpXchg False succOrd failOrd ptr cmp new_)
+
+-- | Memory fence.
+fence :: (MonadIRBuilder m) => IRAtomicOrdering -> m ()
+fence ord = emitVoid (IFence ord)
+
+-- * Freeze
+
+-- | Freeze a potentially poison or undef value to an arbitrary fixed value.
+freeze :: (MonadIRBuilder m) => IROperand -> m IROperand
+freeze op = emitWithResult (operandType op) (IFreeze op)

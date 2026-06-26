@@ -4,6 +4,8 @@ module LLVM.IRInstruction (
   IRICmpCond (..),
   IRFCmpCond (..),
   IRTailMarker (..),
+  IRAtomicOrdering (..),
+  IRAtomicOp (..),
   IRInstrOp (..),
   IRInstruction (..),
 )
@@ -52,6 +54,35 @@ data IRTailMarker
   | MustTail
   deriving (Show, Eq, Ord)
 
+-- | Atomic memory ordering constraints.
+data IRAtomicOrdering
+  = Unordered
+  | Monotonic
+  | Acquire
+  | Release
+  | AcqRel
+  | SeqCst
+  deriving (Show, Eq, Ord)
+
+-- | Operations for the 'IAtomicRMW' instruction.
+data IRAtomicOp
+  = ARMWXchg
+  | ARMWAdd
+  | ARMWSub
+  | ARMWAnd
+  | ARMWNand
+  | ARMWOr
+  | ARMWXor
+  | ARMWMax
+  | ARMWMin
+  | ARMWUMax
+  | ARMWUMin
+  | ARMWFAdd
+  | ARMWFSub
+  | ARMWFMax
+  | ARMWFMin
+  deriving (Show, Eq, Ord)
+
 -- | IR instruction grammar
 data IRInstrOp
   = IAShr IRType IROperand IROperand
@@ -87,6 +118,15 @@ data IRInstrOp
   | IURem IRType IROperand IROperand
   | IXOr IRType IROperand IROperand
   | IZext IROperand IRType
+  | IExtractValue IROperand [Int]
+  | IInsertValue IROperand IROperand [Int]
+  | IExtractElement IROperand IROperand
+  | IInsertElement IROperand IROperand IROperand
+  | IShuffleVector IROperand IROperand [Int]
+  | IAtomicRMW IRAtomicOrdering IRAtomicOp IROperand IROperand
+  | ICmpXchg Bool IRAtomicOrdering IRAtomicOrdering IROperand IROperand IROperand
+  | IFence IRAtomicOrdering
+  | IFreeze IROperand
   deriving (Show, Eq, Ord)
 
 data IRInstruction a = IRInstruction

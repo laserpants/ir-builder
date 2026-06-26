@@ -20,6 +20,8 @@ import qualified Data.Text as Text
 import GHC.Float (castDoubleToWord64)
 import LLVM.IRAnnotation (IRAnnotation (..))
 import LLVM.IRInstruction (
+  IRAtomicOp (..),
+  IRAtomicOrdering (..),
   IRFCmpCond (..),
   IRICmpCond (..),
   IRInstrOp (..),
@@ -262,6 +264,59 @@ renderInstrOp = \case
       <> renderType typ
       <> " "
       <> renderOperand f
+  IExtractValue agg idxs ->
+    "extractvalue " <> renderTypedOperand agg <> foldMap (", " <>) (map (Text.pack . show) idxs)
+  IInsertValue agg elt idxs ->
+    "insertvalue "
+      <> renderTypedOperand agg
+      <> ", "
+      <> renderTypedOperand elt
+      <> foldMap (", " <>) (map (Text.pack . show) idxs)
+  IExtractElement vec idx ->
+    "extractelement " <> renderTypedOperand vec <> ", " <> renderTypedOperand idx
+  IInsertElement vec elt idx ->
+    "insertelement "
+      <> renderTypedOperand vec
+      <> ", "
+      <> renderTypedOperand elt
+      <> ", "
+      <> renderTypedOperand idx
+  IShuffleVector v1 v2 mask ->
+    "shufflevector "
+      <> renderTypedOperand v1
+      <> ", "
+      <> renderTypedOperand v2
+      <> ", <"
+      <> Text.pack (show (length mask))
+      <> " x i32> <"
+      <> Text.intercalate ", " (map (\i -> if i < 0 then "i32 undef" else "i32 " <> Text.pack (show i)) mask)
+      <> ">"
+  IAtomicRMW ord op ptr val ->
+    "atomicrmw "
+      <> renderAtomicOp op
+      <> " ptr "
+      <> renderOperand ptr
+      <> ", "
+      <> renderTypedOperand val
+      <> " "
+      <> renderAtomicOrdering ord
+  ICmpXchg weak succOrd failOrd ptr cmp new_ ->
+    "cmpxchg "
+      <> (if weak then "weak " else "")
+      <> "ptr "
+      <> renderOperand ptr
+      <> ", "
+      <> renderTypedOperand cmp
+      <> ", "
+      <> renderTypedOperand new_
+      <> " "
+      <> renderAtomicOrdering succOrd
+      <> " "
+      <> renderAtomicOrdering failOrd
+  IFence ord ->
+    "fence " <> renderAtomicOrdering ord
+  IFreeze op ->
+    "freeze " <> renderTypedOperand op
  where
   binOp mnemonic typ a b =
     mnemonic <> " " <> renderType typ <> " " <> renderOperand a <> ", " <> renderOperand b
@@ -390,6 +445,37 @@ renderFCmpCond =
     FCmpUno -> "uno"
     FCmpTrue -> "true"
     FCmpFalse -> "false"
+
+-- | Render an atomic memory ordering.
+renderAtomicOrdering :: IRAtomicOrdering -> Text
+renderAtomicOrdering =
+  \case
+    Unordered -> "unordered"
+    Monotonic -> "monotonic"
+    Acquire -> "acquire"
+    Release -> "release"
+    AcqRel -> "acq_rel"
+    SeqCst -> "seq_cst"
+
+-- | Render an atomicrmw operation.
+renderAtomicOp :: IRAtomicOp -> Text
+renderAtomicOp =
+  \case
+    ARMWXchg -> "xchg"
+    ARMWAdd -> "add"
+    ARMWSub -> "sub"
+    ARMWAnd -> "and"
+    ARMWNand -> "nand"
+    ARMWOr -> "or"
+    ARMWXor -> "xor"
+    ARMWMax -> "max"
+    ARMWMin -> "min"
+    ARMWUMax -> "umax"
+    ARMWUMin -> "umin"
+    ARMWFAdd -> "fadd"
+    ARMWFSub -> "fsub"
+    ARMWFMax -> "fmax"
+    ARMWFMin -> "fmin"
 
 -- | Render an attribute
 renderAttribute :: IRAttribute -> Text

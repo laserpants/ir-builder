@@ -21,8 +21,8 @@ and rendered:
 
 @
 let module = buildModule "my_module" $ define i32 "main" [] LExternal [] $ do
-   b0 <- beginBlock "entry"
-   ret (int32 42)
+  b0 <- beginBlock "entry"
+  ret (int32 42)
 case verifyModule module of
 Left err -> putStrLn $ "Verification failed: " ++ err
 Right () -> putStrLn $ "Module verified successfully"
@@ -91,11 +91,11 @@ __Example:__
 
 @
 let mod = IRModule
-   { moduleName = "myprogram"
-   , moduleTypeDecls = [IRTypeDecl "Node" (TStruct [TInt 32, TPtr])]
-   , moduleGlobals = []
-   , moduleFunctions = [mainFunction]
-   }
+  { moduleName = "myprogram"
+  , moduleTypeDecls = [IRTypeDecl "Node" (TStruct [TInt 32, TPtr])]
+  , moduleGlobals = []
+  , moduleFunctions = [mainFunction]
+  }
 in verifyModule mod
 @
 -}
@@ -206,13 +206,13 @@ __Example:__
 
 @
 let func = IRFunction
-   { functionName = "main"
-   , functionLinkage = LExternal
-   , functionRetType = i32
-   , functionArgs = []
-   , functionBlocks = [entryBlock, loopBlock, exitBlock]
-   , functionAttributes = []
-   }
+  { functionName = "main"
+  , functionLinkage = LExternal
+  , functionRetType = i32
+  , functionArgs = []
+  , functionBlocks = [entryBlock, loopBlock, exitBlock]
+  , functionAttributes = []
+  }
 in verifyFunction func
 @
 -}
@@ -264,10 +264,10 @@ __Example:__
 
 @
 let block = IRBlock
-   { blockLabel = "entry"
-   , blockItems = [BlockInstr (ICall i32 "printf" [...])]
-   , blockTerminator = IRet (Just (int32 0))
-   }
+  { blockLabel = "entry"
+  , blockItems = [BlockInstr (ICall i32 "printf" [...])]
+  , blockTerminator = IRet (Just (int32 0))
+  }
 in blockLabel block -- "entry"
 @
 -}
@@ -294,9 +294,9 @@ __Example:__
 
 @
 let mod = buildModule "test" $ do
-   define i32 "main" [] LExternal [] $ do
-     b0 <- beginBlock "entry"
-     ret (int32 42)
+  define i32 "main" [] LExternal [] $ do
+    b0 <- beginBlock "entry"
+    ret (int32 42)
 case verifyModule mod of
 Left err -> putStrLn $ "Error: " ++ err
 Right () -> putStrLn "Module is valid"
@@ -530,6 +530,28 @@ typeCheckInstrOp fn bl res = \case
     checkRes "bitcast" dst
   ICall _ _ _ _ ->
     Right ()
+  IExtractValue _ _ ->
+    Right ()
+  IInsertValue _ _ _ ->
+    Right ()
+  IExtractElement vec idx ->
+    checkIsInt "extractelement" "index" idx >> checkOp "extractelement" "vec" (operandType vec) vec
+  IInsertElement vec elt idx -> do
+    checkIsInt "insertelement" "index" idx
+    checkOp "insertelement" "element" (operandType elt) elt
+    checkOp "insertelement" "vec" (operandType vec) vec
+  IShuffleVector _ _ _ ->
+    Right ()
+  IAtomicRMW _ _ ptr val ->
+    checkOp "atomicrmw" "pointer" TPtr ptr >> checkRes "atomicrmw" (operandType val)
+  ICmpXchg _ _ _ ptr cmp new_ ->
+    checkOp "cmpxchg" "pointer" TPtr ptr
+      >> checkOp "cmpxchg" "new" (operandType cmp) new_
+      >> checkRes "cmpxchg" (TStruct [operandType new_, TInt 1])
+  IFence _ ->
+    Right ()
+  IFreeze op ->
+    checkRes "freeze" (operandType op)
  where
   ctx = "In function '" ++ Text.unpack fn ++ "', block '" ++ Text.unpack bl ++ "': "
 

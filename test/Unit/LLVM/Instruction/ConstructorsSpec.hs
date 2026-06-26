@@ -9,7 +9,7 @@ import LLVM.IRBuilder (IRBuilder, IRBuilderT (..), runIRBuilder)
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
 import LLVM.IRBuilder.Environment (IRBuilderEnv (..), emptyIRBuilderEnv)
 import LLVM.IRBuilder.Error (IRBuilderError)
-import LLVM.IRInstruction (IRFCmpCond (..), IRICmpCond (..), IRInstrOp (..), IRInstruction (..), IRTailMarker (..))
+import LLVM.IRInstruction (IRAtomicOp (..), IRAtomicOrdering (..), IRFCmpCond (..), IRICmpCond (..), IRInstrOp (..), IRInstruction (..), IRTailMarker (..))
 import LLVM.IRInstruction.Constructors
 import LLVM.IRModule (IRBlockItem (..))
 import LLVM.IROperand (IRConstant (..), IROperand (..))
@@ -20,28 +20,27 @@ import Prelude hiding (and, or)
 runBuilder :: IRBuilder a -> IRBuilderEnv -> Either IRBuilderError (a, IRBuilderEnv)
 runBuilder b env = runIdentity (runExceptT (runStateT (runIRBuilder b) env))
 
-{- | Run a builder action that emits instructions and return the last-emitted operand result
-plus the collected block items via interpretting EmitInstr effects directly
--}
+-- | Run a builder action that emits instructions and return the last-emitted operand result
+-- plus the collected block items via interpretting EmitInstr effects directly
 runInstrBuilder :: IRBuilder IROperand -> (IROperand, [IRBlockItem])
 runInstrBuilder action = (result, blockBuilderItems bb)
- where
-  initialEnv =
-    emptyIRBuilderEnv
-      { builderEnvCurrentBlock =
-          Just
-            BlockBuilder
-              { blockBuilderLabel = "entry"
-              , blockBuilderItems = []
-              , blockBuilderTerminator = Nothing
-              }
-      }
-  (result, finalEnv) = case runBuilder action initialEnv of
-    Right (r, e) -> (r, e)
-    Left err -> error $ show err
-  bb = case builderEnvCurrentBlock finalEnv of
-    Just b -> b
-    Nothing -> error "no current block"
+  where
+    initialEnv =
+      emptyIRBuilderEnv
+        { builderEnvCurrentBlock =
+            Just
+              BlockBuilder
+                { blockBuilderLabel = "entry",
+                  blockBuilderItems = [],
+                  blockBuilderTerminator = Nothing
+                }
+        }
+    (result, finalEnv) = case runBuilder action initialEnv of
+      Right (r, e) -> (r, e)
+      Left err -> error $ show err
+    bb = case builderEnvCurrentBlock finalEnv of
+      Just b -> b
+      Nothing -> error "no current block"
 
 -- | Extract the instrOp from the last block item
 lastInstrOp :: [IRBlockItem] -> Maybe IRInstrOp
@@ -170,7 +169,7 @@ spec = describe "LLVM.IRInstruction.Constructors" $ do
           initialEnv =
             emptyIRBuilderEnv
               { builderEnvCurrentBlock =
-                  Just BlockBuilder{blockBuilderLabel = "entry", blockBuilderItems = [], blockBuilderTerminator = Nothing}
+                  Just BlockBuilder {blockBuilderLabel = "entry", blockBuilderItems = [], blockBuilderTerminator = Nothing}
               }
           (_, finalEnv) = case runBuilder (store a32 ptr) initialEnv of
             Right (_, e) -> ((), e)
@@ -242,3 +241,60 @@ spec = describe "LLVM.IRInstruction.Constructors" $ do
       let cond = OLocal (TInt 1) "c"
           (_, items) = runInstrBuilder (select (TInt 32) cond a32 b32)
       lastInstrOp items `shouldBe` Just (ISelect (TInt 32) cond a32 b32)
+
+  describe "Aggregate operations" $ do
+    it "extractValue emits IExtractValue" $ do
+      let agg = OLocal (TStruct [TInt 32, TInt 64]) "s"
+          (_, items) = runInstrBuilder (extractValue (TInt 32) agg [0])
+      lastInstrOp items `shouldBe` Just (IExtractValue agg [0])
+
+    it "insertValue emits IInsertValue with aggregate result type" $ do
+      let agg = OLocal (TStruct [TInt 32, TInt 64]) "s"
+          (_, items) = runInstrBuilder (insertValue agg a32 [0])
+      lastInstrOp items `shouldBe` Just (IInsertValue agg a32 [0])
+
+  describe "Vector operations" $ do
+    it "extractElement emits IExtractElement" $ do
+      let vec = OLocal (TVector 4 (TInt 32)) "v"
+          (_, items) = runInstrBuilder (extractElement (TInt 32) vec a32)
+      lastInstrOp items `shouldBe` Just (IExtractElement vec a32)
+
+    it "insertElement emits IInsertElement with vector result type" $ do
+      let vec = OLocal (TVector 4 (TInt 32)) "v"
+          (_, items) = runInstrBuilder (insertElement vec a32 b32)
+      lastInstrOp items `shouldBe` Just (IInsertElement vec a32 b32)
+
+    it "shuffleVector emits IShuffleVector" $ do
+      let v1 = OLocal (TVector 4 (TInt 32)) "v"
+          v2 = OLocal (TVector 4 (TInt 32)) "w"
+          (_, items) = runInstrBuilder (shuffleVector (TVector 4 (TInt 32)) v1 v2 [0, 1, 2, 3])
+      lastInstrOp items `shouldBe` Just (IShuffleVector v1 v2 [0, 1, 2, 3])
+
+  describe "Atomics" $ do
+    it "atomicRMW emits IAtomicRMW with value type as result" $ do
+      let ptr = OLocal TPtr "p"
+          (_, items) = runInstrBuilder (atomicRMW SeqCst ARMWAdd ptr a32)
+      lastInstrOp items `shouldBe` Just (IAtomicRMW SeqCst ARMWAdd ptr a32)
+
+    it "cmpXchg emits ICmpXchg False with struct result type" $ do
+      let ptr = OLocal TPtr "p"
+          new = OLocal (TInt 32) "new"
+          (_, items) = runInstrBuilder (cmpXchg SeqCst Monotonic ptr a32 new)
+      lastInstrOp items `shouldBe` Just (ICmpXchg False SeqCst Monotonic ptr a32 new)
+
+    it "fence emits IFence (no result)" $ do
+      let initialEnv =
+            emptyIRBuilderEnv
+              { builderEnvCurrentBlock =
+                  Just BlockBuilder {blockBuilderLabel = "entry", blockBuilderItems = [], blockBuilderTerminator = Nothing}
+              }
+          (_, finalEnv) = case runBuilder (fence AcqRel) initialEnv of
+            Right (_, e) -> ((), e)
+            Left err -> error $ show err
+          items = maybe [] blockBuilderItems (builderEnvCurrentBlock finalEnv)
+      lastInstrOp items `shouldBe` Just (IFence AcqRel)
+
+  describe "Freeze" $ do
+    it "freeze emits IFreeze with operand type" $ do
+      let (_, items) = runInstrBuilder (freeze a32)
+      lastInstrOp items `shouldBe` Just (IFreeze a32)
