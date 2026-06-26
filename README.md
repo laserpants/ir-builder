@@ -137,7 +137,7 @@ factorialModule = do
 
 ## Type system
 
-Types are represented by the `IRType` data type:
+LLVM types are represented by the `IRType` data type:
 
 | Constructor | Description |
 |---|---|
