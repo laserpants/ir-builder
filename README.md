@@ -87,8 +87,8 @@ entry:
 
 ## Quick example: Iterative factorial with `mdo`
 
-The `IRBuilder` monad supports `MonadFix`, so you can use `mdo` to refer to
-SSA values before they are emitted — which is necessary for `phi` nodes in
+The `IRBuilder` monad supports `MonadFix`. You can use `mdo` to refer to
+SSA values before they are emitted, which is necessary for `phi` nodes in
 loops:
 
 ```haskell
@@ -166,15 +166,13 @@ are in `LLVM.IRTerminator.Constructors`.
 ### Arithmetic
 
 ```haskell
-add, sub, mul, sdiv, udiv, srem, urem
-  :: IRType -> IROperand -> IROperand -> m IROperand
+add, sub, mul, sdiv, udiv, srem, urem :: IRType -> IROperand -> IROperand -> m IROperand
 ```
 
 ### Bitwise
 
 ```haskell
-and, or, xor, shl, lshr, ashr
-  :: IRType -> IROperand -> IROperand -> m IROperand
+and, or, xor, shl, lshr, ashr :: IRType -> IROperand -> IROperand -> m IROperand
 ```
 
 ### Floating-point
@@ -194,7 +192,7 @@ fcmp :: IRFCmpCond -> IRType -> IROperand -> IROperand -> m IROperand
 ### Memory
 
 ```haskell
-alloca :: IRType -> IROperand -> m IROperand          -- alloca <type>, <count>
+alloca :: IRType -> IROperand -> m IROperand           -- alloca <type>, <count>
 load   :: IRType -> IROperand -> m IROperand           -- load <type>, ptr <ptr>
 store  :: IROperand -> IROperand -> m ()               -- store <val>, ptr <ptr>
 gep    :: IRType -> IROperand -> [IROperand] -> m IROperand
