@@ -1,58 +1,59 @@
--- |
--- This module provides smart constructors for creating LLVM IR types.
---
--- These helpers simplify the construction of common type patterns, including
--- integer types, pointers, floating-point types, and aggregate types.
---
--- ==== __Usage__
---
--- This module is designed to be imported qualified when name collisions occur
--- with "LLVM.IROperand.Constructors":
---
--- @
--- import qualified LLVM.IRType.Constructors as T
--- import qualified LLVM.IROperand.Constructors as O
---
--- myFunction :: IRBuilder ()
--- myFunction = do
---   x <- add T.i32 (O.i32 10) (O.i32 20)
---   ...
--- @
---
--- Alternatively, import only non-colliding names unqualified:
---
--- @
--- import LLVM.IRType.Constructors (ptr, void, double)
--- import LLVM.IROperand.Constructors (local, global, float)
--- @
-module LLVM.IRType.Constructors
-  ( -- * Integer types
-    i1,
-    i8,
-    i16,
-    i32,
-    i64,
-    i128,
+{- |
+This module provides smart constructors for creating LLVM IR types.
 
-    -- * Floating-point types
-    float,
-    double,
+These helpers simplify the construction of common type patterns, including
+integer types, pointers, floating-point types, and aggregate types.
 
-    -- * Pointer and void
-    ptr,
-    void,
+==== __Usage__
 
-    -- * Aggregate types
-    struct,
-    array,
-    vector,
+This module is designed to be imported qualified when name collisions occur
+with "LLVM.IROperand.Constructors":
 
-    -- * Function type
-    fun,
+@
+import qualified LLVM.IRType.Constructors as T
+import qualified LLVM.IROperand.Constructors as O
 
-    -- * Named type reference
-    named,
-  )
+myFunction :: IRBuilder ()
+myFunction = do
+  x <- add T.i32 (O.i32 10) (O.i32 20)
+  ...
+@
+
+Alternatively, import only non-colliding names unqualified:
+
+@
+import LLVM.IRType.Constructors (ptr, void, double)
+import LLVM.IROperand.Constructors (local, global, float)
+@
+-}
+module LLVM.IRType.Constructors (
+  -- * Integer types
+  i1,
+  i8,
+  i16,
+  i32,
+  i64,
+  i128,
+
+  -- * Floating-point types
+  float,
+  double,
+
+  -- * Pointer and void
+  ptr,
+  void,
+
+  -- * Aggregate types
+  struct,
+  array,
+  vector,
+
+  -- * Function type
+  fun,
+
+  -- * Named type reference
+  named,
+)
 where
 
 import LLVM.IRType (IRName, IRType (..))

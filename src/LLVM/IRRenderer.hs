@@ -370,8 +370,8 @@ renderInstrOp =
     IGep typ base idxs -> do
       tyStr <- renderType typ
       baseStr <- renderOperand base
-      idxStrs <- mapM renderOperand idxs
-      pure $ "getelementptr " <> tyStr <> ", ptr " <> baseStr <> foldMap (", i32 " <>) idxStrs
+      idxStrs <- mapM renderTypedOperand idxs
+      pure $ "getelementptr " <> tyStr <> ", ptr " <> baseStr <> foldMap (", " <>) idxStrs
     IBitcast v typ -> do
       vStr <- renderOperand v
       tyStr <- renderType typ
@@ -443,8 +443,9 @@ renderTerminator =
       pure $ "switch " <> valStr <> ", label %" <> quoteIfNeeded default_ <> " [    \n" <> Text.unlines casesStrs <> "  ]"
      where
       renderSwitchCase (caseVal, caseTarget) = do
+        tyStr <- renderType (constantType caseVal)
         caseValStr <- renderConstant caseVal
-        pure $ "    i32 " <> caseValStr <> ", label %" <> quoteIfNeeded caseTarget
+        pure $ "    " <> tyStr <> " " <> caseValStr <> ", label %" <> quoteIfNeeded caseTarget
     IUnreachable ->
       pure "unreachable"
 
