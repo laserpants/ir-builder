@@ -15,6 +15,8 @@ module LLVM.IROperand (
   IROperand (..),
   IRTerminator (..),
   opComponents,
+  constantType,
+  operandType,
 )
 where
 
@@ -112,3 +114,22 @@ opComponents =
       Just (name, t)
     _ ->
       Nothing
+
+-- | Derive the 'IRType' of a constant value.
+constantType :: IRConstant -> IRType
+constantType =
+  \case
+    CInt n _ -> TInt n
+    CFloat _ -> TFloat
+    CDouble _ -> TDouble
+    CNull t -> t
+    CStruct cs -> TStruct (map constantType cs)
+    CArray t cs -> TArray (length cs) t
+
+-- | Derive the 'IRType' of an operand.
+operandType :: IROperand -> IRType
+operandType =
+  \case
+    OLocal t _ -> t
+    OGlobal t _ -> t
+    OConstant c -> constantType c

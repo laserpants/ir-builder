@@ -1,22 +1,22 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StrictData #-}
 
-module LLVM.IRBuilder.Environment
-  ( IRBuilderEnv (..),
-    emptyIRBuilderEnv,
-    overBuilderEnvFreshReg,
-    overBuilderEnvFreshLabel,
-    overBuilderEnvCurrentBlock,
-    mapBuilderEnvCurrentBlock,
-    setBuilderEnvCurrentBlock,
-    overBuilderEnvCurrentFunction,
-    mapBuilderEnvCurrentFunction,
-    clearBuilderEnvCurrentBlock,
-    overBuilderEnvGlobals,
-    appendBuilderEnvGlobals,
-    overBuilderEnvTypeDecls,
-    appendBuilderEnvTypeDecls,
-  )
+module LLVM.IRBuilder.Environment (
+  IRBuilderEnv (..),
+  emptyIRBuilderEnv,
+  overBuilderEnvFreshReg,
+  overBuilderEnvFreshLabel,
+  overBuilderEnvCurrentBlock,
+  mapBuilderEnvCurrentBlock,
+  setBuilderEnvCurrentBlock,
+  overBuilderEnvCurrentFunction,
+  mapBuilderEnvCurrentFunction,
+  clearBuilderEnvCurrentBlock,
+  overBuilderEnvGlobals,
+  appendBuilderEnvGlobals,
+  overBuilderEnvTypeDecls,
+  appendBuilderEnvTypeDecls,
+)
 where
 
 import LLVM.IRBuilder.BlockBuilder (BlockBuilder (..))
@@ -24,97 +24,97 @@ import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..))
 import LLVM.IRModule (IRBlock, IRFunction, IRGlobal, IRTypeDecl)
 
 data IRBuilderEnv = IRBuilderEnv
-  { builderEnvFreshReg :: Int,
-    builderEnvFreshLabel :: Int,
-    builderEnvCurrentBlock :: Maybe BlockBuilder,
-    builderEnvCurrentFunction :: Maybe FunctionBuilder,
-    builderEnvBlocks :: [IRBlock],
-    builderEnvFunctions :: [IRFunction],
-    builderEnvGlobals :: [IRGlobal],
-    builderEnvTypeDecls :: [IRTypeDecl]
+  { builderEnvFreshReg :: Int
+  , builderEnvFreshLabel :: Int
+  , builderEnvCurrentBlock :: Maybe BlockBuilder
+  , builderEnvCurrentFunction :: Maybe FunctionBuilder
+  , builderEnvBlocks :: [IRBlock]
+  , builderEnvFunctions :: [IRFunction]
+  , builderEnvGlobals :: [IRGlobal]
+  , builderEnvTypeDecls :: [IRTypeDecl]
   }
   deriving (Show, Eq, Ord)
 
 emptyIRBuilderEnv :: IRBuilderEnv
 emptyIRBuilderEnv =
   IRBuilderEnv
-    { builderEnvFreshReg = 0,
-      builderEnvFreshLabel = 0,
-      builderEnvCurrentBlock = Nothing,
-      builderEnvCurrentFunction = Nothing,
-      builderEnvBlocks = mempty,
-      builderEnvFunctions = mempty,
-      builderEnvGlobals = mempty,
-      builderEnvTypeDecls = mempty
+    { builderEnvFreshReg = 0
+    , builderEnvFreshLabel = 0
+    , builderEnvCurrentBlock = Nothing
+    , builderEnvCurrentFunction = Nothing
+    , builderEnvBlocks = mempty
+    , builderEnvFunctions = mempty
+    , builderEnvGlobals = mempty
+    , builderEnvTypeDecls = mempty
     }
 
 overBuilderEnvFreshReg :: (Int -> Int) -> IRBuilderEnv -> IRBuilderEnv
-overBuilderEnvFreshReg fn IRBuilderEnv {..} =
+overBuilderEnvFreshReg fn IRBuilderEnv{..} =
   IRBuilderEnv
-    { builderEnvFreshReg = fn builderEnvFreshReg,
-      ..
+    { builderEnvFreshReg = fn builderEnvFreshReg
+    , ..
     }
 
 overBuilderEnvFreshLabel :: (Int -> Int) -> IRBuilderEnv -> IRBuilderEnv
-overBuilderEnvFreshLabel fn IRBuilderEnv {..} =
+overBuilderEnvFreshLabel fn IRBuilderEnv{..} =
   IRBuilderEnv
-    { builderEnvFreshLabel = fn builderEnvFreshLabel,
-      ..
+    { builderEnvFreshLabel = fn builderEnvFreshLabel
+    , ..
     }
 
 overBuilderEnvCurrentBlock :: (Maybe BlockBuilder -> Maybe BlockBuilder) -> IRBuilderEnv -> IRBuilderEnv
-overBuilderEnvCurrentBlock fn IRBuilderEnv {..} =
+overBuilderEnvCurrentBlock fn IRBuilderEnv{..} =
   IRBuilderEnv
-    { builderEnvCurrentBlock = fn builderEnvCurrentBlock,
-      ..
+    { builderEnvCurrentBlock = fn builderEnvCurrentBlock
+    , ..
     }
 
 mapBuilderEnvCurrentBlock :: (BlockBuilder -> BlockBuilder) -> IRBuilderEnv -> IRBuilderEnv
-mapBuilderEnvCurrentBlock fn IRBuilderEnv {..} =
+mapBuilderEnvCurrentBlock fn IRBuilderEnv{..} =
   IRBuilderEnv
-    { builderEnvCurrentBlock = fmap fn builderEnvCurrentBlock,
-      ..
+    { builderEnvCurrentBlock = fmap fn builderEnvCurrentBlock
+    , ..
     }
 
 setBuilderEnvCurrentBlock :: BlockBuilder -> IRBuilderEnv -> IRBuilderEnv
 setBuilderEnvCurrentBlock block = overBuilderEnvCurrentBlock (const (Just block))
 
 overBuilderEnvCurrentFunction :: (Maybe FunctionBuilder -> Maybe FunctionBuilder) -> IRBuilderEnv -> IRBuilderEnv
-overBuilderEnvCurrentFunction fn IRBuilderEnv {..} =
+overBuilderEnvCurrentFunction fn IRBuilderEnv{..} =
   IRBuilderEnv
-    { builderEnvCurrentFunction = fn builderEnvCurrentFunction,
-      ..
+    { builderEnvCurrentFunction = fn builderEnvCurrentFunction
+    , ..
     }
 
 mapBuilderEnvCurrentFunction :: (FunctionBuilder -> FunctionBuilder) -> IRBuilderEnv -> IRBuilderEnv
-mapBuilderEnvCurrentFunction fn IRBuilderEnv {..} =
+mapBuilderEnvCurrentFunction fn IRBuilderEnv{..} =
   IRBuilderEnv
-    { builderEnvCurrentFunction = fmap fn builderEnvCurrentFunction,
-      ..
+    { builderEnvCurrentFunction = fmap fn builderEnvCurrentFunction
+    , ..
     }
 
 clearBuilderEnvCurrentBlock :: IRBuilderEnv -> IRBuilderEnv
-clearBuilderEnvCurrentBlock IRBuilderEnv {..} =
+clearBuilderEnvCurrentBlock IRBuilderEnv{..} =
   IRBuilderEnv
-    { builderEnvCurrentBlock = Nothing,
-      ..
+    { builderEnvCurrentBlock = Nothing
+    , ..
     }
 
 overBuilderEnvGlobals :: ([IRGlobal] -> [IRGlobal]) -> IRBuilderEnv -> IRBuilderEnv
-overBuilderEnvGlobals fn IRBuilderEnv {..} =
+overBuilderEnvGlobals fn IRBuilderEnv{..} =
   IRBuilderEnv
-    { builderEnvGlobals = fn builderEnvGlobals,
-      ..
+    { builderEnvGlobals = fn builderEnvGlobals
+    , ..
     }
 
 appendBuilderEnvGlobals :: [IRGlobal] -> IRBuilderEnv -> IRBuilderEnv
 appendBuilderEnvGlobals globals = overBuilderEnvGlobals (<> globals)
 
 overBuilderEnvTypeDecls :: ([IRTypeDecl] -> [IRTypeDecl]) -> IRBuilderEnv -> IRBuilderEnv
-overBuilderEnvTypeDecls fn IRBuilderEnv {..} =
+overBuilderEnvTypeDecls fn IRBuilderEnv{..} =
   IRBuilderEnv
-    { builderEnvTypeDecls = fn builderEnvTypeDecls,
-      ..
+    { builderEnvTypeDecls = fn builderEnvTypeDecls
+    , ..
     }
 
 appendBuilderEnvTypeDecls :: [IRTypeDecl] -> IRBuilderEnv -> IRBuilderEnv

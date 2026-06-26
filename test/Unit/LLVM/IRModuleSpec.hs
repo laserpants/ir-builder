@@ -3,10 +3,11 @@
 module Unit.LLVM.IRModuleSpec (spec) where
 
 import Fixtures.Builders
+import LLVM.IRInstruction (IRICmpCond (..), IRInstrOp (..), IRInstruction (..))
 import LLVM.IRModule
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
-import LLVM.IRType (IRType (..))
-import Test.Hspec (Spec, describe, it, shouldBe, shouldSatisfy)
+import LLVM.IRType (IRName, IRType (..))
+import Test.Hspec (Spec, describe, expectationFailure, it, shouldBe, shouldContain, shouldSatisfy)
 
 spec :: Spec
 spec = describe "LLVM.IRModule" $ do
@@ -39,10 +40,10 @@ spec = describe "LLVM.IRModule" $ do
           block2 = buildBlockWithTerminator "exit" (IRet (Just (OConstant (CInt 32 0))))
           m =
             IRModule
-              { moduleName = "multi"
-              , moduleTypeDecls = []
-              , moduleGlobals = []
-              , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
+              { moduleName = "multi",
+                moduleTypeDecls = [],
+                moduleGlobals = [],
+                moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
               }
       verifyModule m `shouldBe` Right ()
 
@@ -60,10 +61,10 @@ spec = describe "LLVM.IRModule" $ do
           block3 = buildBlockWithTerminator "else" (IRet (Just (OConstant (CInt 32 0))))
           m =
             IRModule
-              { moduleName = "condbr"
-              , moduleTypeDecls = []
-              , moduleGlobals = []
-              , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2, block3]]
+              { moduleName = "condbr",
+                moduleTypeDecls = [],
+                moduleGlobals = [],
+                moduleFunctions = [buildMultiBlockFunction "f" [block1, block2, block3]]
               }
       verifyModule m `shouldBe` Right ()
 
@@ -72,10 +73,10 @@ spec = describe "LLVM.IRModule" $ do
           block2 = buildBlockWithTerminator "else" (IRet (Just (OConstant (CInt 32 0))))
           m =
             IRModule
-              { moduleName = "bad_condbr"
-              , moduleTypeDecls = []
-              , moduleGlobals = []
-              , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
+              { moduleName = "bad_condbr",
+                moduleTypeDecls = [],
+                moduleGlobals = [],
+                moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
               }
       verifyModule m `shouldSatisfy` isLeft
 
@@ -84,13 +85,113 @@ spec = describe "LLVM.IRModule" $ do
           block2 = buildBlockWithTerminator "default" (IRet (Just (OConstant (CInt 32 0))))
           m =
             IRModule
-              { moduleName = "switch"
-              , moduleTypeDecls = []
-              , moduleGlobals = []
-              , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
+              { moduleName = "switch",
+                moduleTypeDecls = [],
+                moduleGlobals = [],
+                moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
               }
       verifyModule m `shouldBe` Right ()
+
+  describe "typeCheckModule" $ do
+    it "passes a valid simple module" $
+      typeCheckModule (buildSimpleModule "test") `shouldBe` Right ()
+
+    it "catches binary op lhs type mismatch" $
+      moduleWithInstr
+        (IAdd (TInt 32) (OConstant (CInt 64 1)) (OConstant (CInt 32 2)))
+        (Just ("r", TInt 32))
+        `shouldSatisfy` (isLeft . typeCheckModule)
+
+    it "catches binary op rhs type mismatch" $
+      moduleWithInstr
+        (IAdd (TInt 32) (OConstant (CInt 32 1)) (OConstant (CInt 64 2)))
+        (Just ("r", TInt 32))
+        `shouldSatisfy` (isLeft . typeCheckModule)
+
+    it "catches binary op wrong result type" $
+      moduleWithInstr
+        (IAdd (TInt 32) (OConstant (CInt 32 1)) (OConstant (CInt 32 2)))
+        (Just ("r", TInt 64))
+        `shouldSatisfy` (isLeft . typeCheckModule)
+
+    it "catches icmp result not i1" $
+      moduleWithInstr
+        (IICmp ICmpEq (TInt 32) (OConstant (CInt 32 0)) (OConstant (CInt 32 1)))
+        (Just ("r", TInt 32))
+        `shouldSatisfy` (isLeft . typeCheckModule)
+
+    it "accepts icmp with correct i1 result" $
+      moduleWithInstr
+        (IICmp ICmpEq (TInt 32) (OConstant (CInt 32 0)) (OConstant (CInt 32 1)))
+        (Just ("r", TInt 1))
+        `shouldSatisfy` (not . isLeft . typeCheckModule)
+
+    it "catches select condition not i1" $
+      moduleWithInstr
+        (ISelect (TInt 32) (OConstant (CInt 32 1)) (OConstant (CInt 32 2)) (OConstant (CInt 32 3)))
+        (Just ("r", TInt 32))
+        `shouldSatisfy` (isLeft . typeCheckModule)
+
+    it "catches load with non-ptr pointer operand" $
+      moduleWithInstr
+        (ILoad (TInt 32) (OConstant (CInt 32 0)))
+        (Just ("r", TInt 32))
+        `shouldSatisfy` (isLeft . typeCheckModule)
+
+    it "catches store with non-ptr address operand" $
+      moduleWithInstr
+        (IStore (OConstant (CInt 32 42)) (OConstant (CInt 32 0)))
+        Nothing
+        `shouldSatisfy` (isLeft . typeCheckModule)
+
+    it "catches phi incoming type mismatch" $
+      moduleWithInstr
+        (IPhi (TInt 32) [(OConstant (CInt 64 0), "entry")])
+        (Just ("r", TInt 32))
+        `shouldSatisfy` (isLeft . typeCheckModule)
+
+    it "provides a descriptive error message with function and block name" $ do
+      let m =
+            moduleWithInstr
+              (IAdd (TInt 32) (OConstant (CInt 64 1)) (OConstant (CInt 32 2)))
+              (Just ("r", TInt 32))
+      case typeCheckModule m of
+        Right () -> expectationFailure "expected a type error"
+        Left err -> do
+          err `shouldContain` "function 'f'"
+          err `shouldContain` "block 'entry'"
 
 isLeft :: Either a b -> Bool
 isLeft (Left _) = True
 isLeft _ = False
+
+moduleWithInstr :: IRInstrOp -> Maybe (IRName, IRType) -> IRModule
+moduleWithInstr instr result =
+  IRModule
+    { moduleName = "typecheck_test",
+      moduleTypeDecls = [],
+      moduleGlobals = [],
+      moduleFunctions =
+        [ IRFunction
+            { functionName = "f",
+              functionLinkage = LExternal,
+              functionRetType = TVoid,
+              functionArgs = [],
+              functionBlocks =
+                [ IRBlock
+                    { blockLabel = "entry",
+                      blockItems =
+                        [ BlockInstr
+                            IRInstruction
+                              { instrResult = result,
+                                instrOp = instr,
+                                instrMetadata = Nothing
+                              }
+                        ],
+                      blockTerminator = IRet Nothing
+                    }
+                ],
+              functionAttributes = []
+            }
+        ]
+    }

@@ -2,13 +2,14 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
--- |
--- This module provides functionality for rendering LLVM IR data structures into their
--- textual LLVM IR representation. It handles the conversion of IR modules, functions,
--- blocks, instructions, types, and operands into properly formatted LLVM assembly code.
---
--- The primary entry point is 'renderModule', which takes an 'IRModule' and produces
--- the complete textual IR output as a pure 'Text' value.
+{- |
+This module provides functionality for rendering LLVM IR data structures into their
+textual LLVM IR representation. It handles the conversion of IR modules, functions,
+blocks, instructions, types, and operands into properly formatted LLVM assembly code.
+
+The primary entry point is 'renderModule', which takes an 'IRModule' and produces
+the complete textual IR output as a pure 'Text' value.
+-}
 module LLVM.IRRenderer (renderModule) where
 
 import Data.ByteString (ByteString)
@@ -18,36 +19,37 @@ import Data.Text (Text)
 import qualified Data.Text as Text
 import GHC.Float (castDoubleToWord64)
 import LLVM.IRAnnotation (IRAnnotation (..))
-import LLVM.IRInstruction
-  ( IRFCmpCond (..),
-    IRICmpCond (..),
-    IRInstrOp (..),
-    IRInstruction (..),
-    IRTailMarker (..),
-  )
-import LLVM.IRModule
-  ( IRAttribute (..),
-    IRBlock (..),
-    IRBlockItem (..),
-    IRFunction (..),
-    IRGlobal (..),
-    IRLinkage (..),
-    IRModule (..),
-    IRTypeDecl (..),
-  )
-import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
+import LLVM.IRInstruction (
+  IRFCmpCond (..),
+  IRICmpCond (..),
+  IRInstrOp (..),
+  IRInstruction (..),
+  IRTailMarker (..),
+ )
+import LLVM.IRModule (
+  IRAttribute (..),
+  IRBlock (..),
+  IRBlockItem (..),
+  IRFunction (..),
+  IRGlobal (..),
+  IRLinkage (..),
+  IRModule (..),
+  IRTypeDecl (..),
+ )
+import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..), constantType, operandType)
 import LLVM.IRType (IRName, IRType (..))
 import Text.Printf (printf)
 
--- | Returns True if the name needs quoting in LLVM IR.
--- Safe (unquoted) identifiers match [-a-zA-Z$._][-a-zA-Z$._0-9]*.
+{- | Returns True if the name needs quoting in LLVM IR.
+Safe (unquoted) identifiers match [-a-zA-Z$._][-a-zA-Z$._0-9]*.
+-}
 needsQuoting :: IRName -> Bool
 needsQuoting n = case Text.uncons n of
   Nothing -> True
   Just (h, t) -> not (isSafeHead h) || Text.any (not . isSafeBody) t
-  where
-    isSafeHead c = isAlphaNum c || c == '-' || c == '$' || c == '.' || c == '_'
-    isSafeBody c = isSafeHead c
+ where
+  isSafeHead c = isAlphaNum c || c == '-' || c == '$' || c == '.' || c == '_'
+  isSafeBody c = isSafeHead c
 
 -- | Wrap a name in double-quotes if required by LLVM IR; leave it bare otherwise.
 quoteIfNeeded :: IRName -> Text
@@ -55,19 +57,20 @@ quoteIfNeeded n
   | needsQuoting n = "\"" <> n <> "\""
   | otherwise = n
 
--- |
--- Render an LLVM IR module to its textual representation.
---
--- Processes all module components in order:
---
--- 1. Type declarations
--- 2. Global variables and constants
--- 3. Function definitions
---
--- The output is well-formed LLVM IR that can be written to a @.ll@ file or passed
--- to LLVM tools such as @llc@ or @opt@.
+{- |
+Render an LLVM IR module to its textual representation.
+
+Processes all module components in order:
+
+1. Type declarations
+2. Global variables and constants
+3. Function definitions
+
+The output is well-formed LLVM IR that can be written to a @.ll@ file or passed
+to LLVM tools such as @llc@ or @opt@.
+-}
 renderModule :: IRModule -> Text
-renderModule IRModule {moduleTypeDecls, moduleGlobals, moduleFunctions} =
+renderModule IRModule{moduleTypeDecls, moduleGlobals, moduleFunctions} =
   let items =
         map renderTypeDecl moduleTypeDecls
           <> map renderGlobal moduleGlobals
@@ -76,7 +79,7 @@ renderModule IRModule {moduleTypeDecls, moduleGlobals, moduleFunctions} =
 
 -- | Render a type declaration (e.g. @%Node = type { i32, ptr }@).
 renderTypeDecl :: IRTypeDecl -> Text
-renderTypeDecl IRTypeDecl {typeDeclName, typeDeclType} =
+renderTypeDecl IRTypeDecl{typeDeclName, typeDeclType} =
   "%" <> quoteIfNeeded typeDeclName <> " = type " <> renderType typeDeclType <> "\n"
 
 -- | Render a global variable, string constant, or external declaration.
@@ -129,7 +132,7 @@ renderGlobal = \case
 
 -- | Render a function definition.
 renderFunction :: IRFunction -> Text
-renderFunction IRFunction {functionName, functionLinkage, functionRetType, functionArgs, functionBlocks, functionAttributes} =
+renderFunction IRFunction{functionName, functionLinkage, functionRetType, functionArgs, functionBlocks, functionAttributes} =
   let attrsStr =
         if null functionAttributes
           then ""
@@ -149,7 +152,7 @@ renderFunction IRFunction {functionName, functionLinkage, functionRetType, funct
 
 -- | Render a single basic block.
 renderBlock :: IRBlock -> Text
-renderBlock IRBlock {blockLabel, blockItems, blockTerminator} =
+renderBlock IRBlock{blockLabel, blockItems, blockTerminator} =
   quoteIfNeeded blockLabel
     <> ":\n"
     <> Text.unlines (map renderBlockItem blockItems)
@@ -169,7 +172,7 @@ renderBlockItem =
 
 -- | Render an instruction with its optional result register and inline comment.
 renderInstruction :: IRInstruction (Maybe Text) -> Text
-renderInstruction IRInstruction {instrResult, instrOp, instrMetadata} =
+renderInstruction IRInstruction{instrResult, instrOp, instrMetadata} =
   let opStr = renderInstrOp instrOp
       baseStr = case instrResult of
         Nothing -> "  " <> opStr
@@ -236,11 +239,11 @@ renderInstrOp = \case
       <> "("
       <> Text.intercalate ", " (map renderTypedOperand args)
       <> ")"
-    where
-      callPrefix = case marker of
-        NoTail -> "call "
-        Tail -> "tail call "
-        MustTail -> "musttail call "
+   where
+    callPrefix = case marker of
+      NoTail -> "call "
+      Tail -> "tail call "
+      MustTail -> "musttail call "
   IPhi typ incoming ->
     "phi "
       <> renderType typ
@@ -259,9 +262,9 @@ renderInstrOp = \case
       <> renderType typ
       <> " "
       <> renderOperand f
-  where
-    binOp mnemonic typ a b =
-      mnemonic <> " " <> renderType typ <> " " <> renderOperand a <> ", " <> renderOperand b
+ where
+  binOp mnemonic typ a b =
+    mnemonic <> " " <> renderType typ <> " " <> renderOperand a <> ", " <> renderOperand b
 
 -- | Render a terminator instruction.
 renderTerminator :: IRTerminator -> Text
@@ -288,11 +291,11 @@ renderTerminator =
         <> " [    \n"
         <> Text.unlines
           [ "    "
-              <> renderType (constantType caseVal)
-              <> " "
-              <> renderConstant caseVal
-              <> ", label %"
-              <> quoteIfNeeded caseTarget
+            <> renderType (constantType caseVal)
+            <> " "
+            <> renderConstant caseVal
+            <> ", label %"
+            <> quoteIfNeeded caseTarget
           | (caseVal, caseTarget) <- cases
           ]
         <> "  ]"
@@ -310,31 +313,6 @@ renderOperand =
 -- | Render an operand prefixed with its type.
 renderTypedOperand :: IROperand -> Text
 renderTypedOperand op = renderType (operandType op) <> " " <> renderOperand op
-
--- | Derive the type of an operand
-operandType :: IROperand -> IRType
-operandType =
-  \case
-    OLocal t _ -> t
-    OGlobal t _ -> t
-    OConstant c -> constantType c
-
--- | Derive the type of a constant
-constantType :: IRConstant -> IRType
-constantType =
-  \case
-    CInt n _ ->
-      TInt n
-    CFloat _ ->
-      TFloat
-    CDouble _ ->
-      TDouble
-    CNull t ->
-      t
-    CStruct cs ->
-      TStruct (map constantType cs)
-    CArray t _ ->
-      t
 
 -- | Render a type to its LLVM IR text representation.
 renderType :: IRType -> Text
@@ -431,11 +409,12 @@ renderAttribute =
     NoAlias -> "noalias"
     GC txt -> "gc \"" <> txt <> "\""
 
--- | Render a ByteString as an LLVM c"..." literal body, escaping non-printable
--- bytes as \XX hex escape sequences.
+{- | Render a ByteString as an LLVM c"..." literal body, escaping non-printable
+bytes as \XX hex escape sequences.
+-}
 renderByteStringLiteral :: ByteString -> Text
 renderByteStringLiteral = Text.pack . concatMap renderByte . BS.unpack
-  where
-    renderByte b
-      | b >= 32 && b <= 126 && b /= 34 && b /= 92 = [toEnum (fromIntegral b)]
-      | otherwise = '\\' : [intToDigit (fromIntegral b `div` 16), intToDigit (fromIntegral b `mod` 16)]
+ where
+  renderByte b
+    | b >= 32 && b <= 126 && b /= 34 && b /= 92 = [toEnum (fromIntegral b)]
+    | otherwise = '\\' : [intToDigit (fromIntegral b `div` 16), intToDigit (fromIntegral b `mod` 16)]
