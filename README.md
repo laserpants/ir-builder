@@ -273,7 +273,7 @@ unreachable :: m ()
 
 ```haskell
 -- Declare an external function
-declare    :: IRName -> IRType -> [IRType] -> m ()
+declare :: IRName -> IRType -> [IRType] -> m ()
 
 -- Declare a variadic external function
 declareVarArg :: IRName -> IRType -> [IRType] -> m ()
