@@ -4,8 +4,6 @@ A Haskell library for constructing LLVM IR programmatically. It provides a
 monadic DSL for building modules, functions, blocks, and instructions, along
 with a pure renderer that serialises the result to textual LLVM assembly.
 
----
-
 ## Overview
 
 The library is structured as a pipeline:
@@ -34,8 +32,6 @@ example = compileModule "example" $ do
     ret r
 ```
 
----
-
 ## Building
 
 Requires [Stack](https://docs.haskellstack.org/).
@@ -45,8 +41,6 @@ stack build        # build the library
 stack test         # run the test suite
 stack run          # run the demo (prints factorial IR to stdout)
 ```
-
----
 
 ## Quick example: Hello, World!
 
@@ -90,8 +84,6 @@ entry:
   ret i32 0
 }
 ```
-
----
 
 ## Quick example: Iterative factorial with `mdo`
 
@@ -143,8 +135,6 @@ factorialModule = do
     ret (OConstant (CInt 32 0))
 ```
 
----
-
 ## Type system
 
 Types are represented by the `IRType` data type:
@@ -166,8 +156,6 @@ Types are represented by the `IRType` data type:
 `LLVM.IRType.Constructors` exports shorthand aliases: `i1`, `i8`, `i16`,
 `i32`, `i64`, `i128`, `float`, `double`, `ptr`, `void`, and constructor
 helpers `struct`, `array`, `vector`, `fun`, `named`.
-
----
 
 ## Instruction set
 
@@ -283,8 +271,6 @@ switch      :: IROperand -> IRName -> [(IRConstant, IRName)] -> m ()
 unreachable :: m ()
 ```
 
----
-
 ## Globals and declarations
 
 ```haskell
@@ -309,8 +295,6 @@ emitGlobal :: IRGlobal -> m ()
 | `IRVar linkage name type val` | Mutable global |
 | `IRExtern name retType argTypes isVariadic` | External declaration |
 
----
-
 ## Annotations
 
 Instructions can carry an `IRAnnotation` metadata value. The `(<##>)` operator
@@ -321,8 +305,6 @@ r <- add i32 a b <##> "compute sum"
 ```
 
 This renders as `; compute sum` on a line above the instruction.
-
----
 
 ## Verification
 
@@ -346,8 +328,6 @@ and so on.
 Neither function is called automatically by `compileModule` — you invoke
 them when needed.
 
----
-
 ## Module reference
 
 | Module | Contents |
@@ -365,8 +345,6 @@ them when needed.
 | `LLVM.IRType` | `IRType` |
 | `LLVM.IRBuilder.Class` | `MonadIRBuilder` typeclass (for transformer stacks) |
 | `LLVM.IRBuilder.Error` | `IRBuilderError`, `displayError` |
-
----
 
 ## Dependencies
 
