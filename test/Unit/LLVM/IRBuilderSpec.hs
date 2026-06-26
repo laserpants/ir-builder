@@ -15,7 +15,7 @@ import LLVM.IRBuilder.Error (IRBuilderError)
 import LLVM.IRBuilder.FunctionBuilder (FunctionBuilder (..))
 import LLVM.IRBuilder.Supply (fresh, freshLabel)
 import LLVM.IRInstruction (IRInstrOp (..), IRInstruction (..))
-import LLVM.IRModule (IRBlockItem (..), IRDecl (..), IRFunction (..), IRGlobal (..), IRLinkage (..))
+import LLVM.IRModule (IRBlockItem (..), IRFunction (..), IRGlobal (..), IRLinkage (..), IRTypeDecl (..))
 import LLVM.IROperand (IRConstant (..), IROperand (..), IRTerminator (..))
 import LLVM.IRTerminator.Constructors (ret, retVoid)
 import LLVM.IRType (IRType (..))
@@ -37,12 +37,12 @@ evalBuilder b env = case runBuilder b env of
 testFB :: FunctionBuilder
 testFB =
   FunctionBuilder
-    { functionBuilderName = "test"
-    , functionBuilderLinkage = LExternal
-    , functionBuilderRetType = TInt 32
-    , functionBuilderArgs = []
-    , functionBuilderBlocks = []
-    , functionBuilderAttributes = []
+    { functionBuilderName = "test",
+      functionBuilderLinkage = LExternal,
+      functionBuilderRetType = TInt 32,
+      functionBuilderArgs = [],
+      functionBuilderBlocks = [],
+      functionBuilderAttributes = []
     }
 
 spec :: Spec
@@ -103,7 +103,7 @@ spec = describe "LLVM.IRBuilder" $ do
       evalBuilder action emptyIRBuilderEnv `shouldBe` 0
 
     it "second function's registers start from 1 independently" $ do
-      let testFB2 = testFB{functionBuilderName = "test2"}
+      let testFB2 = testFB {functionBuilderName = "test2"}
           action = do
             beginFunction testFB
             _ <- fresh -- %1 in first function
@@ -162,9 +162,9 @@ spec = describe "LLVM.IRBuilder" $ do
   describe "implicit entry block" $ do
     let testInstr =
           IRInstruction
-            { instrResult = Just ("r", TInt 32)
-            , instrOp = IAdd (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b")
-            , instrMetadata = Nothing
+            { instrResult = Just ("r", TInt 32),
+              instrOp = IAdd (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b"),
+              instrMetadata = Nothing
             }
 
     it "emitInstruction without beginBlock creates an implicit 'entry' block" $ do
@@ -210,17 +210,17 @@ spec = describe "LLVM.IRBuilder" $ do
         Nothing -> expectationFailure "expected a current block"
 
   describe "emitTypeDecl" $ do
-    it "adds an IRDecl to the environment" $ do
+    it "adds an IRTypeDecl to the environment" $ do
       let env = execBuilder (emitTypeDecl "Node" (TStruct [TInt 32, TPtr])) emptyIRBuilderEnv
-      builderEnvDecls env `shouldBe` [IRDecl "Node" (TStruct [TInt 32, TPtr])]
+      builderEnvTypeDecls env `shouldBe` [IRTypeDecl "Node" (TStruct [TInt 32, TPtr])]
 
     it "deduplicates by name — second call is ignored" $ do
       let env = execBuilder (emitTypeDecl "Node" (TStruct [TInt 32]) >> emitTypeDecl "Node" (TStruct [TPtr])) emptyIRBuilderEnv
-      length (builderEnvDecls env) `shouldBe` 1
+      length (builderEnvTypeDecls env) `shouldBe` 1
 
     it "keeps distinct names" $ do
       let env = execBuilder (emitTypeDecl "Foo" (TStruct [TInt 32]) >> emitTypeDecl "Bar" (TStruct [TPtr])) emptyIRBuilderEnv
-      length (builderEnvDecls env) `shouldBe` 2
+      length (builderEnvTypeDecls env) `shouldBe` 2
 
   describe "declare" $ do
     it "adds an IRExtern global to the environment" $ do

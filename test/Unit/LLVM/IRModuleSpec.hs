@@ -40,7 +40,7 @@ spec = describe "LLVM.IRModule" $ do
           m =
             IRModule
               { moduleName = "multi"
-              , moduleDecls = []
+              , moduleTypeDecls = []
               , moduleGlobals = []
               , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
               }
@@ -61,7 +61,7 @@ spec = describe "LLVM.IRModule" $ do
           m =
             IRModule
               { moduleName = "condbr"
-              , moduleDecls = []
+              , moduleTypeDecls = []
               , moduleGlobals = []
               , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2, block3]]
               }
@@ -73,7 +73,7 @@ spec = describe "LLVM.IRModule" $ do
           m =
             IRModule
               { moduleName = "bad_condbr"
-              , moduleDecls = []
+              , moduleTypeDecls = []
               , moduleGlobals = []
               , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
               }
@@ -85,7 +85,7 @@ spec = describe "LLVM.IRModule" $ do
           m =
             IRModule
               { moduleName = "switch"
-              , moduleDecls = []
+              , moduleTypeDecls = []
               , moduleGlobals = []
               , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
               }

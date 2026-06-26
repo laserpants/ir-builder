@@ -30,7 +30,7 @@ spec = describe "LLVM.IRBuilder.Environment" $ do
       builderEnvGlobals emptyIRBuilderEnv `shouldBe` []
 
     it "initializes with empty decls list" $
-      builderEnvDecls emptyIRBuilderEnv `shouldBe` []
+      builderEnvTypeDecls emptyIRBuilderEnv `shouldBe` []
 
   describe "overBuilderEnvFreshReg" $ do
     it "applies a function to the fresh register counter" $
