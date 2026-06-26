@@ -2,7 +2,7 @@
 
 A Haskell library for constructing LLVM IR programmatically. It provides a
 monadic DSL for building modules, functions, blocks, and instructions, along
-with a pure renderer that serialises the result to textual LLVM assembly.
+with a pure renderer that serializes the result to textual LLVM assembly.
 
 ## Overview
 
