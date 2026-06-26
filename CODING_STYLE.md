@@ -1,4 +1,4 @@
-# Coding Style Guide
+# Coding style guide
 
 This document describes the conventions and idioms used in this project.
 Follow these when contributing or extending the library.
@@ -32,7 +32,7 @@ Formatting is enforced by **fourmolu**. Run it before committing.
     <> foldMap (", " <>) (map renderTypedOperand idxs)
   ```
 
-## Language Extensions
+## Language extensions
 
 Extensions are declared **per file**, never in `package.yaml`. Only enable what the file actually uses.
 
@@ -55,7 +55,7 @@ Declare extensions at the top of the file, one per line, sorted alphabetically:
 {-# LANGUAGE StrictData #-}
 ```
 
-## GHC Warnings
+## GHC warnings
 
 All warnings listed in `package.yaml` are treated as meaningful. Do not suppress them with
 `{-# OPTIONS_GHC -Wno-... #-}` unless unavoidable, and leave a comment explaining why.
@@ -70,7 +70,7 @@ The enabled warning set includes:
 
 `-Wmissing-export-lists` means **every module must have an explicit export list**.
 
-## Module Structure
+## Module structure
 
 ### Export list
 
@@ -139,7 +139,7 @@ Prefer **selective imports** over `(..)` for non-ADT values. Use `(..)` when imp
 Prefix record fields with an abbreviated module/type name to avoid ambiguity
 (`instrResult`, not `result`; `blockLabel`, not `label`).
 
-## Data Types
+## Data types
 
 ### ADTs
 
@@ -196,7 +196,7 @@ required when defining a new `MonadIRBuilder` operation so the interface compose
 The monad stack is `StateT IRBuilderEnv (ExceptT IRBuilderError m)`. Error propagation
 uses `throwIRBuilderError`; recovery is not expected inside the builder.
 
-## Smart Constructors
+## Smart constructors
 
 All instruction-emitting functions live in `LLVM.IRInstruction.Constructors` and follow
 this pattern:
@@ -262,7 +262,7 @@ __Fields:__
 data IRModule = IRModule { ... }
 ```
 
-## Common Idioms
+## Common idioms
 
 ### LambdaCase
 
@@ -357,7 +357,7 @@ it "fence emits IFence (no result)" $ do
   lastInstrOp items `shouldBe` Just (IFence AcqRel)
 ```
 
-## Architecture Layers
+## Architecture layers
 
 The codebase is divided into four layers; dependencies only flow downward:
 
