@@ -13,9 +13,9 @@ Example usage:
 @
 module <- compileModule "my_module" $ do
 define i32 "main" [] LExternal [] $ do
-  beginBlock "entry"
-  result <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
-  ret result
+ beginBlock "entry"
+ result <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
+ ret result
 @
 
 = Core types and compilation
@@ -76,6 +76,7 @@ module LLVM.IRBuilder (
   emitGlobal,
   emitTypeDecl,
   declare,
+  declareVarArg,
   setTerminator,
 
   -- * Utilities
@@ -416,9 +417,9 @@ __Example:__
 @
 moduleAndResult <- buildModuleWithM "my_module" $ do
 define i32 "main" [] LExternal [] $ do
-  beginBlock "entry"
-  customMonadOperation  -- works with custom MonadIRBuilder instances
-  ret (OConstant (CInt 32 0))
+ beginBlock "entry"
+ customMonadOperation  -- works with custom MonadIRBuilder instances
+ ret (OConstant (CInt 32 0))
 @
 -}
 buildModuleWithM :: (MonadIRBuilder m) => IRName -> m a -> m (IRModule, a)
@@ -451,9 +452,9 @@ __Example:__
 @
 module_ <- buildModuleM "my_module" $ do
 define i32 "main" [] LExternal [] $ do
-  beginBlock "entry"
-  customMonadOperation
-  ret (OConstant (CInt 32 0))
+ beginBlock "entry"
+ customMonadOperation
+ ret (OConstant (CInt 32 0))
 @
 -}
 buildModuleM :: (MonadIRBuilder m) => IRName -> m a -> m IRModule
@@ -500,9 +501,9 @@ __Example:__
 @
 text <- compileModuleM "my_module" $ do
 define i32 "main" [] LExternal [] $ do
-  beginBlock "entry"
-  customMonadOperation
-  ret (OConstant (CInt 32 0))
+ beginBlock "entry"
+ customMonadOperation
+ ret (OConstant (CInt 32 0))
 @
 -}
 compileModuleM :: (MonadIRBuilder m) => IRName -> m a -> m Text
@@ -594,9 +595,9 @@ __Example:__
 @
 let code = compileModule "my_module" $ do
 define i32 "main" [] LExternal [] $ do
- beginBlock "entry"
- x <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
- ret x
+beginBlock "entry"
+x <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
+ret x
 putStrLn code
 @
 
@@ -780,7 +781,7 @@ emitGlobal global = modifyIRBuilderEnv $ \env ->
   globalName (IRString _ n _) = n
   globalName (IRConstant _ n _ _) = n
   globalName (IRVar _ n _ _) = n
-  globalName (IRExtern n _ _) = n
+  globalName (IRExtern n _ _ _) = n
 
 {- | Emit a named type declaration into the module.
 
@@ -826,11 +827,36 @@ declare "malloc" TPtr [TInt 64]
 -}
 declare :: (MonadIRBuilder m) => IRName -> IRType -> [IRType] -> m ()
 declare name retTy argTys = modifyIRBuilderEnv $ \env ->
-  let isDupe (IRExtern n _ _) = n == name
+  let isDupe (IRExtern n _ _ _) = n == name
       isDupe _ = False
    in if any isDupe (builderEnvGlobals env)
         then env
-        else appendBuilderEnvGlobals [IRExtern name retTy argTys] env
+        else appendBuilderEnvGlobals [IRExtern name retTy argTys False] env
+
+{- | Emit a variadic external function declaration into the module.
+
+Like 'declare', but appends @...@ to the argument list:
+
+@
+declare i32 \@printf(ptr, ...)
+@
+
+Duplicate declarations (same function name) are silently ignored.
+
+__Example:__
+
+@
+declareVarArg "printf" i32 [TPtr]
+declareVarArg "scanf"  i32 [TPtr]
+@
+-}
+declareVarArg :: (MonadIRBuilder m) => IRName -> IRType -> [IRType] -> m ()
+declareVarArg name retTy argTys = modifyIRBuilderEnv $ \env ->
+  let isDupe (IRExtern n _ _ _) = n == name
+      isDupe _ = False
+   in if any isDupe (builderEnvGlobals env)
+        then env
+        else appendBuilderEnvGlobals [IRExtern name retTy argTys True] env
 
 {- | Begin a new basic block within the current function.
 

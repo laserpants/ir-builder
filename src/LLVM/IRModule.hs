@@ -21,11 +21,11 @@ and rendered:
 
 @
 let module = buildModule "my_module" $ define i32 "main" [] LExternal [] $ do
-     b0 <- beginBlock "entry"
-     ret (int32 42)
+    b0 <- beginBlock "entry"
+    ret (int32 42)
 case verifyModule module of
- Left err -> putStrLn $ "Verification failed: " ++ err
- Right () -> putStrLn $ "Module verified successfully"
+Left err -> putStrLn $ "Verification failed: " ++ err
+Right () -> putStrLn $ "Module verified successfully"
 @
 -}
 module LLVM.IRModule (
@@ -90,11 +90,11 @@ __Example:__
 
 @
 let mod = IRModule
-     { moduleName = "myprogram"
-     , moduleDecls = [IRDecl "printf" (TFun i32 [TPtr])]
-     , moduleGlobals = []
-     , moduleFunctions = [mainFunction]
-     }
+    { moduleName = "myprogram"
+    , moduleDecls = [IRDecl "printf" (TFun i32 [TPtr])]
+    , moduleGlobals = []
+    , moduleFunctions = [mainFunction]
+    }
 in verifyModule mod
 @
 -}
@@ -140,7 +140,9 @@ data IRGlobal
   = IRString IRLinkage IRName ByteString
   | IRConstant IRLinkage IRName IRType IRConstant
   | IRVar IRLinkage IRName IRType IRConstant
-  | IRExtern IRName IRType [IRType]
+  | -- | @IRExtern name retType argTypes isVariadic@.
+    -- Set @isVariadic = True@ to emit @declare retType \@name(argTypes, ...)@.
+    IRExtern IRName IRType [IRType] Bool
   deriving (Show, Eq, Ord)
 
 {- | Function attributes that provide optimization and correctness hints to the compiler.
@@ -201,13 +203,13 @@ __Example:__
 
 @
 let func = IRFunction
-     { functionName = "main"
-     , functionLinkage = LExternal
-     , functionRetType = i32
-     , functionArgs = []
-     , functionBlocks = [entryBlock, loopBlock, exitBlock]
-     , functionAttributes = []
-     }
+    { functionName = "main"
+    , functionLinkage = LExternal
+    , functionRetType = i32
+    , functionArgs = []
+    , functionBlocks = [entryBlock, loopBlock, exitBlock]
+    , functionAttributes = []
+    }
 in verifyFunction func
 @
 -}
@@ -259,10 +261,10 @@ __Example:__
 
 @
 let block = IRBlock
-     { blockLabel = "entry"
-     , blockItems = [BlockInstr (ICall i32 "printf" [...])]
-     , blockTerminator = IRet (Just (int32 0))
-     }
+    { blockLabel = "entry"
+    , blockItems = [BlockInstr (ICall i32 "printf" [...])]
+    , blockTerminator = IRet (Just (int32 0))
+    }
 in blockLabel block -- "entry"
 @
 -}
@@ -289,12 +291,12 @@ __Example:__
 
 @
 let mod = buildModule "test" $ do
-     define i32 "main" [] LExternal [] $ do
-       b0 <- beginBlock "entry"
-       ret (int32 42)
+    define i32 "main" [] LExternal [] $ do
+      b0 <- beginBlock "entry"
+      ret (int32 42)
 case verifyModule mod of
- Left err -> putStrLn $ "Error: " ++ err
- Right () -> putStrLn "Module is valid"
+Left err -> putStrLn $ "Error: " ++ err
+Right () -> putStrLn "Module is valid"
 @
 -}
 verifyModule :: IRModule -> Either String ()

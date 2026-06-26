@@ -184,10 +184,14 @@ renderGlobal =
       valStr <- renderConstant val
       let linkageStr = renderLinkage linkage
       pure $ "@" <> quoteIfNeeded name <> " = " <> linkageStr <> "global " <> typeStr <> " " <> valStr <> "\n"
-    IRExtern name retTy argTys -> do
+    IRExtern name retTy argTys isVariadic -> do
       retTyStr <- renderType retTy
       argTyStrs <- mapM renderType argTys
-      pure $ "declare " <> retTyStr <> " @" <> quoteIfNeeded name <> "(" <> Text.intercalate ", " argTyStrs <> ")\n"
+      let suffix =
+            if isVariadic
+              then if null argTyStrs then "..." else ", ..."
+              else ""
+      pure $ "declare " <> retTyStr <> " @" <> quoteIfNeeded name <> "(" <> Text.intercalate ", " argTyStrs <> suffix <> ")\n"
 
 -- | Render a function definition
 renderFunction :: (Monad m) => IRFunction -> IRRendererT m Text

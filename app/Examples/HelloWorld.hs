@@ -14,7 +14,7 @@ import LLVM.IRType.Constructors (i32, i8, ptr)
 helloWorld :: IRBuilder ()
 helloWorld = do
   -- declare i32 @puts(ptr)
-  emitGlobal (IRExtern "puts" i32 [ptr])
+  declare "puts" i32 [ptr]
 
   -- @.str = private constant [14 x i8] c"Hello, World!\00"
   emitGlobal (IRString LPrivate ".str" "Hello, World!\0")
