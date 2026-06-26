@@ -195,28 +195,37 @@ renderGlobal =
 
 -- | Render a function definition
 renderFunction :: (Monad m) => IRFunction -> IRRendererT m Text
-renderFunction IRFunction{functionName, functionLinkage, functionRetType, functionArgs, functionBlocks, functionAttributes} = do
-  retTypeStr <- renderType functionRetType
-  argsStr <- renderFunctionArgs functionArgs
-  let linkageStr = renderLinkage functionLinkage
-  let attrsStr =
-        if null functionAttributes
-          then ""
-          else " " <> Text.unwords (map renderAttribute functionAttributes)
-  blocksStr <- mapM renderBlock functionBlocks
-  pure $
-    "define "
-      <> linkageStr
-      <> retTypeStr
-      <> " @"
-      <> quoteIfNeeded functionName
-      <> "("
-      <> argsStr
-      <> ")"
-      <> attrsStr
-      <> " {\n"
-      <> Text.unlines blocksStr
-      <> "}\n"
+renderFunction
+  IRFunction
+    { functionName
+    , functionLinkage
+    , functionRetType
+    , functionArgs
+    , functionBlocks
+    , functionAttributes
+    } =
+    do
+      retTypeStr <- renderType functionRetType
+      argsStr <- renderFunctionArgs functionArgs
+      let linkageStr = renderLinkage functionLinkage
+      let attrsStr =
+            if null functionAttributes
+              then ""
+              else " " <> Text.unwords (map renderAttribute functionAttributes)
+      blocksStr <- mapM renderBlock functionBlocks
+      pure $
+        "define "
+          <> linkageStr
+          <> retTypeStr
+          <> " @"
+          <> quoteIfNeeded functionName
+          <> "("
+          <> argsStr
+          <> ")"
+          <> attrsStr
+          <> " {\n"
+          <> Text.unlines blocksStr
+          <> "}\n"
 
 -- | Render a single block
 renderBlock :: (Monad m) => IRBlock -> IRRendererT m Text
