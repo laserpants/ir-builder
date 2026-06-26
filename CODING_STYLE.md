@@ -363,7 +363,9 @@ The codebase is divided into four layers; dependencies only flow downward:
 
 ```
 IRType  ←  IROperand  ←  IRInstruction  ←  IRModule
+
                                        ↓
+                                       
                                    IRBuilder  →  IRRenderer
 ```
 
