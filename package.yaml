@@ -39,17 +39,6 @@ ghc-options:
 library:
   source-dirs: src
 
-executables:
-  proto-exe:
-    main: Main.hs
-    source-dirs: app
-    ghc-options:
-      - -threaded
-      - -rtsopts
-      - -with-rtsopts=-N
-    dependencies:
-      - coal-llvm-subsystem
-
 tests:
   proto-test:
     main: Spec.hs
