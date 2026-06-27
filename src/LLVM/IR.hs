@@ -21,17 +21,17 @@ import LLVM.IR
 
 example :: Text
 example = compileModule "example" $
-define void "hello" [] LExternal [] $ do
-beginBlock "entry"
-retVoid
+  define void "hello" [] LExternal [] $ do
+    beginBlock "entry"
+    retVoid
 @
 
 Run the builder with explicit error handling using 'compileModuleWith':
 
 @
 case compileModuleWith "example" builder of
-Left err -> putStrLn (displayError err)
-Right ir  -> Data.Text.IO.putStr ir
+  Left err -> putStrLn (displayError err)
+  Right ir  -> Data.Text.IO.putStr ir
 @
 
 = Operand constants
@@ -51,10 +51,10 @@ import qualified LLVM.IROperand.Constructors as C
 
 example :: IRBuilder ()
 example =
-define i32 "add" [(i32, "a"), (i32, "b")] LExternal [] $ do
-beginBlock "entry"
-r <- add i32 (C.i32 1) (C.i32 2)
-ret r
+  define i32 "add" [(i32, "a"), (i32, "b")] LExternal [] $ do
+    beginBlock "entry"
+    r <- add i32 (C.i32 1) (C.i32 2)
+    ret r
 @
 
 Alternatively, use the 'OConstant' and 'CInt' constructors re-exported
@@ -123,23 +123,23 @@ import qualified LLVM.IROperand.Constructors as C
 
 factorial :: Text
 factorial = compileModule "mymod" $
-define i64 "fact" [(i64, "n")] LExternal [] $ mdo
-beginBlock "entry"
-br loopLabel
+  define i64 "fact" [(i64, "n")] LExternal [] $ mdo
+    beginBlock "entry"
+    br loopLabel
 
-loopLabel <- block "loop"
-acc  <- phi i64 [(C.i64 1, "entry"),          (newAcc, bodyLabel)]
-n    <- phi i64 [(OLocal i64 "n", "entry"),   (newN,   bodyLabel)]
-cond <- icmp ICmpSGt i64 n (C.i64 0)
-condbr cond bodyLabel exitLabel
+    loopLabel <- block "loop"
+    acc  <- phi i64 [(C.i64 1, "entry"),          (newAcc, bodyLabel)]
+    n    <- phi i64 [(OLocal i64 "n", "entry"),   (newN,   bodyLabel)]
+    cond <- icmp ICmpSGt i64 n (C.i64 0)
+    condbr cond bodyLabel exitLabel
 
-bodyLabel <- block "body"
-newAcc <- mul i64 acc n
-newN   <- sub i64 n (C.i64 1)
-br loopLabel
+    bodyLabel <- block "body"
+    newAcc <- mul i64 acc n
+    newN   <- sub i64 n (C.i64 1)
+    br loopLabel
 
-exitLabel <- block "exit"
-ret acc
+    exitLabel <- block "exit"
+    ret acc
 @
 
 = Module reference
