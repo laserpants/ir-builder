@@ -1,0 +1,7 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "ir-builder:lib"
+
+    - path: "./test"
+      component: "ir-builder:test:proto-test"
