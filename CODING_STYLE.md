@@ -103,24 +103,7 @@ module LLVM.IRBuilder (
 
 Export re-exported types in the section where they are conceptually used, not at the bottom.
 
-### Import order
-
-1. Standard library and `base` packages.
-2. External packages (`Data.*`, `Control.*`, `Text.*`, `GHC.*`).
-3. Internal library modules (`LLVM.*`), sorted alphabetically.
-
-Each tier is separated by a blank line. Qualified imports share the tier with their unqualified siblings:
-
-```haskell
-import Data.ByteString (ByteString)
-import qualified Data.ByteString as BS
-import Data.Text (Text)
-import qualified Data.Text as Text
-
-import LLVM.IRAnnotation (IRAnnotation (..))
-import LLVM.IRBuilder.Class (MonadIRBuilder (..))
-import LLVM.IRInstruction (IRInstrOp (..), IRInstruction (..))
-```
+### Imports
 
 Prefer **selective imports** over `(..)` for non-ADT values. Use `(..)` when importing all constructors of a data type or all methods of a typeclass.
 
