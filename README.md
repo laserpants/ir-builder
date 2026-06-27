@@ -18,11 +18,7 @@ then converts that value to the textual LLVM IR format that can be passed
 to `llc`, `clang`, or `lli`.
 
 ```haskell
-import LLVM.IRBuilder
-import LLVM.IRInstruction.Constructors (add)
-import LLVM.IROperand (IRConstant (..), IROperand (..))
-import LLVM.IRTerminator.Constructors (ret)
-import LLVM.IRType.Constructors (i32)
+import LLVM.IR
 
 example :: Text
 example = compileModule "example" $ do
@@ -39,7 +35,6 @@ Requires [Stack](https://docs.haskellstack.org/).
 ```
 stack build        # build the library
 stack test         # run the test suite
-stack run          # run the demo (prints factorial IR to stdout)
 ```
 
 ## Quick example: Hello, World!
@@ -49,14 +44,7 @@ stack run          # run the demo (prints factorial IR to stdout)
 
 module Examples.HelloWorld (helloWorld) where
 
-import LLVM.IRBuilder
-import LLVM.IRInstruction (IRTailMarker (..))
-import LLVM.IRInstruction.Constructors (callVoid, gep)
-import LLVM.IRModule (IRGlobal (..), IRLinkage (..))
-import LLVM.IROperand (IRConstant (..), IROperand (..))
-import LLVM.IRTerminator.Constructors (ret)
-import LLVM.IRType (IRType (..))
-import LLVM.IRType.Constructors (i32, i8, ptr)
+import LLVM.IR
 
 helloWorld :: IRBuilder ()
 helloWorld = do
@@ -97,13 +85,7 @@ loops:
 
 module Examples.Factorial (factorialModule) where
 
-import LLVM.IRBuilder
-import LLVM.IRInstruction (IRICmpCond (..), IRTailMarker (..))
-import LLVM.IRInstruction.Constructors (call, callVoid, icmp, mul, phi, sub)
-import LLVM.IRModule (IRGlobal (..), IRLinkage (..))
-import LLVM.IROperand (IRConstant (..), IROperand (..))
-import LLVM.IRTerminator.Constructors (br, condbr, ret)
-import LLVM.IRType.Constructors (i32, i64, ptr)
+import LLVM.IR
 
 factorialModule :: IRBuilder ()
 factorialModule = do
@@ -156,6 +138,36 @@ LLVM types are represented by the `IRType` data type:
 `LLVM.IRType.Constructors` exports shorthand aliases: `i1`, `i8`, `i16`,
 `i32`, `i64`, `i128`, `float`, `double`, `ptr`, `void`, and constructor
 helpers `struct`, `array`, `vector`, `fun`, `named`.
+
+## Linkage
+
+`IRLinkage` controls symbol visibility and is the fourth argument to `define`:
+
+| Value | Description |
+|---|---|
+| `LExternal` | Visible outside the module (default for most functions) |
+| `LInternal` | Module-local; may be renamed to avoid clashes during linking |
+| `LPrivate` | Module-local and excluded from the symbol table |
+
+## Function attributes
+
+`IRAttribute` values form the fifth argument to `define` as a list:
+
+| Value | Description |
+|---|---|
+| `NoReturn` | Function never returns normally |
+| `NoUnwind` | Function never throws (no stack unwinding) |
+| `ReadOnly` | Function only reads memory, no writes |
+| `ReadNone` | Function neither reads nor writes memory |
+| `AlwaysInline` | Always inline at call sites |
+| `NoInline` | Never inline |
+| `TailCall` | Mark as eligible for tail-call optimisation |
+| `MustTailCall` | Require tail-call elimination |
+| `Cold` | Rarely executed path |
+| `Hot` | Frequently executed path |
+| `InlineHint` | Hint to inline |
+| `NoAlias` | Return value does not alias any existing pointer |
+| `GC Text` | Specify a garbage collector by name, e.g. `GC "shadow-stack"` |
 
 ## Instruction set
 
@@ -303,7 +315,11 @@ attaches a comment to an instruction result:
 r <- add i32 a b <##> "compute sum"
 ```
 
-This renders as `; compute sum` on a line above the instruction.
+This renders as a trailing inline comment on the same line as the instruction:
+
+```llvm
+%1 = add i32 %a, %b  ; compute sum
+```
 
 ## Verification
 
@@ -331,12 +347,13 @@ them when needed.
 
 | Module | Contents |
 |---|---|
-| `LLVM.IRBuilder` | Main entry point: `compileModule`, `define`, `beginBlock`, `emitInstruction`, `declare`, `declareVarArg`, `emitGlobal`, `emitTypeDecl` |
+| `LLVM.IR` | Single-import façade — re-exports the complete public API |
+| `LLVM.IRBuilder` | Builder monad: `compileModule`, `define`, `beginBlock`, `emitInstruction`, `declare`, `declareVarArg`, `emitGlobal`, `emitTypeDecl`, `(<##>)` |
 | `LLVM.IRInstruction.Constructors` | All instruction smart constructors |
 | `LLVM.IRTerminator.Constructors` | `ret`, `retVoid`, `br`, `condbr`, `switch`, `unreachable` |
 | `LLVM.IROperand.Constructors` | Constant and operand helpers (`int`, `float`, `nullPtr`, …) |
 | `LLVM.IRType.Constructors` | Type aliases (`i32`, `ptr`, `float`, …) |
-| `LLVM.IRAnnotation.Constructors` | Comment helpers (`comment`, `<##>`) |
+| `LLVM.IRAnnotation.Constructors` | Comment helpers: `comment`, `commentBlock`, `withComment` |
 | `LLVM.IRRenderer` | `renderModule :: IRModule -> Text` |
 | `LLVM.IRModule` | `IRModule`, `IRFunction`, `IRBlock`, `IRGlobal`, `IRLinkage`, `IRAttribute`, `verifyModule`, `typeCheckModule` |
 | `LLVM.IRInstruction` | `IRInstrOp`, `IRInstruction`, `IRICmpCond`, `IRFCmpCond`, `IRTailMarker`, `IRAtomicOrdering`, `IRAtomicOp` |

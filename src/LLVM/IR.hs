@@ -21,17 +21,26 @@ import LLVM.IR
 
 example :: Text
 example = compileModule "example" $
-  define void "hello" [] LExternal [] $ do
-    beginBlock "entry"
-    retVoid
+ define void "hello" [] LExternal [] $ do
+   beginBlock "entry"
+   retVoid
+@
+
+Produces:
+
+@
+define void @hello() {
+entry:
+ ret void
+}
 @
 
 Run the builder with explicit error handling using 'compileModuleWith':
 
 @
 case compileModuleWith "example" builder of
-  Left err -> putStrLn (displayError err)
-  Right ir  -> Data.Text.IO.putStr ir
+ Left err -> putStrLn (displayError err)
+ Right ir  -> Data.Text.IO.putStr ir
 @
 
 = Operand constants
@@ -51,10 +60,10 @@ import qualified LLVM.IROperand.Constructors as C
 
 example :: IRBuilder ()
 example =
-  define i32 "add" [(i32, "a"), (i32, "b")] LExternal [] $ do
-    beginBlock "entry"
-    r <- add i32 (C.i32 1) (C.i32 2)
-    ret r
+ define i32 "add" [(i32, "a"), (i32, "b")] LExternal [] $ do
+   beginBlock "entry"
+   r <- add i32 (C.i32 1) (C.i32 2)
+   ret r
 @
 
 Alternatively, use the 'OConstant' and 'CInt' constructors re-exported
@@ -107,12 +116,25 @@ operator form — postfix, reads left-to-right:
 
 @result \<- withComment "note" $ add i32 a b@
 
+['OLocal', 'OGlobal', 'OConstant']
+Construct operands. 'OLocal' references a function parameter or previous
+instruction result by name — @OLocal i32 "x"@ where @"x"@ matches the
+declared parameter name or a binding captured with @\<-@. 'OGlobal'
+references a module-level value: @OGlobal i64 "fact"@. 'OConstant' wraps
+a constant: @OConstant (CInt 32 0)@ or @OConstant (CFloat 1.0)@. For
+brevity, use the helpers from 'LLVM.IROperand.Constructors' imported
+qualified (e.g. @C.i32 0@, @C.i64 1@).
+
 = Extended example
 
 An iterative factorial using @mdo@ for forward block references. The
 pattern @loopLabel \<- block "loop"@ captures the generated unique label
 so it can be referenced in branch targets and phi nodes that appear
 lexically earlier in the @mdo@ block.
+
+A @phi@ node selects among its incoming pairs based on which predecessor
+block control arrived from: @phi ty [(v1, "lbl1"), (v2, "lbl2")]@ returns
+@v1@ if the previous block was @"lbl1"@, @v2@ if it was @"lbl2"@.
 
 @
 {\-# LANGUAGE OverloadedStrings #-\}
@@ -123,23 +145,23 @@ import qualified LLVM.IROperand.Constructors as C
 
 factorial :: Text
 factorial = compileModule "mymod" $
-  define i64 "fact" [(i64, "n")] LExternal [] $ mdo
-    beginBlock "entry"
-    br loopLabel
+ define i64 "fact" [(i64, "n")] LExternal [] $ mdo
+   beginBlock "entry"
+   br loopLabel
 
-    loopLabel <- block "loop"
-    acc  <- phi i64 [(C.i64 1, "entry"),          (newAcc, bodyLabel)]
-    n    <- phi i64 [(OLocal i64 "n", "entry"),   (newN,   bodyLabel)]
-    cond <- icmp ICmpSGt i64 n (C.i64 0)
-    condbr cond bodyLabel exitLabel
+   loopLabel <- block "loop"
+   acc  <- phi i64 [(C.i64 1, "entry"),          (newAcc, bodyLabel)]
+   n    <- phi i64 [(OLocal i64 "n", "entry"),   (newN,   bodyLabel)]
+   cond <- icmp ICmpSGt i64 n (C.i64 0)
+   condbr cond bodyLabel exitLabel
 
-    bodyLabel <- block "body"
-    newAcc <- mul i64 acc n
-    newN   <- sub i64 n (C.i64 1)
-    br loopLabel
+   bodyLabel <- block "body"
+   newAcc <- mul i64 acc n
+   newN   <- sub i64 n (C.i64 1)
+   br loopLabel
 
-    exitLabel <- block "exit"
-    ret acc
+   exitLabel <- block "exit"
+   ret acc
 @
 
 = Module reference
@@ -173,8 +195,12 @@ type alias (@type IRName = Text@).
 'array', 'vector', 'fun', 'named'.
 
 ['LLVM.IRModule'] Module-level IR data types ('IRModule', 'IRFunction',
-'IRBlock', 'IRGlobal', 'IRLinkage', 'IRAttribute', 'IRBlockItem') and
-validation ('verifyModule', 'typeCheckModule').
+'IRBlock', 'IRGlobal', 'IRBlockItem') and validation ('verifyModule',
+'typeCheckModule'). 'IRLinkage' values: 'LExternal' (visible outside
+module), 'LInternal' (module-local), 'LPrivate' (not in symbol table).
+'IRAttribute' values: 'NoReturn', 'NoUnwind', 'ReadOnly', 'ReadNone',
+'AlwaysInline', 'NoInline', 'TailCall', 'MustTailCall', 'Cold', 'Hot',
+'InlineHint', 'NoAlias', @GC "name"@.
 
 ['LLVM.IROperand'] Operand and constant data types: 'IROperand', 'IRConstant',
 'IRTerminator'. Helper functions: 'operandType', 'constantType',
