@@ -223,9 +223,9 @@ as the canonical representation of an IR module.
 
 @
 m <- buildModule "my_module" $ do
-    define i32 "main" [] $ do
-        block "entry"
-        ret (OConstant (CInt 32 0))
+  define i32 "main" [] LExternal [] $ do
+    beginBlock "entry"
+    ret (OConstant (CInt 32 0))
 @
 -}
 module LLVM.IRModule (...) where
