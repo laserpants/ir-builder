@@ -22,8 +22,8 @@ import LLVM.IR
 example :: Text
 example = compileModule "example" $
 define void "hello" [] LExternal [] $ do
- beginBlock "entry"
- retVoid
+beginBlock "entry"
+retVoid
 @
 
 Run the builder with explicit error handling using 'compileModuleWith':
@@ -52,9 +52,9 @@ import qualified LLVM.IROperand.Constructors as C
 example :: IRBuilder ()
 example =
 define i32 "add" [(i32, "a"), (i32, "b")] LExternal [] $ do
- beginBlock "entry"
- r <- add i32 (C.i32 1) (C.i32 2)
- ret r
+beginBlock "entry"
+r <- add i32 (C.i32 1) (C.i32 2)
+ret r
 @
 
 Alternatively, use the 'OConstant' and 'CInt' constructors re-exported
@@ -93,9 +93,19 @@ From 'LLVM.IRType.Constructors': 'i1', 'i8', 'i16', 'i32', 'i64',
 'i128', 'ptr', 'void', 'float', 'double', 'struct', 'array', 'vector',
 'fun', 'named'.
 
-['emitAnnotation', 'comment', 'commentBlock', '(<##>)']
-Emit block-level comment annotations or attach an inline comment to the
-preceding instruction with the '(<##>)' operator.
+['emitAnnotation', 'comment', 'commentBlock']
+Emit a stand-alone comment into the current block. 'comment' and
+'commentBlock' construct an 'IRAnnotation' value to pass to 'emitAnnotation'.
+
+['(<##>)', 'withComment']
+Attach an inline comment to an instruction. '(<##>)' is the idiomatic
+operator form — postfix, reads left-to-right:
+
+@result \<- add i32 a b \<##\> "note"@
+
+'withComment' is the equivalent function form, convenient with @$@:
+
+@result \<- withComment "note" $ add i32 a b@
 
 = Extended example
 
@@ -114,22 +124,22 @@ import qualified LLVM.IROperand.Constructors as C
 factorial :: Text
 factorial = compileModule "mymod" $
 define i64 "fact" [(i64, "n")] LExternal [] $ mdo
- beginBlock "entry"
- br loopLabel
+beginBlock "entry"
+br loopLabel
 
- loopLabel <- block "loop"
- acc  <- phi i64 [(C.i64 1, "entry"),          (newAcc, bodyLabel)]
- n    <- phi i64 [(OLocal i64 "n", "entry"),   (newN,   bodyLabel)]
- cond <- icmp ICmpSGt i64 n (C.i64 0)
- condbr cond bodyLabel exitLabel
+loopLabel <- block "loop"
+acc  <- phi i64 [(C.i64 1, "entry"),          (newAcc, bodyLabel)]
+n    <- phi i64 [(OLocal i64 "n", "entry"),   (newN,   bodyLabel)]
+cond <- icmp ICmpSGt i64 n (C.i64 0)
+condbr cond bodyLabel exitLabel
 
- bodyLabel <- block "body"
- newAcc <- mul i64 acc n
- newN   <- sub i64 n (C.i64 1)
- br loopLabel
+bodyLabel <- block "body"
+newAcc <- mul i64 acc n
+newN   <- sub i64 n (C.i64 1)
+br loopLabel
 
- exitLabel <- block "exit"
- ret acc
+exitLabel <- block "exit"
+ret acc
 @
 
 = Module reference

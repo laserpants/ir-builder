@@ -270,7 +270,7 @@ created automatically.
 __Example:__
 
 @
-add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2)) <##> "compute sum"
+add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2)) \<##\> "compute sum"
 @
 -}
 emitInstruction :: (MonadIRBuilder m) => IRInstruction (Maybe Text) -> m ()
@@ -310,7 +310,7 @@ line comment in LLVM assembly.
 __Usage:__
 
 @
-result <- add i32 a b <##> "sum of a and b"
+result <- add i32 a b \<##\> "sum of a and b"
 @
 
 This renders as:
