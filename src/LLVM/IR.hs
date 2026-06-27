@@ -244,6 +244,9 @@ module), 'LInternal' (module-local), 'LPrivate' (not in symbol table).
 constants (@i32@, @i64@, @float@, @local@, @global@, etc.).
 __Not re-exported here__ — import this module qualified to avoid
 collisions with the type constructors above.
+
+['LLVM.IR.Examples'] Complete, runnable examples: 'helloWorld',
+'addNumbers', and 'factorial'.
 -}
 module LLVM.IR (
   -- * Builder monad and compilation

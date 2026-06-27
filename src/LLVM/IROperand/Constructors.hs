@@ -11,8 +11,8 @@ import qualified LLVM.IROperand.Constructors as O
 
 myFunction :: IRBuilder ()
 myFunction = do
- x <- add T.i32 (O.i32 10) (O.i32 20)
- ...
+  x <- add T.i32 (O.i32 10) (O.i32 20)
+  ...
 @
 
 Alternatively, import only non-colliding names unqualified:

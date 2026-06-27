@@ -21,11 +21,11 @@ and rendered:
 
 @
 let module = buildModule "my_module" $ define i32 "main" [] LExternal [] $ do
- b0 <- beginBlock "entry"
- ret (int32 42)
+  b0 <- beginBlock "entry"
+  ret (int32 42)
 case verifyModule module of
-Left err -> putStrLn $ "Verification failed: " ++ err
-Right () -> putStrLn $ "Module verified successfully"
+  Left err -> putStrLn $ "Verification failed: " ++ err
+  Right () -> putStrLn $ "Module verified successfully"
 @
 -}
 module LLVM.IRModule (
@@ -264,10 +264,10 @@ __Example:__
 
 @
 let block = IRBlock
- { blockLabel = "entry"
- , blockItems = [BlockInstr (ICall i32 "printf" [...])]
- , blockTerminator = IRet (Just (int32 0))
- }
+  { blockLabel = "entry"
+  , blockItems = [BlockInstr (ICall i32 "printf" [...])]
+  , blockTerminator = IRet (Just (int32 0))
+  }
 in blockLabel block -- "entry"
 @
 -}
@@ -294,12 +294,12 @@ __Example:__
 
 @
 let mod = buildModule "test" $ do
- define i32 "main" [] LExternal [] $ do
-   b0 <- beginBlock "entry"
-   ret (int32 42)
+  define i32 "main" [] LExternal [] $ do
+    b0 <- beginBlock "entry"
+    ret (int32 42)
 case verifyModule mod of
-Left err -> putStrLn $ "Error: " ++ err
-Right () -> putStrLn "Module is valid"
+  Left err -> putStrLn $ "Error: " ++ err
+  Right () -> putStrLn "Module is valid"
 @
 -}
 verifyModule :: IRModule -> Either String ()

@@ -12,10 +12,10 @@ Example usage:
 
 @
 module <- compileModule "my_module" $ do
- define i32 "main" [] LExternal [] $ do
-   beginBlock "entry"
-   result <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
-   ret result
+  define i32 "main" [] LExternal [] $ do
+    beginBlock "entry"
+    result <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
+    ret result
 @
 -}
 module LLVM.IRBuilder (
@@ -480,10 +480,10 @@ __Example:__
 
 @
 text <- compileModuleM "my_module" $ do
- define i32 "main" [] LExternal [] $ do
-   beginBlock "entry"
-   customMonadOperation
-   ret (OConstant (CInt 32 0))
+  define i32 "main" [] LExternal [] $ do
+    beginBlock "entry"
+    customMonadOperation
+    ret (OConstant (CInt 32 0))
 @
 -}
 compileModuleM :: (MonadIRBuilder m) => IRName -> m a -> m Text
@@ -574,10 +574,10 @@ __Example:__
 
 @
 let code = compileModule "my_module" $ do
- define i32 "main" [] LExternal [] $ do
-   beginBlock "entry"
-   x <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
-   ret x
+  define i32 "main" [] LExternal [] $ do
+    beginBlock "entry"
+    x <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
+    ret x
 putStrLn code
 @
 
@@ -695,9 +695,9 @@ __Example:__
 
 @
 define i32 "add" [(i32, "a"), (i32, "b")] LExternal [] $ do
- beginBlock "entry"
- result <- add i32 (OLocal i32 "a") (OLocal i32 "b")
- ret result
+  beginBlock "entry"
+  result <- add i32 (OLocal i32 "a") (OLocal i32 "b")
+  ret result
 @
 
 __Throws:__ Any error from body computation or finalization
@@ -885,19 +885,19 @@ nested or repeated uses of the same logical name:
 @
 -- "loop" becomes e.g. "loop.1", "body" becomes "body.2"
 define i64 "fact" [(i64, "n")] LExternal [] $ mdo
- beginBlock "entry"
- br loopLabel
+  beginBlock "entry"
+  br loopLabel
 
- loopLabel <- block "loop"
- ...
- condbr cond bodyLabel exitLabel
+  loopLabel <- block "loop"
+  ...
+  condbr cond bodyLabel exitLabel
 
- bodyLabel <- block "body"
- ...
- br loopLabel
+  bodyLabel <- block "body"
+  ...
+  br loopLabel
 
- exitLabel <- block "exit"
- ret result
+  exitLabel <- block "exit"
+  ret result
 @
 
 __Returns:__ the generated block label (e.g., @"loop.1"@)

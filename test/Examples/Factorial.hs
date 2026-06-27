@@ -1,66 +1,7 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecursiveDo #-}
-
 module Examples.Factorial (factorialModule) where
 
-import LLVM.IR
+import LLVM.IR (IRBuilder)
+import LLVM.IR.Examples (factorial)
 
-{- | Build LLVM IR for a 64-bit iterative factorial function plus a @main
-that calls @fact(5) and returns the result.
-
-Emits:
-
-> @.fmt = private constant [15 x i8] c"fact(5) = %ld\0a\00"
-> declare i32 @printf(ptr)
->
-> define i64 @fact(i64 %n) {
-> entry:
->   br label %loop
-> loop:
->   %1 = phi i64 [ 1, %entry ], [ %4, %body ]
->   %2 = phi i64 [ %n, %entry ], [ %5, %body ]
->   %3 = icmp sgt i64 %2, 0
->   br i1 %3, label %body, label %exit
-> body:
->   %4 = mul i64 %1, %2
->   %5 = sub i64 %2, 1
->   br label %loop
-> exit:
->   ret i64 %1
-> }
->
-> define i32 @main() {
-> entry:
->   %6 = call i64 @fact(i64 5)
->   call i32 (ptr, ...) @printf(ptr @.fmt, i64 %6)
->   ret i32 0
-> }
--}
 factorialModule :: IRBuilder ()
-factorialModule = do
-  declareVarArg "printf" i32 [ptr]
-  emitGlobal (IRString LPrivate ".fmt" "fact(5) = %ld\n\0")
-
-  define i64 "fact" [(i64, "n")] LExternal [] $ mdo
-    beginBlock "entry"
-    br "loop"
-
-    beginBlock "loop"
-    accPhi <- phi i64 [(OConstant (CInt 64 1), "entry"), (newAcc, "body")]
-    nPhi <- phi i64 [(OLocal i64 "n", "entry"), (newN, "body")]
-    cond <- icmp ICmpSGt i64 nPhi (OConstant (CInt 64 0))
-    condbr cond "body" "exit"
-
-    beginBlock "body"
-    newAcc <- mul i64 accPhi nPhi
-    newN <- sub i64 nPhi (OConstant (CInt 64 1))
-    br "loop"
-
-    beginBlock "exit"
-    ret accPhi
-
-  define i32 "main" [] LExternal [] $ do
-    beginBlock "entry"
-    result <- call NoTail i64 (OGlobal i64 "fact") [OConstant (CInt 64 5)]
-    callVoid NoTail i32 (OGlobal i32 "printf") [OGlobal ptr ".fmt", result]
-    ret (OConstant (CInt 32 0))
+factorialModule = factorial
