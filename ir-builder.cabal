@@ -1,0 +1,96 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.37.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           ir-builder
+version:        0.1.0.0
+synopsis:       Monadic DSL for constructing LLVM IR
+description:    Please see the README at <https://codeberg.org/laserpants/ir-builder#readme>
+category:       Compilers/Interpreters
+homepage:       https://codeberg.org/laserpants/ir-builder
+bug-reports:    https://codeberg.org/laserpants/ir-builder/issues
+author:         Heikki Johannes Hildén
+maintainer:     hildenjohannes@gmail.com
+copyright:      2026-present Heikki Johannes Hildén
+license:        MIT
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+
+library
+  exposed-modules:
+      LLVM.IR
+      LLVM.IRAnnotation
+      LLVM.IRAnnotation.Constructors
+      LLVM.IRBuilder
+      LLVM.IRBuilder.BlockBuilder
+      LLVM.IRBuilder.Class
+      LLVM.IRBuilder.Environment
+      LLVM.IRBuilder.Error
+      LLVM.IRBuilder.FunctionBuilder
+      LLVM.IRBuilder.Supply
+      LLVM.IRInstruction
+      LLVM.IRInstruction.Constructors
+      LLVM.IRModule
+      LLVM.IROperand
+      LLVM.IROperand.Constructors
+      LLVM.IRRenderer
+      LLVM.IRTerminator.Constructors
+      LLVM.IRType
+      LLVM.IRType.Constructors
+      LLVM.IRType.HasType
+  other-modules:
+      Paths_ir_builder
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      base >=4.7 && <5
+    , bytestring
+    , containers
+    , mtl
+    , text
+  default-language: Haskell2010
+
+test-suite proto-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Examples.Comments
+      Examples.Factorial
+      Examples.HelloWorld
+      Fixtures.Builders
+      Fixtures.TestData
+      Integration.ExamplesSpec
+      Unit.LLVM.Builder.BlockBuilderSpec
+      Unit.LLVM.Builder.EnvironmentSpec
+      Unit.LLVM.Builder.FunctionBuilderSpec
+      Unit.LLVM.Builder.SupplySpec
+      Unit.LLVM.Instruction.ConstructorsSpec
+      Unit.LLVM.IRAnnotationSpec
+      Unit.LLVM.IRBuilderSpec
+      Unit.LLVM.IRInstructionSpec
+      Unit.LLVM.IRModuleSpec
+      Unit.LLVM.IROperandSpec
+      Unit.LLVM.IRRendererSpec
+      Unit.LLVM.IRTypeSpec
+      Unit.LLVM.Terminator.ConstructorsSpec
+      Unit.LLVM.Type.ConstructorsSpec
+      Paths_ir_builder
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-tool-depends:
+      hspec-discover:hspec-discover
+  build-depends:
+      base >=4.7 && <5
+    , bytestring
+    , containers
+    , hspec >=2.10.0
+    , ir-builder
+    , mtl
+    , text
+  default-language: Haskell2010

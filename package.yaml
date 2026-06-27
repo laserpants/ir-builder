@@ -4,19 +4,15 @@ license: MIT
 author: "Heikki Johannes Hildén"
 maintainer: "hildenjohannes@gmail.com"
 copyright: "2026-present Heikki Johannes Hildén"
+synopsis: Monadic DSL for constructing LLVM IR
+category: Compilers/Interpreters
+homepage: https://codeberg.org/laserpants/ir-builder
+bug-reports: https://codeberg.org/laserpants/ir-builder/issues
 
 extra-source-files:
   - README.md
-  - CHANGELOG.md
 
-# Metadata used when publishing your package
-# synopsis:            Short description of your package
-# category:            Web
-
-# To avoid duplicated efforts in documentation and dealing with the
-# complications of embedding Haddock markup inside cabal files, it is
-# common to point users to the README.md file.
-description: Please see the README on GitHub at <https://github.com/githubuser/proto#readme>
+description: Please see the README at <https://codeberg.org/laserpants/ir-builder#readme>
 
 dependencies:
   - base >= 4.7 && < 5
