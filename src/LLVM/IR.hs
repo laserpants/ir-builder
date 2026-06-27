@@ -14,7 +14,7 @@ control.
 
 = Quick start
 
-Build an IR module containing a function that returns 0:
+Build an IR module containing a simple void function:
 
 @
 import LLVM.IR
