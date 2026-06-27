@@ -14,7 +14,7 @@ where
 import LLVM.IROperand (IROperand (..))
 import LLVM.IRType (IRName, IRType (..))
 
--- | icmp instruction condition codes
+-- | Condition codes for the @icmp@ instruction.
 data IRICmpCond
   = ICmpEq
   | ICmpNe
@@ -28,7 +28,7 @@ data IRICmpCond
   | ICmpSLe
   deriving (Show, Eq, Ord)
 
--- | fcmp instruction condition codes
+-- | Condition codes for the @fcmp@ instruction.
 data IRFCmpCond
   = FCmpOEq
   | FCmpOGt
@@ -83,7 +83,7 @@ data IRAtomicOp
   | ARMWFMin
   deriving (Show, Eq, Ord)
 
--- | IR instruction grammar
+-- | All supported IR instruction operations.
 data IRInstrOp
   = IAShr IRType IROperand IROperand
   | IAdd IRType IROperand IROperand

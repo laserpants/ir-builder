@@ -2,13 +2,13 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-{- |
-This module provides functionality for rendering LLVM IR data structures into their
-textual LLVM IR representation. It handles the conversion of IR modules, functions,
-blocks, instructions, types, and operands into properly formatted LLVM assembly code.
+{- | Renders LLVM IR data structures to their textual LLVM assembly representation.
 
-The primary entry point is 'renderModule', which takes an 'IRModule' and produces
-the complete textual IR output as a pure 'Text' value.
+Handles the conversion of modules, functions, blocks, instructions, types, and
+operands into properly formatted LLVM assembly code.
+
+The primary entry point is 'renderModule', which takes an 'IRModule' and
+produces the complete textual output as a pure 'Text' value.
 -}
 module LLVM.IRRenderer (renderModule) where
 
@@ -59,8 +59,7 @@ quoteIfNeeded n
   | needsQuoting n = "\"" <> n <> "\""
   | otherwise = n
 
-{- |
-Render an LLVM IR module to its textual representation.
+{- | Render an LLVM IR module to its textual representation.
 
 Processes all module components in order:
 
@@ -68,8 +67,8 @@ Processes all module components in order:
 2. Global variables and constants
 3. Function definitions
 
-The output is well-formed LLVM IR that can be written to a @.ll@ file or passed
-to LLVM tools such as @llc@ or @opt@.
+The output is well-formed LLVM IR that can be written to a @.ll@ file or
+passed to LLVM tools such as @llc@ or @opt@.
 -}
 renderModule :: IRModule -> Text
 renderModule IRModule{moduleTypeDecls, moduleGlobals, moduleFunctions} =

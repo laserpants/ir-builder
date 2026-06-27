@@ -21,8 +21,8 @@ and rendered:
 
 @
 let module = buildModule "my_module" $ define i32 "main" [] LExternal [] $ do
-  b0 <- beginBlock "entry"
-  ret (int32 42)
+ b0 <- beginBlock "entry"
+ ret (int32 42)
 case verifyModule module of
 Left err -> putStrLn $ "Verification failed: " ++ err
 Right () -> putStrLn $ "Module verified successfully"
@@ -64,9 +64,9 @@ import LLVM.IRType (IRName, IRType (..))
 
 Linkage controls symbol visibility and resolution:
 
-* `LExternal`: Symbol is externally visible and resolved at link time
-* `LInternal`: Symbol is internal to the translation unit (static in C)
-* `LPrivate`: Symbol is private and cannot be referenced externally
+* 'LExternal': symbol is externally visible and resolved at link time
+* 'LInternal': symbol is internal to the translation unit (like @static@ in C)
+* 'LPrivate': symbol is private and cannot be referenced externally
 -}
 data IRLinkage
   = LExternal
@@ -82,20 +82,20 @@ rendered to LLVM assembly text.
 
 __Fields:__
 
-* `moduleName`: The name of this module
-* `moduleTypeDecls`: Named type declarations (e.g. @%Node = type { ... }@)
-* `moduleGlobals`: Global constants and string literals
-* `moduleFunctions`: Function definitions
+* 'moduleName': the name of this module
+* 'moduleTypeDecls': named type declarations (e.g. @%Node = type { ... }@)
+* 'moduleGlobals': global constants and string literals
+* 'moduleFunctions': function definitions
 
 __Example:__
 
 @
 let mod = IRModule
-  { moduleName = "myprogram"
-  , moduleTypeDecls = [IRTypeDecl "Node" (TStruct [TInt 32, TPtr])]
-  , moduleGlobals = []
-  , moduleFunctions = [mainFunction]
-  }
+ { moduleName = "myprogram"
+ , moduleTypeDecls = [IRTypeDecl "Node" (TStruct [TInt 32, TPtr])]
+ , moduleGlobals = []
+ , moduleFunctions = [mainFunction]
+ }
 in verifyModule mod
 @
 -}
@@ -117,8 +117,8 @@ Type declarations define named types in the module, rendered as:
 
 __Fields:__
 
-* `typeDeclName`: The name of the declared type
-* `typeDeclType`: The underlying type definition
+* 'typeDeclName': the name of the declared type
+* 'typeDeclType': the underlying type definition
 -}
 data IRTypeDecl = IRTypeDecl
   { typeDeclName :: IRName
@@ -134,10 +134,10 @@ variables, or external function declarations.
 
 __Constructors:__
 
-* `IRString`: A string literal with the given byte content
-* `IRConstant`: An immutable (constant) global with an initial value
-* `IRVar`: A mutable global variable with an initial value
-* `IRExtern`: External function (similar to 'IRDecl')
+* 'IRString': a string literal with the given byte content
+* 'IRConstant': an immutable (constant) global with an initial value
+* 'IRVar': a mutable global variable with an initial value
+* 'IRExtern': an external function declaration
 -}
 data IRGlobal
   = IRString IRLinkage IRName ByteString
@@ -156,19 +156,19 @@ be combined on a single function.
 
 __Common attributes:__
 
-* `NoReturn`: Function never returns (calls @exit()@, raises exception, infinite loop)
-* `NoUnwind`: Function does not unwind exceptions
-* `ReadOnly`: Function accesses memory but does not modify it
-* `ReadNone`: Function neither reads nor writes memory
-* `AlwaysInline`: Always inline this function at call sites
-* `NoInline`: Never inline this function
-* `TailCall`: Hints that tail call optimization should be applied
-* `MustTailCall`: Requires tail call optimization
-* `Cold`: Indicates function is infrequently called
-* `Hot`: Indicates function is frequently called
-* `InlineHint`: Suggest inlining to the backend optimizer
-* `NoAlias`: Arguments and return value do not alias
-* `GC`: Specifies the garbage collection strategy for this function
+* 'NoReturn': function never returns (e.g., calls @exit()@, raises an exception, or loops forever)
+* 'NoUnwind': function does not unwind the stack
+* 'ReadOnly': function accesses memory but does not modify it
+* 'ReadNone': function neither reads nor writes memory
+* 'AlwaysInline': always inline this function at call sites
+* 'NoInline': never inline this function
+* 'TailCall': hints that tail-call optimization should be applied
+* 'MustTailCall': requires tail-call optimization
+* 'Cold': indicates this function is infrequently called
+* 'Hot': indicates this function is frequently called
+* 'InlineHint': suggests inlining to the backend optimizer
+* 'NoAlias': arguments and return value do not alias
+* 'GC': specifies the garbage-collection strategy for this function
 -}
 data IRAttribute
   = NoReturn
@@ -195,24 +195,24 @@ branch terminators. All paths through the function must end with a terminator
 
 __Fields:__
 
-* `functionName`: Unique name of this function within the module
-* `functionLinkage`: Visibility and linkage of this function
-* `functionRetType`: Type of the return value
-* `functionArgs`: Parameter types and names
-* `functionBlocks`: Basic blocks comprising the function body
-* `functionAttributes`: Optimization and correctness hints
+* 'functionName': unique name of this function within the module
+* 'functionLinkage': visibility and linkage
+* 'functionRetType': return type
+* 'functionArgs': parameter types and names
+* 'functionBlocks': basic blocks comprising the function body
+* 'functionAttributes': optimization and correctness hints
 
 __Example:__
 
 @
 let func = IRFunction
-  { functionName = "main"
-  , functionLinkage = LExternal
-  , functionRetType = i32
-  , functionArgs = []
-  , functionBlocks = [entryBlock, loopBlock, exitBlock]
-  , functionAttributes = []
-  }
+ { functionName = "main"
+ , functionLinkage = LExternal
+ , functionRetType = i32
+ , functionArgs = []
+ , functionBlocks = [entryBlock, loopBlock, exitBlock]
+ , functionAttributes = []
+ }
 in verifyFunction func
 @
 -}
@@ -234,8 +234,8 @@ annotations provide documentation in the output.
 
 __Constructors:__
 
-* `BlockInstr`: An LLVM instruction with optional inline comment
-* `BlockAnnotation`: A comment annotation for documentation
+* 'BlockInstr': an LLVM instruction with an optional inline comment
+* 'BlockAnnotation': a comment annotation for documentation
 -}
 data IRBlockItem
   = BlockInstr (IRInstruction (Maybe Text))
@@ -256,18 +256,18 @@ terminator instruction.
 
 __Fields:__
 
-* `blockLabel`: Unique label identifying this block within its function
-* `blockItems`: Instructions and annotations in execution order
-* `blockTerminator`: The final instruction (ret, br, condbr, etc.)
+* 'blockLabel': unique label identifying this block within its function
+* 'blockItems': instructions and annotations in execution order
+* 'blockTerminator': the terminating instruction (@ret@, @br@, @condbr@, etc.)
 
 __Example:__
 
 @
 let block = IRBlock
-  { blockLabel = "entry"
-  , blockItems = [BlockInstr (ICall i32 "printf" [...])]
-  , blockTerminator = IRet (Just (int32 0))
-  }
+ { blockLabel = "entry"
+ , blockItems = [BlockInstr (ICall i32 "printf" [...])]
+ , blockTerminator = IRet (Just (int32 0))
+ }
 in blockLabel block -- "entry"
 @
 -}
@@ -294,9 +294,9 @@ __Example:__
 
 @
 let mod = buildModule "test" $ do
-  define i32 "main" [] LExternal [] $ do
-    b0 <- beginBlock "entry"
-    ret (int32 42)
+ define i32 "main" [] LExternal [] $ do
+   b0 <- beginBlock "entry"
+   ret (int32 42)
 case verifyModule mod of
 Left err -> putStrLn $ "Error: " ++ err
 Right () -> putStrLn "Module is valid"
@@ -392,14 +392,14 @@ to catch type errors before rendering.
 
 __Checks performed:__
 
-* Binary arithmetic\/bitwise operands match the declared type
+* Binary arithmetic/bitwise operands match the declared type
 * Comparison operands match the declared type; result is @i1@
 * @select@ condition is @i1@; branch values match the declared type
 * @phi@ incoming operand types match the declared type
-* @load@\/@store@ pointer operand is @ptr@
+* @load@/@store@ pointer operand is @ptr@
 * @alloca@ count operand is an integer type
-* @sext@\/@zext@\/@trunc@ width constraints
-* @inttoptr@\/@ptrtoint@ integer\/pointer constraints
+* @sext@/@zext@/@trunc@ width constraints
+* @inttoptr@/@ptrtoint@ integer/pointer constraints
 * @getelementptr@ base is @ptr@; index operands are integers
 
 __Not checked:__

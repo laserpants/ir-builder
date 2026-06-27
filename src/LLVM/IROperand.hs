@@ -1,8 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE StrictData #-}
 
-{- |
-This module defines the operand and constant value representations used in
+{- | This module defines the operand and constant value representations used in
 LLVM IR, as well as terminator instructions that control flow between basic blocks.
 
 Operands represent values that can be used in instructions, including local
@@ -22,21 +21,20 @@ where
 
 import LLVM.IRType (IRName, IRType (..))
 
-{- |
-Represents constant values in LLVM IR.
+{- | Represents constant values in LLVM IR.
 
 Constants are compile-time known values that can be used as operands in
 instructions or as initializers for global variables. They are typed and
 immutable.
 
-==== __Constructors__
+__Constructors:__
 
-[@CInt Int Integer@] Integer constant with bit width and value
-[@CFloat Float@] Single-precision floating-point constant
-[@CDouble Double@] Double-precision floating-point constant
-[@CNull IRType@] Null pointer constant of the specified type
-[@CStruct [IRConstant]@] Aggregate constant containing a list of field values
-[@CArray IRType [IRConstant]@] Array constant with element type and values
+* 'CInt': integer constant with the given bit width and value
+* 'CFloat': single-precision floating-point constant
+* 'CDouble': double-precision floating-point constant
+* 'CNull': null pointer constant of the specified type
+* 'CStruct': aggregate constant containing a list of field values
+* 'CArray': array constant with element type and values
 -}
 data IRConstant
   = CInt Int Integer
@@ -47,18 +45,17 @@ data IRConstant
   | CArray IRType [IRConstant]
   deriving (Show, Eq, Ord)
 
-{- |
-Represents operands used in LLVM IR instructions.
+{- | Represents operands used in LLVM IR instructions.
 
 An operand is a value that can be used as input to an instruction. It can
 reference a local variable (SSA value), a global symbol, or an immediate
 constant. All operands are typed.
 
-==== __Constructors__
+__Constructors:__
 
-[@OLocal IRType IRName@] Reference to a local SSA value (register) with its type
-[@OGlobal IRType IRName@] Reference to a global symbol with its type
-[@OConstant IRConstant@] Immediate constant value
+* 'OLocal': reference to a local SSA value (register) with its type
+* 'OGlobal': reference to a global symbol with its type
+* 'OConstant': immediate constant value
 -}
 data IROperand
   = OLocal IRType IRName
@@ -66,21 +63,20 @@ data IROperand
   | OConstant IRConstant
   deriving (Show, Eq, Ord)
 
-{- |
-Represents terminator instructions in LLVM IR.
+{- | Represents terminator instructions in LLVM IR.
 
 Terminators are special instructions that must appear exactly once at the
 end of every basic block. They control the flow of execution by either
 returning from a function, branching to another block, or indicating
 unreachable code.
 
-==== __Constructors__
+__Constructors:__
 
-[@IRet (Maybe IROperand)@] Return from function; 'Nothing' for @ret void@, @'Just' op@ for a typed value
-[@IBr IRName@] Unconditional branch to the named block
-[@ICondBr IROperand IRName IRName@] Conditional branch: if condition, then true block, else false block
-[@ISwitch IROperand IRName [(IRConstant, IRName)]@] Multi-way branch on value with default block and case list
-[@IUnreachable@] Indicates unreachable code (undefined behavior if reached)
+* 'IRet': return from the function; 'Nothing' for @ret void@, 'Just' for a typed return value
+* 'IBr': unconditional branch to the named block
+* 'ICondBr': conditional branch — if the condition is true, jump to the first block, else the second
+* 'ISwitch': multi-way branch on a value, with a default block and a list of cases
+* 'IUnreachable': indicates unreachable code (undefined behavior if executed)
 -}
 data IRTerminator
   = IRet (Maybe IROperand)
@@ -90,17 +86,12 @@ data IRTerminator
   | IUnreachable
   deriving (Show, Eq, Ord)
 
-{- |
-Extract the name and type components from an operand.
+{- | Extract the name and type components from an operand.
 
-This function returns the name and type for local and global operands,
-returning 'Nothing' for constant operands which don't have names.
+Returns the name and type for local and global operands. Constant operands
+have no name, so they return 'Nothing'.
 
-==== __Parameters__
-
-* 'IROperand' - The operand to extract components from
-
-==== __Returns__
+__Returns:__
 
 * @Just (IRName, IRType)@ for local and global operands
 * @Nothing@ for constant operands

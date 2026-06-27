@@ -241,7 +241,7 @@ liftEither = either throwIRBuilderError pure
 -- ============================================================================
 
 {- | Internal: ensure a current block exists, creating an implicit 'entry' block
-if none is active. This mirrors LLVM IR semantics where the first block's
+if none is active. This mirrors LLVM IR semantics where the first block’s
 label is implicit.
 -}
 ensureBlock :: (MonadIRBuilder m) => m ()
@@ -285,7 +285,7 @@ setTerminator term = modifyIRBuilderEnv $ mapBuilderEnvCurrentBlock (setBlockBui
 
 {- | Emit an instruction into the current block.
 
-Instructions are appended to the current block's instruction list. Each
+Instructions are appended to the current block’s instruction list. Each
 instruction may have an optional inline comment attached via '<##>'.
 
 If no block is currently active, an implicit block labelled @"entry"@ is

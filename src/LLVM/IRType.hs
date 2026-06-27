@@ -1,38 +1,34 @@
 {-# LANGUAGE StrictData #-}
 
-{- |
-This module defines the type system for LLVM IR.
--}
+-- | This module defines the type system for LLVM IR.
 module LLVM.IRType (IRType (..), IRName) where
 
 import Data.Text (Text)
 
-{- |
-A type alias for names used in LLVM IR (block labels, register names,
+{- | A type alias for names used in LLVM IR (block labels, register names,
 function names, type names, etc.).
 -}
 type IRName = Text
 
-{- |
-Represents LLVM IR types.
+{- | Represents LLVM IR types.
 
 This data type models the LLVM type system, supporting both primitive
 types and complex aggregate types. Types can be anonymous or named,
 and the type system includes support for SIMD vectors.
 
-==== __Constructors__
+__Constructors:__
 
-[@TInt Int@] Integer type with specified bit width (e.g., i32, i64)
-[@TFloat@] Single-precision floating-point type (float)
-[@TDouble@] Double-precision floating-point type (double)
-[@TVoid@] Void type, used for functions that don't return a value
-[@TFun IRType [IRType]@] Function type with return type and parameter types
-[@TPtr@] Opaque pointer type (replaces typed pointers in modern LLVM)
-[@TStruct [IRType]@] Structure type containing a list of field types
-[@TArray Int IRType@] Array type with element count and element type
-[@TNamed IRName@] Reference to a named type defined elsewhere
-[@TOpaque IRName@] Opaque type declaration (incomplete type)
-[@TVector Int IRType@] SIMD vector type with element count and element type
+* 'TInt': integer type with the given bit width (e.g., @i32@, @i64@)
+* 'TFloat': single-precision floating-point (@float@)
+* 'TDouble': double-precision floating-point (@double@)
+* 'TVoid': void type, used for functions that don’t return a value
+* 'TFun': function type with return type and parameter types
+* 'TPtr': opaque pointer type (replaces typed pointers in modern LLVM)
+* 'TStruct': structure type containing a list of field types
+* 'TArray': array type with element count and element type
+* 'TNamed': reference to a named type defined elsewhere
+* 'TOpaque': opaque type declaration (incomplete type)
+* 'TVector': SIMD vector type with element count and element type
 -}
 data IRType
   = TInt Int

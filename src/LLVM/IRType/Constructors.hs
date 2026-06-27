@@ -1,10 +1,5 @@
-{- |
-This module provides smart constructors for creating LLVM IR types.
-
-These helpers simplify the construction of common type patterns, including
-integer types, pointers, floating-point types, and aggregate types.
-
-==== __Usage__
+{- | Smart constructors for common 'IRType' values, including integer types,
+pointers, floating-point types, and aggregate types.
 
 This module is designed to be imported qualified when name collisions occur
 with "LLVM.IROperand.Constructors":
@@ -15,8 +10,8 @@ import qualified LLVM.IROperand.Constructors as O
 
 myFunction :: IRBuilder ()
 myFunction = do
-  x <- add T.i32 (O.i32 10) (O.i32 20)
-  ...
+ x <- add T.i32 (O.i32 10) (O.i32 20)
+ ...
 @
 
 Alternatively, import only non-colliding names unqualified:

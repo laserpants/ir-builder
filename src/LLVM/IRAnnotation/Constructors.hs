@@ -15,11 +15,11 @@ import LLVM.IRBuilder.Class (MonadIRBuilder)
 
 {- | Create a single-line comment annotation.
 
-Usage:
+__Example:__
 
 @emitAnnotation (comment "This is a comment")@
 
-Renders as:
+__Output:__
 
 @; This is a comment@
 -}
@@ -28,11 +28,11 @@ comment = Comment
 
 {- | Create a multi-line comment block annotation.
 
-Usage:
+__Example:__
 
 @emitAnnotation (commentBlock ["Line 1", "Line 2", "Line 3"])@
 
-Renders as:
+__Output:__
 
 > ; Line 1
 > ; Line 2
@@ -41,13 +41,13 @@ Renders as:
 commentBlock :: [Text] -> IRAnnotation
 commentBlock = CommentBlock
 
-{- | Alternative syntax for inline comments using function composition.
+{- | Attach an inline comment to the result of a builder action.
 
-Usage:
+__Example:__
 
 @reg <- withComment "comment explaining this" $ add i32 a b@
 
-Renders as:
+__Output:__
 
 @%reg = add i32 %a, %b  ; comment explaining this@
 -}

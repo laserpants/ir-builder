@@ -1,11 +1,6 @@
-{- |
-This module provides smart constructors for creating LLVM IR operands and constants.
-
-These helpers simplify the construction of common operand patterns, including
-integer and floating-point constants, null pointers, and references to local
-and global values.
-
-==== __Usage__
+{- | Smart constructors for 'IROperand' and 'IRConstant' values, including
+integer and floating-point constants, null pointers, and references to
+local and global symbols.
 
 This module is designed to be imported qualified when name collisions occur
 with "LLVM.IRType.Constructors":
@@ -16,8 +11,8 @@ import qualified LLVM.IROperand.Constructors as O
 
 myFunction :: IRBuilder ()
 myFunction = do
-  x <- add T.i32 (O.i32 10) (O.i32 20)
-  ...
+ x <- add T.i32 (O.i32 10) (O.i32 20)
+ ...
 @
 
 Alternatively, import only non-colliding names unqualified:
@@ -94,11 +89,7 @@ unit = OConstant $ CInt 1 1
 
 -- * Integer constants
 
-{- | Create an i1 (1-bit) integer constant.
-
-==== __Parameters__
-
-* 'Integral' @a@ - The integer value (typically 0 or 1)
+{- | Create an @i1@ (1-bit) integer constant from any 'Integral' value.
 
 >>> i1 0
 OConstant (CInt 1 0)
@@ -107,11 +98,7 @@ OConstant (CInt 1 0)
 i1 :: (Integral a) => a -> IROperand
 i1 = OConstant . CInt 1 . toInteger
 
-{- | Create an i8 (8-bit) integer constant.
-
-==== __Parameters__
-
-* 'Integral' @a@ - The integer value
+{- | Create an @i8@ (8-bit) integer constant from any 'Integral' value.
 
 >>> i8 42
 OConstant (CInt 8 42)
@@ -120,11 +107,7 @@ OConstant (CInt 8 42)
 i8 :: (Integral a) => a -> IROperand
 i8 = OConstant . CInt 8 . toInteger
 
-{- | Create an i32 (32-bit) integer constant.
-
-==== __Parameters__
-
-* 'Integral' @a@ - The integer value
+{- | Create an @i32@ (32-bit) integer constant from any 'Integral' value.
 
 >>> i32 1000
 OConstant (CInt 32 1000)
@@ -133,11 +116,7 @@ OConstant (CInt 32 1000)
 i32 :: (Integral a) => a -> IROperand
 i32 = OConstant . CInt 32 . toInteger
 
-{- | Create an i64 (64-bit) integer constant.
-
-==== __Parameters__
-
-* 'Integral' @a@ - The integer value
+{- | Create an @i64@ (64-bit) integer constant from any 'Integral' value.
 
 >>> i64 9999999
 OConstant (CInt 64 9999999)
@@ -148,10 +127,7 @@ i64 = OConstant . CInt 64 . toInteger
 
 {- | Create an integer constant with a custom bit width.
 
-==== __Parameters__
-
-* 'Int' - The bit width
-* 'Integral' @a@ - The integer value
+Takes the bit width as an 'Int' and the value as any 'Integral'.
 
 >>> int 16 32768
 OConstant (CInt 16 32768)
@@ -164,10 +140,6 @@ int w = OConstant . CInt w . toInteger
 
 {- | Create a single-precision floating-point constant.
 
-==== __Parameters__
-
-* 'Float' - The floating-point value
-
 >>> float 3.14
 OConstant (CFloat 3.14)
 -}
@@ -176,10 +148,6 @@ float :: Float -> IROperand
 float = OConstant . CFloat
 
 {- | Create a double-precision floating-point constant.
-
-==== __Parameters__
-
-* 'Double' - The floating-point value
 
 >>> double 2.71828
 OConstant (CDouble 2.71828)
@@ -192,10 +160,6 @@ double = OConstant . CDouble
 
 {- | Create a null pointer constant of the specified type.
 
-==== __Parameters__
-
-* 'IRType' - The type of the null pointer
-
 >>> nullPtr TPtr
 OConstant (CNull TPtr)
 -}
@@ -207,10 +171,7 @@ nullPtr = OConstant . CNull
 
 {- | Create a reference to a local SSA value (register).
 
-==== __Parameters__
-
-* 'IRType' - The type of the local value
-* 'IRName' - The name of the local value
+Takes the type and name of the SSA register.
 
 >>> local (TInt 32) "x"
 OLocal (TInt 32) "x"
@@ -221,10 +182,7 @@ local = OLocal
 
 {- | Create a reference to a global symbol.
 
-==== __Parameters__
-
-* 'IRType' - The type of the global symbol
-* 'IRName' - The name of the global symbol
+Takes the type and name of the global.
 
 >>> global TPtr "printf"
 OGlobal TPtr "printf"
@@ -233,13 +191,7 @@ OGlobal TPtr "printf"
 global :: IRType -> IRName -> IROperand
 global = OGlobal
 
-{- | Create a constant operand from an 'IRConstant'.
-
-This is a convenience wrapper for the 'OConstant' constructor.
-
-==== __Parameters__
-
-* 'IRConstant' - The constant value
+{- | Wrap an 'IRConstant' as an 'IROperand'. Convenience alias for 'OConstant'.
 
 >>> constant (CInt 32 42)
 OConstant (CInt 32 42)
@@ -252,10 +204,6 @@ constant = OConstant
 
 {- | Create a structure constant from a list of field constants.
 
-==== __Parameters__
-
-* ['IRConstant'] - The list of field values
-
 >>> struct [CInt 32 1, CInt 32 2]
 OConstant (CStruct [CInt 32 1, CInt 32 2])
 -}
@@ -263,12 +211,7 @@ OConstant (CStruct [CInt 32 1, CInt 32 2])
 struct :: [IRConstant] -> IROperand
 struct = OConstant . CStruct
 
-{- | Create an array constant with the specified element type.
-
-==== __Parameters__
-
-* 'IRType' - The element type of the array
-* ['IRConstant'] - The list of element values
+{- | Create an array constant with the given element type and values.
 
 >>> array (TInt 32) [CInt 32 1, CInt 32 2, CInt 32 3]
 OConstant (CArray (TInt 32) [CInt 32 1, CInt 32 2, CInt 32 3])
