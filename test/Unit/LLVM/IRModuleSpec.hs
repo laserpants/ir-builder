@@ -14,8 +14,8 @@ spec = describe "LLVM.IRModule" $ do
   describe "IRModule construction" $ do
     it "creates a simple module" $ do
       let m = buildSimpleModule "test"
-      moduleName m `shouldBe` "test"
-      length (moduleFunctions m) `shouldBe` 1
+      irModuleName m `shouldBe` "test"
+      length (irModuleFunctions m) `shouldBe` 1
 
   describe "IRFunction construction" $ do
     it "creates a simple function" $ do
@@ -40,10 +40,10 @@ spec = describe "LLVM.IRModule" $ do
           block2 = buildBlockWithTerminator "exit" (IRet (Just (OConstant (CInt 32 0))))
           m =
             IRModule
-              { moduleName = "multi"
-              , moduleTypeDecls = []
-              , moduleGlobals = []
-              , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
+              { irModuleName = "multi"
+              , irModuleTypeDecls = []
+              , irModuleGlobals = []
+              , irModuleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
               }
       verifyModule m `shouldBe` Right ()
 
@@ -61,10 +61,10 @@ spec = describe "LLVM.IRModule" $ do
           block3 = buildBlockWithTerminator "else" (IRet (Just (OConstant (CInt 32 0))))
           m =
             IRModule
-              { moduleName = "condbr"
-              , moduleTypeDecls = []
-              , moduleGlobals = []
-              , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2, block3]]
+              { irModuleName = "condbr"
+              , irModuleTypeDecls = []
+              , irModuleGlobals = []
+              , irModuleFunctions = [buildMultiBlockFunction "f" [block1, block2, block3]]
               }
       verifyModule m `shouldBe` Right ()
 
@@ -73,10 +73,10 @@ spec = describe "LLVM.IRModule" $ do
           block2 = buildBlockWithTerminator "else" (IRet (Just (OConstant (CInt 32 0))))
           m =
             IRModule
-              { moduleName = "bad_condbr"
-              , moduleTypeDecls = []
-              , moduleGlobals = []
-              , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
+              { irModuleName = "bad_condbr"
+              , irModuleTypeDecls = []
+              , irModuleGlobals = []
+              , irModuleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
               }
       verifyModule m `shouldSatisfy` isLeft
 
@@ -85,10 +85,10 @@ spec = describe "LLVM.IRModule" $ do
           block2 = buildBlockWithTerminator "default" (IRet (Just (OConstant (CInt 32 0))))
           m =
             IRModule
-              { moduleName = "switch"
-              , moduleTypeDecls = []
-              , moduleGlobals = []
-              , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
+              { irModuleName = "switch"
+              , irModuleTypeDecls = []
+              , irModuleGlobals = []
+              , irModuleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
               }
       verifyModule m `shouldBe` Right ()
 
@@ -168,10 +168,10 @@ isLeft _ = False
 moduleWithInstr :: IRInstrOp -> Maybe (IRName, IRType) -> IRModule
 moduleWithInstr instr result =
   IRModule
-    { moduleName = "typecheck_test"
-    , moduleTypeDecls = []
-    , moduleGlobals = []
-    , moduleFunctions =
+    { irModuleName = "typecheck_test"
+    , irModuleTypeDecls = []
+    , irModuleGlobals = []
+    , irModuleFunctions =
         [ IRFunction
             { functionName = "f"
             , functionLinkage = LExternal

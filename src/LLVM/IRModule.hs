@@ -82,28 +82,28 @@ rendered to LLVM assembly text.
 
 __Fields:__
 
-* 'moduleName': the name of this module
-* 'moduleTypeDecls': named type declarations (e.g. @%Node = type { ... }@)
-* 'moduleGlobals': global constants and string literals
-* 'moduleFunctions': function definitions
+* 'irModuleName': the name of this module
+* 'irModuleTypeDecls': named type declarations (e.g. @%Node = type { ... }@)
+* 'irModuleGlobals': global constants and string literals
+* 'irModuleFunctions': function definitions
 
 __Example:__
 
 @
 let mod = IRModule
- { moduleName = "myprogram"
- , moduleTypeDecls = [IRTypeDecl "Node" (TStruct [TInt 32, TPtr])]
- , moduleGlobals = []
- , moduleFunctions = [mainFunction]
+ { irModuleName = "myprogram"
+ , irModuleTypeDecls = [IRTypeDecl "Node" (TStruct [TInt 32, TPtr])]
+ , irModuleGlobals = []
+ , irModuleFunctions = [mainFunction]
  }
 in verifyModule mod
 @
 -}
 data IRModule = IRModule
-  { moduleName :: IRName
-  , moduleTypeDecls :: [IRTypeDecl]
-  , moduleGlobals :: [IRGlobal]
-  , moduleFunctions :: [IRFunction]
+  { irModuleName :: IRName
+  , irModuleTypeDecls :: [IRTypeDecl]
+  , irModuleGlobals :: [IRGlobal]
+  , irModuleFunctions :: [IRFunction]
   }
   deriving (Show, Eq, Ord)
 
@@ -303,7 +303,7 @@ Right () -> putStrLn "Module is valid"
 @
 -}
 verifyModule :: IRModule -> Either String ()
-verifyModule IRModule{moduleFunctions} = mapM_ verifyFunction moduleFunctions
+verifyModule IRModule{irModuleFunctions} = mapM_ verifyFunction irModuleFunctions
 
 verifyFunction :: IRFunction -> Either String ()
 verifyFunction f = do
@@ -408,7 +408,7 @@ __Not checked:__
 * @bitcast@ size compatibility (requires data layout)
 -}
 typeCheckModule :: IRModule -> Either String ()
-typeCheckModule IRModule{moduleFunctions} = mapM_ typeCheckFunction moduleFunctions
+typeCheckModule IRModule{irModuleFunctions} = mapM_ typeCheckFunction irModuleFunctions
 
 typeCheckFunction :: IRFunction -> Either String ()
 typeCheckFunction IRFunction{functionName, functionBlocks} =

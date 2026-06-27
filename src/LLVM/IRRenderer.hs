@@ -71,11 +71,11 @@ The output is well-formed LLVM IR that can be written to a @.ll@ file or
 passed to LLVM tools such as @llc@ or @opt@.
 -}
 renderModule :: IRModule -> Text
-renderModule IRModule{moduleTypeDecls, moduleGlobals, moduleFunctions} =
+renderModule IRModule{irModuleTypeDecls, irModuleGlobals, irModuleFunctions} =
   let items =
-        map renderTypeDecl moduleTypeDecls
-          <> map renderGlobal moduleGlobals
-          <> map renderFunction moduleFunctions
+        map renderTypeDecl irModuleTypeDecls
+          <> map renderGlobal irModuleGlobals
+          <> map renderFunction irModuleFunctions
    in if null items then "" else Text.intercalate "\n" items <> "\n"
 
 -- | Render a type declaration (e.g. @%Node = type { i32, ptr }@).

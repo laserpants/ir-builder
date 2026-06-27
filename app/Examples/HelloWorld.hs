@@ -2,14 +2,7 @@
 
 module Examples.HelloWorld (helloWorld) where
 
-import LLVM.IRBuilder
-import LLVM.IRInstruction (IRTailMarker (..))
-import LLVM.IRInstruction.Constructors (callVoid, gep)
-import LLVM.IRModule (IRGlobal (..), IRLinkage (..))
-import LLVM.IROperand (IRConstant (..), IROperand (..))
-import LLVM.IRTerminator.Constructors (ret)
-import LLVM.IRType (IRType (..))
-import LLVM.IRType.Constructors (i32, i8, ptr)
+import LLVM.IR
 
 helloWorld :: IRBuilder ()
 helloWorld = do

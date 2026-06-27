@@ -3,45 +3,38 @@
 
 module Examples.Factorial (factorialModule) where
 
-import LLVM.IRBuilder
-import LLVM.IRInstruction (IRICmpCond (..), IRTailMarker (..))
-import LLVM.IRInstruction.Constructors (call, callVoid, icmp, mul, phi, sub)
-import LLVM.IRModule (IRGlobal (..), IRLinkage (..))
-import LLVM.IROperand (IRConstant (..), IROperand (..))
-import LLVM.IRTerminator.Constructors (br, condbr, ret)
-import LLVM.IRType.Constructors (i32, i64, ptr)
+import LLVM.IR
 
-{- | Build LLVM IR for a 64-bit iterative factorial function plus a @main
-that calls @fact(5) and returns the result.
-
-Emits:
-
-> @.fmt = private constant [15 x i8] c"fact(5) = %ld\0a\00"
-> declare i32 @printf(ptr)
->
-> define i64 @fact(i64 %n) {
-> entry:
->   br label %loop
-> loop:
->   %1 = phi i64 [ 1, %entry ], [ %4, %body ]
->   %2 = phi i64 [ %n, %entry ], [ %5, %body ]
->   %3 = icmp sgt i64 %2, 0
->   br i1 %3, label %body, label %exit
-> body:
->   %4 = mul i64 %1, %2
->   %5 = sub i64 %2, 1
->   br label %loop
-> exit:
->   ret i64 %1
-> }
->
-> define i32 @main() {
-> entry:
->   %6 = call i64 @fact(i64 5)
->   call i32 (ptr, ...) @printf(ptr @.fmt, i64 %6)
->   ret i32 0
-> }
--}
+-- | Build LLVM IR for a 64-bit iterative factorial function plus a @main
+-- that calls @fact(5) and returns the result.
+--
+-- Emits:
+--
+-- > @.fmt = private constant [15 x i8] c"fact(5) = %ld\0a\00"
+-- > declare i32 @printf(ptr)
+-- >
+-- > define i64 @fact(i64 %n) {
+-- > entry:
+-- >   br label %loop
+-- > loop:
+-- >   %1 = phi i64 [ 1, %entry ], [ %4, %body ]
+-- >   %2 = phi i64 [ %n, %entry ], [ %5, %body ]
+-- >   %3 = icmp sgt i64 %2, 0
+-- >   br i1 %3, label %body, label %exit
+-- > body:
+-- >   %4 = mul i64 %1, %2
+-- >   %5 = sub i64 %2, 1
+-- >   br label %loop
+-- > exit:
+-- >   ret i64 %1
+-- > }
+-- >
+-- > define i32 @main() {
+-- > entry:
+-- >   %6 = call i64 @fact(i64 5)
+-- >   call i32 (ptr, ...) @printf(ptr @.fmt, i64 %6)
+-- >   ret i32 0
+-- > }
 factorialModule :: IRBuilder ()
 factorialModule = do
   declareVarArg "printf" i32 [ptr]

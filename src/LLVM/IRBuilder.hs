@@ -49,6 +49,7 @@ module LLVM.IRBuilder (
   MonadIRBuilder (..),
   runIRBuilder,
   IRBuilderEnv (..),
+  emptyIRBuilderEnv,
   lift,
   compileModule,
   compileModuleWith,
@@ -276,8 +277,8 @@ emitTerminator term = do
 
 {- | Set the terminator instruction for the current block.
 
-Prefer 'emitTerminator' for proper error handling. This is a lower-level 
-variant used internally. 
+Prefer 'emitTerminator' for proper error handling. This is a lower-level
+variant used internally.
 -}
 setTerminator :: (MonadIRBuilder m) => IRTerminator -> m ()
 setTerminator term = modifyIRBuilderEnv $ mapBuilderEnvCurrentBlock (setBlockBuilderTerminator term)
@@ -377,10 +378,10 @@ modifyLastInstructionComment comment = do
 finalizeModule :: IRName -> IRBuilderEnv -> IRModule
 finalizeModule name env@IRBuilderEnv{builderEnvGlobals, builderEnvTypeDecls} =
   IRModule
-    { moduleName = name
-    , moduleTypeDecls = reverse builderEnvTypeDecls
-    , moduleGlobals = reverse builderEnvGlobals
-    , moduleFunctions = finalizeFunctions env
+    { irModuleName = name
+    , irModuleTypeDecls = reverse builderEnvTypeDecls
+    , irModuleGlobals = reverse builderEnvGlobals
+    , irModuleFunctions = finalizeFunctions env
     }
 
 finalizeFunctions :: IRBuilderEnv -> [IRFunction]

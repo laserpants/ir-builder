@@ -56,10 +56,10 @@ buildSimpleFunction fname =
 buildSimpleModule :: IRName -> IRModule
 buildSimpleModule mname =
   IRModule
-    { moduleName = mname
-    , moduleTypeDecls = []
-    , moduleGlobals = []
-    , moduleFunctions = [buildSimpleFunction "main"]
+    { irModuleName = mname
+    , irModuleTypeDecls = []
+    , irModuleGlobals = []
+    , irModuleFunctions = [buildSimpleFunction "main"]
     }
 
 -- | Build a block with a specific terminator
@@ -118,10 +118,10 @@ buildModuleWithDuplicateBlockNames =
           , functionAttributes = []
           }
    in IRModule
-        { moduleName = "bad_module"
-        , moduleTypeDecls = []
-        , moduleGlobals = []
-        , moduleFunctions = [func]
+        { irModuleName = "bad_module"
+        , irModuleTypeDecls = []
+        , irModuleGlobals = []
+        , irModuleFunctions = [func]
         }
 
 -- | Build a module with an invalid branch target
@@ -143,8 +143,8 @@ buildModuleWithInvalidBranchTarget =
           , functionAttributes = []
           }
    in IRModule
-        { moduleName = "bad_branch_module"
-        , moduleTypeDecls = []
-        , moduleGlobals = []
-        , moduleFunctions = [func]
+        { irModuleName = "bad_branch_module"
+        , irModuleTypeDecls = []
+        , irModuleGlobals = []
+        , irModuleFunctions = [func]
         }
