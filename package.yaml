@@ -1,4 +1,4 @@
-name: coal-llvm-subsystem
+name: ir-builder
 version: 0.1.0.0
 license: MIT
 author: "Heikki Johannes Hildén"
@@ -50,5 +50,5 @@ tests:
     build-tools:
       - hspec-discover:hspec-discover
     dependencies:
-      - coal-llvm-subsystem
+      - ir-builder
       - hspec >= 2.10.0

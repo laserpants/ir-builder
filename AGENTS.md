@@ -1,4 +1,4 @@
-# Agent Guide — coal-llvm-subsystem
+# Agent Guide — ir-builder
 
 > Quick reference for AI coding agents generating Haskell code that builds
 > LLVM IR using this library. Load this file as context before generating code.
