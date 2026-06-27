@@ -18,10 +18,10 @@ render = unpack . renderModule
 minimalModule :: IRModule
 minimalModule =
   IRModule
-    { moduleName = "test",
-      moduleTypeDecls = [],
-      moduleGlobals = [],
-      moduleFunctions = []
+    { moduleName = "test"
+    , moduleTypeDecls = []
+    , moduleGlobals = []
+    , moduleFunctions = []
     }
 
 -- | Build a module with a single trivial function
@@ -30,18 +30,18 @@ singleFuncModule =
   minimalModule
     { moduleFunctions =
         [ IRFunction
-            { functionName = "main",
-              functionLinkage = LExternal,
-              functionRetType = TInt 32,
-              functionArgs = [],
-              functionBlocks =
+            { functionName = "main"
+            , functionLinkage = LExternal
+            , functionRetType = TInt 32
+            , functionArgs = []
+            , functionBlocks =
                 [ IRBlock
-                    { blockLabel = "entry",
-                      blockItems = [],
-                      blockTerminator = IRet (Just (OConstant (CInt 32 0)))
+                    { blockLabel = "entry"
+                    , blockItems = []
+                    , blockTerminator = IRet (Just (OConstant (CInt 32 0)))
                     }
-                ],
-              functionAttributes = []
+                ]
+            , functionAttributes = []
             }
         ]
     }
@@ -69,14 +69,14 @@ spec = describe "LLVM.IRRenderer" $ do
             minimalModule
               { moduleFunctions =
                   [ IRFunction
-                      { functionName = "f",
-                        functionLinkage = LExternal,
-                        functionRetType = TInt 32,
-                        functionArgs = [(TInt 32, "x"), (TFloat, "y")],
-                        functionBlocks =
+                      { functionName = "f"
+                      , functionLinkage = LExternal
+                      , functionRetType = TInt 32
+                      , functionArgs = [(TInt 32, "x"), (TFloat, "y")]
+                      , functionBlocks =
                           [ IRBlock "entry" [] (IRet (Just (OConstant (CInt 32 0))))
-                          ],
-                        functionAttributes = []
+                          ]
+                      , functionAttributes = []
                       }
                   ]
               }
@@ -89,14 +89,14 @@ spec = describe "LLVM.IRRenderer" $ do
             minimalModule
               { moduleFunctions =
                   [ IRFunction
-                      { functionName = "f",
-                        functionLinkage = LExternal,
-                        functionRetType = TVoid,
-                        functionArgs = [],
-                        functionBlocks =
+                      { functionName = "f"
+                      , functionLinkage = LExternal
+                      , functionRetType = TVoid
+                      , functionArgs = []
+                      , functionBlocks =
                           [ IRBlock "entry" [] IUnreachable
-                          ],
-                        functionAttributes = [NoReturn, NoUnwind]
+                          ]
+                      , functionAttributes = [NoReturn, NoUnwind]
                       }
                   ]
               }
@@ -109,7 +109,7 @@ spec = describe "LLVM.IRRenderer" $ do
       let m =
             minimalModule
               { moduleTypeDecls =
-                  [ IRTypeDecl {typeDeclName = "MyType", typeDeclType = TStruct [TInt 32, TFloat]}
+                  [ IRTypeDecl{typeDeclName = "MyType", typeDeclType = TStruct [TInt 32, TFloat]}
                   ]
               }
       let out = render m
@@ -202,9 +202,9 @@ spec = describe "LLVM.IRRenderer" $ do
     it "renders add instruction" $ do
       let instr =
             IRInstruction
-              { instrResult = Just ("r", TInt 32),
-                instrOp = IAdd (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b"),
-                instrMetadata = Nothing
+              { instrResult = Just ("r", TInt 32)
+              , instrOp = IAdd (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b")
+              , instrMetadata = Nothing
               }
           m =
             minimalModule
@@ -219,9 +219,9 @@ spec = describe "LLVM.IRRenderer" $ do
     it "renders icmp instruction" $ do
       let instr =
             IRInstruction
-              { instrResult = Just ("cmp", TInt 1),
-                instrOp = IICmp ICmpEq (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b"),
-                instrMetadata = Nothing
+              { instrResult = Just ("cmp", TInt 1)
+              , instrOp = IICmp ICmpEq (TInt 32) (OLocal (TInt 32) "a") (OLocal (TInt 32) "b")
+              , instrMetadata = Nothing
               }
           m =
             minimalModule
@@ -235,9 +235,9 @@ spec = describe "LLVM.IRRenderer" $ do
     it "renders store instruction (no result)" $ do
       let instr =
             IRInstruction
-              { instrResult = Nothing,
-                instrOp = IStore (OLocal (TInt 32) "v") (OGlobal TPtr "g"),
-                instrMetadata = Nothing
+              { instrResult = Nothing
+              , instrOp = IStore (OLocal (TInt 32) "v") (OGlobal TPtr "g")
+              , instrMetadata = Nothing
               }
           m =
             minimalModule
@@ -251,9 +251,9 @@ spec = describe "LLVM.IRRenderer" $ do
     it "renders load instruction" $ do
       let instr =
             IRInstruction
-              { instrResult = Just ("r", TInt 32),
-                instrOp = ILoad (TInt 32) (OGlobal TPtr "g"),
-                instrMetadata = Nothing
+              { instrResult = Just ("r", TInt 32)
+              , instrOp = ILoad (TInt 32) (OGlobal TPtr "g")
+              , instrMetadata = Nothing
               }
           m =
             minimalModule
@@ -267,9 +267,9 @@ spec = describe "LLVM.IRRenderer" $ do
     it "renders call instruction with typed arguments" $ do
       let instr =
             IRInstruction
-              { instrResult = Nothing,
-                instrOp = ICall NoTail (TInt 32) (OGlobal (TInt 32) "puts") [OLocal TPtr "s"],
-                instrMetadata = Nothing
+              { instrResult = Nothing
+              , instrOp = ICall NoTail (TInt 32) (OGlobal (TInt 32) "puts") [OLocal TPtr "s"]
+              , instrMetadata = Nothing
               }
           m =
             minimalModule
@@ -283,9 +283,9 @@ spec = describe "LLVM.IRRenderer" $ do
     it "renders tail call instruction" $ do
       let instr =
             IRInstruction
-              { instrResult = Nothing,
-                instrOp = ICall Tail (TInt 32) (OGlobal (TInt 32) "puts") [OLocal TPtr "s"],
-                instrMetadata = Nothing
+              { instrResult = Nothing
+              , instrOp = ICall Tail (TInt 32) (OGlobal (TInt 32) "puts") [OLocal TPtr "s"]
+              , instrMetadata = Nothing
               }
           m =
             minimalModule
@@ -299,9 +299,9 @@ spec = describe "LLVM.IRRenderer" $ do
     it "renders musttail call instruction" $ do
       let instr =
             IRInstruction
-              { instrResult = Nothing,
-                instrOp = ICall MustTail (TInt 32) (OGlobal (TInt 32) "puts") [OLocal TPtr "s"],
-                instrMetadata = Nothing
+              { instrResult = Nothing
+              , instrOp = ICall MustTail (TInt 32) (OGlobal (TInt 32) "puts") [OLocal TPtr "s"]
+              , instrMetadata = Nothing
               }
           m =
             minimalModule
@@ -336,8 +336,8 @@ spec = describe "LLVM.IRRenderer" $ do
                       LExternal
                       TVoid
                       []
-                      [ IRBlock "entry" [] (IBr "exit"),
-                        IRBlock "exit" [] IUnreachable
+                      [ IRBlock "entry" [] (IBr "exit")
+                      , IRBlock "exit" [] IUnreachable
                       ]
                       []
                   ]
@@ -354,9 +354,9 @@ spec = describe "LLVM.IRRenderer" $ do
                       LExternal
                       TVoid
                       []
-                      [ IRBlock "entry" [] (ICondBr (OLocal (TInt 1) "c") "then" "else"),
-                        IRBlock "then" [] IUnreachable,
-                        IRBlock "else" [] IUnreachable
+                      [ IRBlock "entry" [] (ICondBr (OLocal (TInt 1) "c") "then" "else")
+                      , IRBlock "then" [] IUnreachable
+                      , IRBlock "else" [] IUnreachable
                       ]
                       []
                   ]
@@ -458,11 +458,11 @@ spec = describe "LLVM.IRRenderer" $ do
 
   describe "renderModule - type declarations" $ do
     it "renders a named struct type declaration" $ do
-      let m = minimalModule {moduleTypeDecls = [IRTypeDecl "Node" (TStruct [TInt 32, TPtr, TPtr])]}
+      let m = minimalModule{moduleTypeDecls = [IRTypeDecl "Node" (TStruct [TInt 32, TPtr, TPtr])]}
       render m `shouldContain` "%Node = type { i32, ptr, ptr }"
 
     it "renders multiple type declarations" $ do
-      let m = minimalModule {moduleTypeDecls = [IRTypeDecl "Foo" (TStruct [TInt 32]), IRTypeDecl "Bar" (TStruct [TPtr])]}
+      let m = minimalModule{moduleTypeDecls = [IRTypeDecl "Foo" (TStruct [TInt 32]), IRTypeDecl "Bar" (TStruct [TPtr])]}
       let out = render m
       out `shouldContain` "%Foo = type { i32 }"
       out `shouldContain` "%Bar = type { ptr }"
@@ -470,8 +470,8 @@ spec = describe "LLVM.IRRenderer" $ do
     it "type declarations appear before globals and functions" $ do
       let m =
             minimalModule
-              { moduleTypeDecls = [IRTypeDecl "Node" (TStruct [TInt 32])],
-                moduleGlobals = [IRExtern "printf" TVoid [TPtr] False]
+              { moduleTypeDecls = [IRTypeDecl "Node" (TStruct [TInt 32])]
+              , moduleGlobals = [IRExtern "printf" TVoid [TPtr] False]
               }
       let out = render m
       let nodePos = length $ takeWhile (/= '%') out
@@ -480,109 +480,109 @@ spec = describe "LLVM.IRRenderer" $ do
 
   describe "renderModule - external declarations" $ do
     it "renders a declare statement" $ do
-      let m = minimalModule {moduleGlobals = [IRExtern "printf" TVoid [TPtr] False]}
+      let m = minimalModule{moduleGlobals = [IRExtern "printf" TVoid [TPtr] False]}
       render m `shouldContain` "declare void @printf(ptr)"
 
     it "renders declare with multiple arg types" $ do
-      let m = minimalModule {moduleGlobals = [IRExtern "memcpy" TPtr [TPtr, TPtr, TInt 64] False]}
+      let m = minimalModule{moduleGlobals = [IRExtern "memcpy" TPtr [TPtr, TPtr, TInt 64] False]}
       render m `shouldContain` "declare ptr @memcpy(ptr, ptr, i64)"
 
     it "renders a variadic declare with fixed args" $ do
-      let m = minimalModule {moduleGlobals = [IRExtern "printf" (TInt 32) [TPtr] True]}
+      let m = minimalModule{moduleGlobals = [IRExtern "printf" (TInt 32) [TPtr] True]}
       render m `shouldContain` "declare i32 @printf(ptr, ...)"
 
     it "renders a variadic declare with no fixed args" $ do
-      let m = minimalModule {moduleGlobals = [IRExtern "varonly" TVoid [] True]}
+      let m = minimalModule{moduleGlobals = [IRExtern "varonly" TVoid [] True]}
       render m `shouldContain` "declare void @varonly(...)"
 
   describe "renderModule - aggregate and vector instructions" $ do
     it "renders extractvalue" $ do
       let instr =
             IRInstruction
-              { instrResult = Just ("r", TInt 32),
-                instrOp = IExtractValue (OLocal (TStruct [TInt 32, TInt 64]) "s") [0],
-                instrMetadata = Nothing
+              { instrResult = Just ("r", TInt 32)
+              , instrOp = IExtractValue (OLocal (TStruct [TInt 32, TInt 64]) "s") [0]
+              , instrMetadata = Nothing
               }
-          m = minimalModule {moduleFunctions = [IRFunction "f" LExternal (TInt 32) [] [IRBlock "entry" [BlockInstr instr] (IRet (Just (OLocal (TInt 32) "r")))] []]}
+          m = minimalModule{moduleFunctions = [IRFunction "f" LExternal (TInt 32) [] [IRBlock "entry" [BlockInstr instr] (IRet (Just (OLocal (TInt 32) "r")))] []]}
       render m `shouldContain` "extractvalue { i32, i64 } %s, 0"
 
     it "renders insertvalue" $ do
       let instr =
             IRInstruction
-              { instrResult = Just ("r", TStruct [TInt 32, TInt 64]),
-                instrOp = IInsertValue (OLocal (TStruct [TInt 32, TInt 64]) "s") (OLocal (TInt 32) "v") [0],
-                instrMetadata = Nothing
+              { instrResult = Just ("r", TStruct [TInt 32, TInt 64])
+              , instrOp = IInsertValue (OLocal (TStruct [TInt 32, TInt 64]) "s") (OLocal (TInt 32) "v") [0]
+              , instrMetadata = Nothing
               }
-          m = minimalModule {moduleFunctions = [IRFunction "f" LExternal (TStruct [TInt 32, TInt 64]) [] [IRBlock "entry" [BlockInstr instr] (IRet (Just (OLocal (TStruct [TInt 32, TInt 64]) "r")))] []]}
+          m = minimalModule{moduleFunctions = [IRFunction "f" LExternal (TStruct [TInt 32, TInt 64]) [] [IRBlock "entry" [BlockInstr instr] (IRet (Just (OLocal (TStruct [TInt 32, TInt 64]) "r")))] []]}
       render m `shouldContain` "insertvalue { i32, i64 } %s, i32 %v, 0"
 
     it "renders extractelement" $ do
       let instr =
             IRInstruction
-              { instrResult = Just ("r", TInt 32),
-                instrOp = IExtractElement (OLocal (TVector 4 (TInt 32)) "v") (OLocal (TInt 32) "i"),
-                instrMetadata = Nothing
+              { instrResult = Just ("r", TInt 32)
+              , instrOp = IExtractElement (OLocal (TVector 4 (TInt 32)) "v") (OLocal (TInt 32) "i")
+              , instrMetadata = Nothing
               }
-          m = minimalModule {moduleFunctions = [IRFunction "f" LExternal (TInt 32) [] [IRBlock "entry" [BlockInstr instr] (IRet (Just (OLocal (TInt 32) "r")))] []]}
+          m = minimalModule{moduleFunctions = [IRFunction "f" LExternal (TInt 32) [] [IRBlock "entry" [BlockInstr instr] (IRet (Just (OLocal (TInt 32) "r")))] []]}
       render m `shouldContain` "extractelement <4 x i32> %v, i32 %i"
 
     it "renders insertelement" $ do
       let instr =
             IRInstruction
-              { instrResult = Just ("r", TVector 4 (TInt 32)),
-                instrOp = IInsertElement (OLocal (TVector 4 (TInt 32)) "v") (OLocal (TInt 32) "e") (OLocal (TInt 32) "i"),
-                instrMetadata = Nothing
+              { instrResult = Just ("r", TVector 4 (TInt 32))
+              , instrOp = IInsertElement (OLocal (TVector 4 (TInt 32)) "v") (OLocal (TInt 32) "e") (OLocal (TInt 32) "i")
+              , instrMetadata = Nothing
               }
-          m = minimalModule {moduleFunctions = [IRFunction "f" LExternal (TVector 4 (TInt 32)) [] [IRBlock "entry" [BlockInstr instr] (IRet (Just (OLocal (TVector 4 (TInt 32)) "r")))] []]}
+          m = minimalModule{moduleFunctions = [IRFunction "f" LExternal (TVector 4 (TInt 32)) [] [IRBlock "entry" [BlockInstr instr] (IRet (Just (OLocal (TVector 4 (TInt 32)) "r")))] []]}
       render m `shouldContain` "insertelement <4 x i32> %v, i32 %e, i32 %i"
 
     it "renders shufflevector" $ do
       let instr =
             IRInstruction
-              { instrResult = Just ("r", TVector 4 (TInt 32)),
-                instrOp = IShuffleVector (OLocal (TVector 4 (TInt 32)) "a") (OLocal (TVector 4 (TInt 32)) "b") [0, 2, 1, 3],
-                instrMetadata = Nothing
+              { instrResult = Just ("r", TVector 4 (TInt 32))
+              , instrOp = IShuffleVector (OLocal (TVector 4 (TInt 32)) "a") (OLocal (TVector 4 (TInt 32)) "b") [0, 2, 1, 3]
+              , instrMetadata = Nothing
               }
-          m = minimalModule {moduleFunctions = [IRFunction "f" LExternal (TVector 4 (TInt 32)) [] [IRBlock "entry" [BlockInstr instr] (IRet (Just (OLocal (TVector 4 (TInt 32)) "r")))] []]}
+          m = minimalModule{moduleFunctions = [IRFunction "f" LExternal (TVector 4 (TInt 32)) [] [IRBlock "entry" [BlockInstr instr] (IRet (Just (OLocal (TVector 4 (TInt 32)) "r")))] []]}
       render m `shouldContain` "shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 0, i32 2, i32 1, i32 3>"
 
   describe "renderModule - atomic instructions" $ do
     it "renders atomicrmw" $ do
       let instr =
             IRInstruction
-              { instrResult = Just ("r", TInt 32),
-                instrOp = IAtomicRMW SeqCst ARMWAdd (OLocal TPtr "p") (OLocal (TInt 32) "v"),
-                instrMetadata = Nothing
+              { instrResult = Just ("r", TInt 32)
+              , instrOp = IAtomicRMW SeqCst ARMWAdd (OLocal TPtr "p") (OLocal (TInt 32) "v")
+              , instrMetadata = Nothing
               }
-          m = minimalModule {moduleFunctions = [IRFunction "f" LExternal (TInt 32) [] [IRBlock "entry" [BlockInstr instr] (IRet (Just (OLocal (TInt 32) "r")))] []]}
+          m = minimalModule{moduleFunctions = [IRFunction "f" LExternal (TInt 32) [] [IRBlock "entry" [BlockInstr instr] (IRet (Just (OLocal (TInt 32) "r")))] []]}
       render m `shouldContain` "atomicrmw add ptr %p, i32 %v seq_cst"
 
     it "renders cmpxchg" $ do
       let instr =
             IRInstruction
-              { instrResult = Just ("r", TStruct [TInt 32, TInt 1]),
-                instrOp = ICmpXchg False SeqCst Monotonic (OLocal TPtr "p") (OLocal (TInt 32) "cmp") (OLocal (TInt 32) "new"),
-                instrMetadata = Nothing
+              { instrResult = Just ("r", TStruct [TInt 32, TInt 1])
+              , instrOp = ICmpXchg False SeqCst Monotonic (OLocal TPtr "p") (OLocal (TInt 32) "cmp") (OLocal (TInt 32) "new")
+              , instrMetadata = Nothing
               }
-          m = minimalModule {moduleFunctions = [IRFunction "f" LExternal (TStruct [TInt 32, TInt 1]) [] [IRBlock "entry" [BlockInstr instr] (IRet (Just (OLocal (TStruct [TInt 32, TInt 1]) "r")))] []]}
+          m = minimalModule{moduleFunctions = [IRFunction "f" LExternal (TStruct [TInt 32, TInt 1]) [] [IRBlock "entry" [BlockInstr instr] (IRet (Just (OLocal (TStruct [TInt 32, TInt 1]) "r")))] []]}
       render m `shouldContain` "cmpxchg ptr %p, i32 %cmp, i32 %new seq_cst monotonic"
 
     it "renders fence" $ do
       let instr =
             IRInstruction
-              { instrResult = Nothing,
-                instrOp = IFence AcqRel,
-                instrMetadata = Nothing
+              { instrResult = Nothing
+              , instrOp = IFence AcqRel
+              , instrMetadata = Nothing
               }
-          m = minimalModule {moduleFunctions = [IRFunction "f" LExternal TVoid [] [IRBlock "entry" [BlockInstr instr] IUnreachable] []]}
+          m = minimalModule{moduleFunctions = [IRFunction "f" LExternal TVoid [] [IRBlock "entry" [BlockInstr instr] IUnreachable] []]}
       render m `shouldContain` "fence acq_rel"
 
     it "renders freeze" $ do
       let instr =
             IRInstruction
-              { instrResult = Just ("r", TInt 32),
-                instrOp = IFreeze (OLocal (TInt 32) "v"),
-                instrMetadata = Nothing
+              { instrResult = Just ("r", TInt 32)
+              , instrOp = IFreeze (OLocal (TInt 32) "v")
+              , instrMetadata = Nothing
               }
-          m = minimalModule {moduleFunctions = [IRFunction "f" LExternal (TInt 32) [] [IRBlock "entry" [BlockInstr instr] (IRet (Just (OLocal (TInt 32) "r")))] []]}
+          m = minimalModule{moduleFunctions = [IRFunction "f" LExternal (TInt 32) [] [IRBlock "entry" [BlockInstr instr] (IRet (Just (OLocal (TInt 32) "r")))] []]}
       render m `shouldContain` "freeze i32 %v"

@@ -40,10 +40,10 @@ spec = describe "LLVM.IRModule" $ do
           block2 = buildBlockWithTerminator "exit" (IRet (Just (OConstant (CInt 32 0))))
           m =
             IRModule
-              { moduleName = "multi",
-                moduleTypeDecls = [],
-                moduleGlobals = [],
-                moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
+              { moduleName = "multi"
+              , moduleTypeDecls = []
+              , moduleGlobals = []
+              , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
               }
       verifyModule m `shouldBe` Right ()
 
@@ -61,10 +61,10 @@ spec = describe "LLVM.IRModule" $ do
           block3 = buildBlockWithTerminator "else" (IRet (Just (OConstant (CInt 32 0))))
           m =
             IRModule
-              { moduleName = "condbr",
-                moduleTypeDecls = [],
-                moduleGlobals = [],
-                moduleFunctions = [buildMultiBlockFunction "f" [block1, block2, block3]]
+              { moduleName = "condbr"
+              , moduleTypeDecls = []
+              , moduleGlobals = []
+              , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2, block3]]
               }
       verifyModule m `shouldBe` Right ()
 
@@ -73,10 +73,10 @@ spec = describe "LLVM.IRModule" $ do
           block2 = buildBlockWithTerminator "else" (IRet (Just (OConstant (CInt 32 0))))
           m =
             IRModule
-              { moduleName = "bad_condbr",
-                moduleTypeDecls = [],
-                moduleGlobals = [],
-                moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
+              { moduleName = "bad_condbr"
+              , moduleTypeDecls = []
+              , moduleGlobals = []
+              , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
               }
       verifyModule m `shouldSatisfy` isLeft
 
@@ -85,10 +85,10 @@ spec = describe "LLVM.IRModule" $ do
           block2 = buildBlockWithTerminator "default" (IRet (Just (OConstant (CInt 32 0))))
           m =
             IRModule
-              { moduleName = "switch",
-                moduleTypeDecls = [],
-                moduleGlobals = [],
-                moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
+              { moduleName = "switch"
+              , moduleTypeDecls = []
+              , moduleGlobals = []
+              , moduleFunctions = [buildMultiBlockFunction "f" [block1, block2]]
               }
       verifyModule m `shouldBe` Right ()
 
@@ -168,30 +168,30 @@ isLeft _ = False
 moduleWithInstr :: IRInstrOp -> Maybe (IRName, IRType) -> IRModule
 moduleWithInstr instr result =
   IRModule
-    { moduleName = "typecheck_test",
-      moduleTypeDecls = [],
-      moduleGlobals = [],
-      moduleFunctions =
+    { moduleName = "typecheck_test"
+    , moduleTypeDecls = []
+    , moduleGlobals = []
+    , moduleFunctions =
         [ IRFunction
-            { functionName = "f",
-              functionLinkage = LExternal,
-              functionRetType = TVoid,
-              functionArgs = [],
-              functionBlocks =
+            { functionName = "f"
+            , functionLinkage = LExternal
+            , functionRetType = TVoid
+            , functionArgs = []
+            , functionBlocks =
                 [ IRBlock
-                    { blockLabel = "entry",
-                      blockItems =
+                    { blockLabel = "entry"
+                    , blockItems =
                         [ BlockInstr
                             IRInstruction
-                              { instrResult = result,
-                                instrOp = instr,
-                                instrMetadata = Nothing
+                              { instrResult = result
+                              , instrOp = instr
+                              , instrMetadata = Nothing
                               }
-                        ],
-                      blockTerminator = IRet Nothing
+                        ]
+                    , blockTerminator = IRet Nothing
                     }
-                ],
-              functionAttributes = []
+                ]
+            , functionAttributes = []
             }
         ]
     }
