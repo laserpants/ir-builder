@@ -276,8 +276,8 @@ emitTerminator term = do
 
 {- | Set the terminator instruction for the current block.
 
-This is a lower-level variant used internally. Prefer 'emitTerminator' for
-proper error handling.
+Prefer 'emitTerminator' for proper error handling. This is a lower-level 
+variant used internally. 
 -}
 setTerminator :: (MonadIRBuilder m) => IRTerminator -> m ()
 setTerminator term = modifyIRBuilderEnv $ mapBuilderEnvCurrentBlock (setBlockBuilderTerminator term)
