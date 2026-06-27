@@ -23,9 +23,9 @@ module LLVM.IRBuilder.Class (
 )
 where
 
-import Control.Monad.Except (ExceptT, MonadError (throwError))
+import Control.Monad.Except (ExceptT)
 import Control.Monad.Reader (ReaderT)
-import Control.Monad.State (MonadState (get, put), StateT)
+import Control.Monad.State (StateT)
 import Control.Monad.Trans (lift)
 import Control.Monad.Writer (WriterT)
 import LLVM.IRBuilder.Environment (IRBuilderEnv)
