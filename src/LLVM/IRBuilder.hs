@@ -97,7 +97,7 @@ import Control.Monad.Except (ExceptT, MonadError, runExceptT, throwError)
 import Control.Monad.Fix (MonadFix (mfix))
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Control.Monad.Identity (Identity, runIdentity)
-import Control.Monad.State (MonadState, StateT, get, gets, modify, put, runStateT)
+import Control.Monad.State (MonadState, StateT, get, put, runStateT)
 import Control.Monad.Trans (MonadTrans (lift))
 import Data.Maybe (isJust)
 import Data.Text (Text, pack)
@@ -114,7 +114,6 @@ import LLVM.IRBuilder.Environment (
   appendBuilderEnvTypeDecls,
   emptyIRBuilderEnv,
   mapBuilderEnvCurrentBlock,
-  overBuilderEnvFreshLabel,
   setBuilderEnvCurrentBlock,
  )
 import LLVM.IRBuilder.Error (IRBuilderError (..))
