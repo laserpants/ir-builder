@@ -17,30 +17,6 @@ beginBlock "entry"
 result <- add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2))
 ret result
 @
-
-= Core types and compilation
-
-Types and functions for the IR builder monad and module compilation.
-
-= Function definition
-
-Monadic operations for defining functions with return types, parameters, and attributes.
-
-= Block management
-
-Operations for managing basic blocks within functions.
-
-= Instruction emission
-
-Functions for emitting various types of IR instructions and annotations.
-
-= Utilities
-
-Helper functions and operators for common DSL patterns.
-
-= Error handling
-
-Error introspection and lifting functions for explicit error handling.
 -}
 module LLVM.IRBuilder (
   -- * Core types and compilation
