@@ -21,9 +21,9 @@ import LLVM.IR
 
 example :: Text
 example = compileModule "example" $
- define void "hello" [] LExternal [] $ do
-   beginBlock "entry"
-   retVoid
+  define void "hello" [] LExternal [] $ do
+    beginBlock "entry"
+    retVoid
 @
 
 Produces:
@@ -31,7 +31,7 @@ Produces:
 @
 define void @hello() {
 entry:
- ret void
+  ret void
 }
 @
 
@@ -39,8 +39,8 @@ Run the builder with explicit error handling using 'compileModuleWith':
 
 @
 case compileModuleWith "example" builder of
- Left err -> putStrLn (displayError err)
- Right ir  -> Data.Text.IO.putStr ir
+  Left err -> putStrLn (displayError err)
+  Right ir  -> Data.Text.IO.putStr ir
 @
 
 = Operand constants
@@ -60,10 +60,10 @@ import qualified LLVM.IROperand.Constructors as C
 
 example :: IRBuilder ()
 example =
- define i32 "add" [(i32, "a"), (i32, "b")] LExternal [] $ do
-   beginBlock "entry"
-   r <- add i32 (C.i32 1) (C.i32 2)
-   ret r
+define i32 "add" [(i32, "a"), (i32, "b")] LExternal [] $ do
+  beginBlock "entry"
+  r <- add i32 (C.i32 1) (C.i32 2)
+  ret r
 @
 
 Alternatively, use the 'OConstant' and 'CInt' constructors re-exported
@@ -125,6 +125,34 @@ a constant: @OConstant (CInt 32 0)@ or @OConstant (CFloat 1.0)@. For
 brevity, use the helpers from 'LLVM.IROperand.Constructors' imported
 qualified (e.g. @C.i32 0@, @C.i64 1@).
 
+= Invariants
+
+The following rules must hold for every generated module:
+
+1. __Every block needs a terminator.__ Each basic block must end with
+exactly one of: 'ret', 'retVoid', 'br', 'condbr', 'switch', 'unreachable'.
+A block without a terminator raises 'BlockMissingTerminator' at
+finalization. A block with two terminators raises 'BlockAlreadyTerminated'.
+
+2. __The first block is @"entry"@.__ Always call @beginBlock "entry"@ as
+the first statement inside every 'define' body.
+
+3. __Parameters are @OLocal@.__ A parameter declared as @[(i32, "x")]@
+in 'define' is accessed as @OLocal i32 "x"@. The name must match exactly.
+
+4. __Results are SSA bindings.__ Capture instruction results with @\<-@
+and pass the 'IROperand' binding directly. Never reconstruct a result
+from a name string.
+
+5. __Use @mdo@ for forward references.__ Enable
+@{\-\# LANGUAGE RecursiveDo \#-\}@ and use @mdo@ when a phi source or
+branch target is a Haskell binding defined later in the block sequence.
+Use @do@ when there are no such forward references.
+
+6. __Declare before calling.__ Invoke 'declare' or 'declareVarArg' before
+any 'call' or 'callVoid' on external functions. Duplicate declarations are
+silently ignored.
+
 = Extended example
 
 An iterative factorial using @mdo@ for forward block references. The
@@ -145,23 +173,23 @@ import qualified LLVM.IROperand.Constructors as C
 
 factorial :: Text
 factorial = compileModule "mymod" $
- define i64 "fact" [(i64, "n")] LExternal [] $ mdo
-   beginBlock "entry"
-   br loopLabel
+  define i64 "fact" [(i64, "n")] LExternal [] $ mdo
+    beginBlock "entry"
+    br loopLabel
 
-   loopLabel <- block "loop"
-   acc  <- phi i64 [(C.i64 1, "entry"),          (newAcc, bodyLabel)]
-   n    <- phi i64 [(OLocal i64 "n", "entry"),   (newN,   bodyLabel)]
-   cond <- icmp ICmpSGt i64 n (C.i64 0)
-   condbr cond bodyLabel exitLabel
+    loopLabel <- block "loop"
+    acc  <- phi i64 [(C.i64 1, "entry"),          (newAcc, bodyLabel)]
+    n    <- phi i64 [(OLocal i64 "n", "entry"),   (newN,   bodyLabel)]
+    cond <- icmp ICmpSGt i64 n (C.i64 0)
+    condbr cond bodyLabel exitLabel
 
-   bodyLabel <- block "body"
-   newAcc <- mul i64 acc n
-   newN   <- sub i64 n (C.i64 1)
-   br loopLabel
+    bodyLabel <- block "body"
+    newAcc <- mul i64 acc n
+    newN   <- sub i64 n (C.i64 1)
+    br loopLabel
 
-   exitLabel <- block "exit"
-   ret acc
+    exitLabel <- block "exit"
+    ret acc
 @
 
 = Module reference

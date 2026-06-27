@@ -117,6 +117,68 @@ factorialModule = do
     ret (OConstant (CInt 32 0))
 ```
 
+## Patterns
+
+### Conditional with phi merge
+
+When both branches converge at a single exit point, `phi` selects the
+appropriate value based on which predecessor block control arrived from:
+
+```haskell
+define i32 "max" [(i32, "a"), (i32, "b")] LExternal [] $ do
+  beginBlock "entry"
+  cond <- icmp ICmpSGt i32 (OLocal i32 "a") (OLocal i32 "b")
+  condbr cond "then_" "else_"
+
+  beginBlock "then_"
+  br "merge"
+
+  beginBlock "else_"
+  br "merge"
+
+  beginBlock "merge"
+  r <- phi i32 [(OLocal i32 "a", "then_"), (OLocal i32 "b", "else_")]
+  ret r
+```
+
+```llvm
+define i32 @max(i32 %a, i32 %b) {
+entry:
+  %1 = icmp sgt i32 %a, %b
+  br i1 %1, label %then_, label %else_
+then_:
+  br label %merge
+else_:
+  br label %merge
+merge:
+  %2 = phi i32 [ %a, %then_ ], [ %b, %else_ ]
+  ret i32 %2
+}
+```
+
+### Switch
+
+`switch` dispatches on an integer value with a mandatory default case and
+zero or more literal arms. Each arm is a `(IRConstant, IRName)` pair:
+
+```haskell
+define i32 "classify" [(i32, "n")] LExternal [] $ do
+  beginBlock "entry"
+  switch (OLocal i32 "n") "default_"
+    [ (CInt 32 0, "zero")
+    , (CInt 32 1, "one")
+    ]
+
+  beginBlock "zero"
+  ret (OConstant (CInt 32 10))
+
+  beginBlock "one"
+  ret (OConstant (CInt 32 20))
+
+  beginBlock "default_"
+  ret (OConstant (CInt 32 (-1)))
+```
+
 ## Type system
 
 LLVM types are represented by the `IRType` data type:
