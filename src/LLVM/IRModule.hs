@@ -206,13 +206,13 @@ __Example:__
 
 @
 let func = IRFunction
- { functionName = "main"
- , functionLinkage = LExternal
- , functionRetType = i32
- , functionArgs = []
- , functionBlocks = [entryBlock, loopBlock, exitBlock]
- , functionAttributes = []
- }
+  { functionName = "main"
+  , functionLinkage = LExternal
+  , functionRetType = i32
+  , functionArgs = []
+  , functionBlocks = [entryBlock, loopBlock, exitBlock]
+  , functionAttributes = []
+  }
 in verifyFunction func
 @
 -}
