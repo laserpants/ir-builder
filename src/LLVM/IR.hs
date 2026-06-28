@@ -45,13 +45,11 @@ case compileModuleWith "example" builder of
 
 = Operand constants
 
-'LLVM.IRType.Constructors' (re-exported here) provides type-level
-constructors such as @i32 :: IRType@ and @ptr :: IRType@.
-'LLVM.IROperand.Constructors' provides identically-named value-level
-constructors — @i32 :: Integral a => a -> IROperand@,
-@float :: Float -> IROperand@ — that would create a name clash.
+Both "LLVM.IRType.Constructors" (re-exported here) and
+"LLVM.IROperand.Constructors" export names like @i32@ and @ptr@ — one as
+a type, one as a constant-operand helper.
 
-To avoid this, 'LLVM.IROperand.Constructors' is __not__ re-exported.
+To avoid conflicts, "LLVM.IROperand.Constructors" is __not__ re-exported.
 Import it qualified whenever you need constant operand helpers:
 
 @
@@ -67,7 +65,7 @@ example =
 @
 
 Alternatively, use the 'OConstant' and 'CInt' constructors re-exported
-from 'LLVM.IROperand' directly:
+from "LLVM.IROperand" directly:
 
 @
 ret (OConstant (CInt 32 0))
@@ -89,16 +87,16 @@ Open a new basic block. Use 'block' inside @mdo@ notation to capture the
 generated label for use as a branch target — see the extended example.
 
 [Instruction constructors]
-Re-exported from 'LLVM.IRInstruction.Constructors'. Each function (e.g.
+Re-exported from "LLVM.IRInstruction.Constructors". Each function (e.g.
 'add', 'load', 'icmp', 'phi', 'call') emits one instruction and returns
 the result as an 'IROperand'.
 
 ['ret', 'br', 'condbr', 'switch', 'unreachable']
-Terminators from 'LLVM.IRTerminator.Constructors'. Every basic block must
+Terminators from "LLVM.IRTerminator.Constructors". Every basic block must
 end with exactly one terminator.
 
 [Type constructors]
-From 'LLVM.IRType.Constructors': 'i1', 'i8', 'i16', 'i32', 'i64',
+From "LLVM.IRType.Constructors": 'i1', 'i8', 'i16', 'i32', 'i64',
 'i128', 'ptr', 'void', 'float', 'double', 'struct', 'array', 'vector',
 'fun', 'named'.
 
@@ -194,35 +192,35 @@ factorial = compileModule "mymod" $
 
 = Module reference
 
-['LLVM.IRBuilder'] Builder monad and compilation functions: 'compileModule',
+["LLVM.IRBuilder"] Builder monad and compilation functions: 'compileModule',
 'buildModule', 'compileModuleWith', 'buildModuleWith', 'define',
 'beginBlock', 'block', 'emitInstruction', 'emitAnnotation',
 'emitTerminator', 'emitGlobal', 'emitTypeDecl', 'declare',
 'declareVarArg', and the '(<##>)' inline-comment operator.
 
-['LLVM.IRBuilder.Error'] 'IRBuilderError' type and 'displayError' for
+["LLVM.IRBuilder.Error"] 'IRBuilderError' type and 'displayError' for
 programs that use explicit error handling via 'compileModuleWith' or
 'buildModuleWith'.
 
-['LLVM.IRInstruction'] IR instruction data types and condition codes:
+["LLVM.IRInstruction"] IR instruction data types and condition codes:
 'IRICmpCond', 'IRFCmpCond', 'IRTailMarker', 'IRInstrOp', 'IRInstruction'.
 
-['LLVM.IRInstruction.Constructors'] Instruction smart constructors: 'add',
+["LLVM.IRInstruction.Constructors"] Instruction smart constructors: 'add',
 'sub', 'mul', 'sdiv', 'udiv', 'load', 'store', 'gep', 'call', 'callVoid',
 'icmp', 'fcmp', 'phi', 'select', 'bitcast', 'sext', 'zext', 'trunc',
 'alloca', 'freeze', 'atomicRMW', 'cmpXchg', 'fence', and more.
 
-['LLVM.IRTerminator.Constructors'] Block terminators: 'ret', 'retVoid',
+["LLVM.IRTerminator.Constructors"] Block terminators: 'ret', 'retVoid',
 'br', 'condbr', 'switch', 'unreachable'.
 
-['LLVM.IRType'] The 'IRType' algebraic data type and the 'IRName'
+["LLVM.IRType"] The 'IRType' algebraic data type and the 'IRName'
 type alias (@type IRName = Text@).
 
-['LLVM.IRType.Constructors'] Type smart constructors: 'i1', 'i8', 'i16',
+["LLVM.IRType.Constructors"] Type smart constructors: 'i1', 'i8', 'i16',
 'i32', 'i64', 'i128', 'ptr', 'void', 'float', 'double', 'struct',
 'array', 'vector', 'fun', 'named'.
 
-['LLVM.IRModule'] Module-level IR data types ('IRModule', 'IRFunction',
+["LLVM.IRModule"] Module-level IR data types ('IRModule', 'IRFunction',
 'IRBlock', 'IRGlobal', 'IRBlockItem') and validation ('verifyModule',
 'typeCheckModule'). 'IRLinkage' values: 'LExternal' (visible outside
 module), 'LInternal' (module-local), 'LPrivate' (not in symbol table).
@@ -230,22 +228,22 @@ module), 'LInternal' (module-local), 'LPrivate' (not in symbol table).
 'AlwaysInline', 'NoInline', 'TailCall', 'MustTailCall', 'Cold', 'Hot',
 'InlineHint', 'NoAlias', @GC "name"@.
 
-['LLVM.IROperand'] Operand and constant data types: 'IROperand', 'IRConstant',
+["LLVM.IROperand"] Operand and constant data types: 'IROperand', 'IRConstant',
 'IRTerminator'. Helper functions: 'operandType', 'constantType',
 'opComponents'.
 
-['LLVM.IRAnnotation'] The 'IRAnnotation' type ('Comment', 'CommentBlock').
+["LLVM.IRAnnotation"] The 'IRAnnotation' type ('Comment', 'CommentBlock').
 
-['LLVM.IRAnnotation.Constructors'] Annotation helpers: 'comment',
+["LLVM.IRAnnotation.Constructors"] Annotation helpers: 'comment',
 'commentBlock', 'withComment'. The '(<##>)' operator comes from
 'LLVM.IRBuilder'.
 
-['LLVM.IROperand.Constructors'] Integer and floating-point operand
+["LLVM.IROperand.Constructors"] Integer and floating-point operand
 constants (@i32@, @i64@, @float@, @local@, @global@, etc.).
 __Not re-exported here__ — import this module qualified to avoid
 collisions with the type constructors above.
 
-['LLVM.IR.Examples'] Complete, runnable examples: 'helloWorld',
+["LLVM.IR.Examples"] Complete, runnable examples: 'helloWorld',
 'addNumbers', and 'factorial'.
 -}
 module LLVM.IR (
