@@ -8,6 +8,7 @@ synopsis: Monadic DSL for constructing LLVM IR
 category: Compilers/Interpreters
 homepage: https://codeberg.org/laserpants/ir-builder
 bug-reports: https://codeberg.org/laserpants/ir-builder/issues
+git: https://codeberg.org/laserpants/ir-builder.git
 
 extra-source-files:
   - README.md

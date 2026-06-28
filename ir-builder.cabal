@@ -69,6 +69,10 @@ extra-source-files:
     README.md
     prologue.haddock
 
+source-repository head
+  type: git
+  location: https://codeberg.org/laserpants/ir-builder.git
+
 library
   exposed-modules:
       LLVM.IR
