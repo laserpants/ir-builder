@@ -91,11 +91,11 @@ __Example:__
 
 @
 let mod = IRModule
- { irModuleName = "myprogram"
- , irModuleTypeDecls = [IRTypeDecl "Node" (TStruct [TInt 32, TPtr])]
- , irModuleGlobals = []
- , irModuleFunctions = [mainFunction]
- }
+  { irModuleName = "myprogram"
+  , irModuleTypeDecls = [IRTypeDecl "Node" (TStruct [TInt 32, TPtr])]
+  , irModuleGlobals = []
+  , irModuleFunctions = [mainFunction]
+  }
 in verifyModule mod
 @
 -}
