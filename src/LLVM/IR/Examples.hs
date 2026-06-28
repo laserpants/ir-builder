@@ -87,7 +87,7 @@ addNumbers =
         [ \"Explanation: This block performs a simple addition\"
         , \"of two 32-bit integers\"
         ])
-    result <- add i32 (OLocal i32 \"a\") (OLocal i32 \"b\") <##> \"add the two input numbers\"
+    result <- add i32 (OLocal i32 \"a\") (OLocal i32 \"b\") \<##\> \"add the two input numbers\"
     ret result
 @
 
