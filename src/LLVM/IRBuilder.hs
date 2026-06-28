@@ -776,7 +776,7 @@ emitGlobal global = modifyIRBuilderEnv $ \env ->
 Renders at the top of the IR output as:
 
 @
-%IRName = type <type>
+%IRName = type \<type\>
 @
 
 Duplicate declarations (same name) are silently ignored, so it is safe
@@ -785,7 +785,7 @@ to call this function multiple times for the same type.
 __Example:__
 
 @
-emitTypeDecl "Node" (TStruct [TInt 32, TPtr, TPtr])
+emitTypeDecl \"Node\" (TStruct [TInt 32, TPtr, TPtr])
 -- renders: %Node = type { i32, ptr, ptr }
 @
 -}
@@ -800,7 +800,7 @@ emitTypeDecl name ty = modifyIRBuilderEnv $ \env ->
 Renders as:
 
 @
-declare <retType> @<name>(<argTypes>)
+declare \<retType\> \@\<name\>(\<argTypes\>)
 @
 
 Duplicate declarations (same function name) are silently ignored, so it is
