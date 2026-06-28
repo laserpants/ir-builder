@@ -262,15 +262,23 @@ setTerminator term = modifyIRBuilderEnv $ mapBuilderEnvCurrentBlock (setBlockBui
 {- | Emit an instruction into the current block.
 
 Instructions are appended to the current block’s instruction list. Each
-instruction may have an optional inline comment attached via '<##>'.
+instruction may have an optional inline comment attached via ‘<##>’.
 
 If no block is currently active, an implicit block labelled @"entry"@ is
 created automatically.
 
-__Example:__
+This is the low-level primitive that all instruction smart constructors
+(e.g. ‘add’, ‘mul’, ‘load’) call internally. Prefer those over calling
+this function directly.
+
+__Example (direct use):__
 
 @
-add i32 (OConstant (CInt 32 1)) (OConstant (CInt 32 2)) \<##\> "compute sum"
+emitInstruction IRInstruction
+  { instrResult   = Just ("x", i32)
+  , instrOp       = IAdd i32 (OLocal i32 "a") (OLocal i32 "b")
+  , instrMetadata = Nothing
+  }
 @
 -}
 emitInstruction :: (MonadIRBuilder m) => IRInstruction (Maybe Text) -> m ()
