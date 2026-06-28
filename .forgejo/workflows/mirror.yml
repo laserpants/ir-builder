@@ -1,0 +1,22 @@
+name: Mirror to GitHub
+
+on:
+  push:
+    branches:
+      - "**"
+    tags:
+      - "**"
+
+jobs:
+  mirror:
+    runs-on: docker
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push mirror
+        run: |
+          git remote add github https://oauth2:${{ secrets.GH_TOKEN }}@github.com/laserpants/ir-builder
+          git push github --mirror
