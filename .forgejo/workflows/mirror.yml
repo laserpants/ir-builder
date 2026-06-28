@@ -18,5 +18,5 @@ jobs:
 
       - name: Push mirror
         run: |
-          git remote add github https://oauth2:${{ secrets.GH_TOKEN }}@github.com/laserpants/ir-builder
+          git remote add github https://oauth2:${{ secrets.GH_TOKEN }}@github.com/laserpants/ir-builder.git
           git push github --mirror
