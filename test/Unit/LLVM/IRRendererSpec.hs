@@ -268,7 +268,7 @@ spec = describe "LLVM.IRRenderer" $ do
       let instr =
             IRInstruction
               { instrResult = Nothing
-              , instrOp = ICall NoTail (TInt 32) (OGlobal (TInt 32) "puts") [OLocal TPtr "s"]
+              , instrOp = ICall NoTail (TInt 32) [] False (OGlobal (TInt 32) "puts") [OLocal TPtr "s"]
               , instrMetadata = Nothing
               }
           m =
@@ -284,7 +284,7 @@ spec = describe "LLVM.IRRenderer" $ do
       let instr =
             IRInstruction
               { instrResult = Nothing
-              , instrOp = ICall Tail (TInt 32) (OGlobal (TInt 32) "puts") [OLocal TPtr "s"]
+              , instrOp = ICall Tail (TInt 32) [] False (OGlobal (TInt 32) "puts") [OLocal TPtr "s"]
               , instrMetadata = Nothing
               }
           m =
@@ -300,7 +300,7 @@ spec = describe "LLVM.IRRenderer" $ do
       let instr =
             IRInstruction
               { instrResult = Nothing
-              , instrOp = ICall MustTail (TInt 32) (OGlobal (TInt 32) "puts") [OLocal TPtr "s"]
+              , instrOp = ICall MustTail (TInt 32) [] False (OGlobal (TInt 32) "puts") [OLocal TPtr "s"]
               , instrMetadata = Nothing
               }
           m =

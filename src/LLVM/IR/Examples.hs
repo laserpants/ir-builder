@@ -146,7 +146,7 @@ factorial = do
   define i32 \"main\" [] LExternal [] $ do
     beginBlock \"entry\"
     result <- call NoTail i64 (OGlobal i64 \"fact\") [OConstant (CInt 64 5)]
-    callVoid NoTail i32 (OGlobal i32 \"printf\") [OGlobal ptr \".fmt\", result]
+    callVoidVarArg NoTail i32 [ptr] (OGlobal i32 \"printf\") [OGlobal ptr \".fmt\", result]
     ret (OConstant (CInt 32 0))
 @
 
@@ -154,7 +154,7 @@ Produces:
 
 > @.fmt = private constant [15 x i8] c"fact(5) = %ld\0a\00"
 >
-> declare i32 @printf(ptr)
+> declare i32 @printf(ptr, ...)
 >
 > define i64 @fact(i64 %n) {
 > entry:
@@ -204,5 +204,5 @@ factorial = do
   define i32 "main" [] LExternal [] $ do
     beginBlock "entry"
     result <- call NoTail i64 (OGlobal i64 "fact") [OConstant (CInt 64 5)]
-    callVoid NoTail i32 (OGlobal i32 "printf") [OGlobal ptr ".fmt", result]
+    callVoidVarArg NoTail i32 [ptr] (OGlobal i32 "printf") [OGlobal ptr ".fmt", result]
     ret (OConstant (CInt 32 0))

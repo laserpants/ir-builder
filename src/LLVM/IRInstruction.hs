@@ -90,7 +90,7 @@ data IRInstrOp
   | IAlloca IRType IROperand
   | IAnd IRType IROperand IROperand
   | IBitcast IROperand IRType
-  | ICall IRTailMarker IRType IROperand [IROperand]
+  | ICall IRTailMarker IRType [IRType] Bool IROperand [IROperand]
   | IFAdd IRType IROperand IROperand
   | IFCmp IRFCmpCond IRType IROperand IROperand
   | IFDiv IRType IROperand IROperand

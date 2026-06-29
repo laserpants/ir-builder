@@ -227,7 +227,7 @@ spec = describe "LLVM.IRInstruction.Constructors" $ do
     it "call emits ICall and returns result" $ do
       let fn = OGlobal (TInt 32) "myfunc"
           (result, items) = runInstrBuilder (call NoTail (TInt 32) fn [a32])
-      lastInstrOp items `shouldBe` Just (ICall NoTail (TInt 32) fn [a32])
+      lastInstrOp items `shouldBe` Just (ICall NoTail (TInt 32) [] False fn [a32])
       case result of
         OLocal (TInt 32) _ -> pure ()
         _ -> expectationFailure "expected OLocal (TInt 32)"

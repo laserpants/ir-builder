@@ -44,6 +44,8 @@ module LLVM.IRInstruction.Constructors (
   -- * Control flow
   call,
   callVoid,
+  callVarArg,
+  callVoidVarArg,
 
   -- * Miscellaneous
   phi,
@@ -224,11 +226,29 @@ ptrtoint op t = emitWithResult t (IPtrtoint op t)
 
 -- | Call a function that returns a non-void value.
 call :: (MonadIRBuilder m) => IRTailMarker -> IRType -> IROperand -> [IROperand] -> m IROperand
-call tm t fn args = emitWithResult t (ICall tm t fn args)
+call tm t fn args = emitWithResult t (ICall tm t [] False fn args)
 
 -- | Call a function that returns void.
 callVoid :: (MonadIRBuilder m) => IRTailMarker -> IRType -> IROperand -> [IROperand] -> m ()
-callVoid tm t fn args = emitVoid (ICall tm t fn args)
+callVoid tm t fn args = emitVoid (ICall tm t [] False fn args)
+
+{- | Call a variadic function that returns a non-void value.
+
+The @paramTys@ argument lists the fixed parameter types for the function
+type annotation emitted in the call instruction, e.g. @[ptr]@ for @printf@.
+This annotation is required by the LLVM ABI for variadic calls.
+-}
+callVarArg :: (MonadIRBuilder m) => IRTailMarker -> IRType -> [IRType] -> IROperand -> [IROperand] -> m IROperand
+callVarArg tm t paramTys fn args = emitWithResult t (ICall tm t paramTys True fn args)
+
+{- | Call a variadic function, discarding the return value.
+
+The @paramTys@ argument lists the fixed parameter types for the function
+type annotation emitted in the call instruction, e.g. @[ptr]@ for @printf@.
+This annotation is required by the LLVM ABI for variadic calls.
+-}
+callVoidVarArg :: (MonadIRBuilder m) => IRTailMarker -> IRType -> [IRType] -> IROperand -> [IROperand] -> m ()
+callVoidVarArg tm t paramTys fn args = emitVoid (ICall tm t paramTys True fn args)
 
 -- * Miscellaneous
 

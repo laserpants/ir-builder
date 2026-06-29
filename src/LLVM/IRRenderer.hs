@@ -232,14 +232,22 @@ renderInstrOp = \case
     "inttoptr " <> renderTypedOperand v <> " to " <> renderType typ
   IPtrtoint v typ ->
     "ptrtoint " <> renderTypedOperand v <> " to " <> renderType typ
-  ICall marker retTy fn args ->
-    callPrefix
-      <> renderType retTy
-      <> " "
-      <> renderOperand fn
-      <> "("
-      <> Text.intercalate ", " (map renderTypedOperand args)
-      <> ")"
+  ICall marker retTy paramTys isVarArg fn args ->
+    let fnTyAnnotation
+          | isVarArg =
+              " ("
+                <> Text.intercalate ", " (map renderType paramTys)
+                <> (if null paramTys then "..." else ", ...")
+                <> ")"
+          | otherwise = ""
+     in callPrefix
+          <> renderType retTy
+          <> fnTyAnnotation
+          <> " "
+          <> renderOperand fn
+          <> "("
+          <> Text.intercalate ", " (map renderTypedOperand args)
+          <> ")"
    where
     callPrefix = case marker of
       NoTail -> "call "
