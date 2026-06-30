@@ -12,6 +12,7 @@ git: https://codeberg.org/laserpants/ir-builder.git
 
 extra-source-files:
   - README.md
+  - CHANGELOG.md
   - prologue.haddock
 
 description: |
