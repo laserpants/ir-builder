@@ -44,7 +44,7 @@ stack test         # run the test suite
 
 module Examples.HelloWorld (helloWorld) where
 
-mport LLVM.IR
+import LLVM.IR
 
 helloWorld :: IRBuilder ()
 helloWorld = do
