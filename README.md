@@ -20,8 +20,8 @@ to `llc`, `clang`, or `lli`. For example:
 ```haskell
 import LLVM.IR
 
-example :: Text
-example = compileModule "example" $ do
+example :: IRBuilder ()
+example = do
   define i32 "add_one" [(i32, "x")] LExternal [] $ do
     beginBlock "entry"
     r <- add i32 (OLocal i32 "x") (OConstant (CInt 32 1))
